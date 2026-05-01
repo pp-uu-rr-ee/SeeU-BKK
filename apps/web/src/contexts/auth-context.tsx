@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [profileCache, setProfileCache] = useState<UserProfile | null>(null)
   const supabase = createClient()
+  const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 
   useEffect(() => {
     // Get initial session
@@ -126,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/me', {
+      const response = await fetch(`${serverUrl}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/profile', {
+      const response = await fetch(`${serverUrl}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -182,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/onboarding', {
+      const response = await fetch(`${serverUrl}/api/auth/onboarding`, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -216,7 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         skipped: Boolean(options?.skipped),
       }
 
-      const response = await fetch('http://localhost:3000/api/auth/onboarding', {
+      const response = await fetch(`${serverUrl}/api/auth/onboarding`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
