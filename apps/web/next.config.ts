@@ -4,6 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   // Configure for monorepo file tracing
   outputFileTracingRoot: path.join(__dirname, '../../'),
+  turbopack: {},
   images: {
     remotePatterns: [
       {
