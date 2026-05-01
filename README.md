@@ -138,31 +138,7 @@ web-bundles/ # Agent and persona assets
 
 ## Getting Started
 
-### Install Dependencies
-
-```bash
-bun install
-```
-
-### Run the Apps
-
-```bash
-bun run dev
-```
-
-### Run Individual Workspaces
-
-```bash
-bun run dev:web
-bun run dev:server
-```
-
-### Build and Type Check
-
-```bash
-bun run build
-bun run check-types
-```
+### Go To INSTALLATION.txt
 
 ## Notes
 
