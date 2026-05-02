@@ -144,8 +144,6 @@ Go To INSTALLATION.txt
 
 (TH) https://www.youtube.com/watch?v=Sr_vcjIpcxw
 
-Go To INSTALLATION.txt
-
 ## Notes
 
 - The web app runs on port `3001` in development.
