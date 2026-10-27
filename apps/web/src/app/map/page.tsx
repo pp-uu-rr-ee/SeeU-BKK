@@ -163,10 +163,6 @@ export default function TripPlannerPage() {
     }
   }, [loading, session, router]);
 
-  if (!loading && !session?.access_token) {
-    return null;
-  }
-
   // Fetch saved trips from server
   const fetchSavedTrips = useCallback(async () => {
     if (!session?.access_token) return;
@@ -800,6 +796,11 @@ export default function TripPlannerPage() {
     if (!displayedTrip || !displayedTrip.stops) return 0;
     return displayedTrip.stops.reduce((sum, s) => sum + (s.suggestedDurationMin || 0), 0);
   }, [displayedTrip]);
+
+  // Early return must come after all hooks to keep hook order stable
+  if (!loading && !session?.access_token) {
+    return null;
+  }
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
