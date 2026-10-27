@@ -25,11 +25,12 @@ const resetPasswordSchema = z.object({
 
 const updateProfileSchema = z.object({
   nick_name: z.string().optional(),
-  avatar_url: z.string().url().optional().or(z.literal('')),
-  birth_year: z.number().int().min(1900).max(2010).optional(),
+  // '' / null clear the field
+  avatar_url: z.string().url().nullable().optional().or(z.literal('')),
+  birth_year: z.number().int().min(1900).max(2010).nullable().optional(),
   travel_style: z.array(z.enum(['slow-life', 'budget', 'instagram', 'foodie', 'history'])).optional(),
   mobility: z.enum(['walk', 'bike', 'public', 'grab']).optional(),
-  budget_per_day: z.number().int().positive().optional(),
+  budget_per_day: z.number().int().nonnegative().nullable().optional(),
   languages: z.array(z.string()).optional(),
   onboarding_completed: z.boolean().optional(),
   onboarding_completed_at: z.string().optional(),
@@ -108,6 +109,7 @@ auth.put('/profile', authMiddleware, zValidator('json', updateProfileSchema), as
       .upsert({
         user_id: user.id,
         ...profileData,
+        ...(profileData.avatar_url === '' ? { avatar_url: null } : {}),
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
       .select()

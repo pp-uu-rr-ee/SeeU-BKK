@@ -29,6 +29,17 @@ interface UserProfile {
   updated_at: string
 }
 
+/** Fields accepted by PUT /api/auth/profile; null or '' clears a field */
+export interface ProfileUpdates {
+  nick_name?: string
+  avatar_url?: string | null
+  birth_year?: number | null
+  travel_style?: string[]
+  mobility?: 'walk' | 'bike' | 'public' | 'grab'
+  budget_per_day?: number | null
+  languages?: string[]
+}
+
 interface AuthContextType {
   user: User | null
   session: Session | null
@@ -38,7 +49,7 @@ interface AuthContextType {
   signOut: () => Promise<{ error: AuthError | null }>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
   getProfile: () => Promise<{ profile: UserProfile | null; error: any | null }>
-  updateProfile: (updates: { nick_name?: string; avatar_url?: string; birth_year?: number; travel_style?: string[]; mobility?: 'walk' | 'bike' | 'public' | 'grab'; budget_per_day?: number; languages?: string[] }) => Promise<{ profile: UserProfile | null; error: any | null }>
+  updateProfile: (updates: ProfileUpdates) => Promise<{ profile: UserProfile | null; error: any | null }>
   getOnboardingStatus: () => Promise<{ completed: boolean; skipped: boolean; error: string | null }>
   saveOnboarding: (payload: OnboardingPreferences, options?: { skipped?: boolean }) => Promise<{ completed: boolean; error: string | null }>
   refreshProfile: () => Promise<void>
@@ -148,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const updateProfile = async (updates: { nick_name?: string; avatar_url?: string; birth_year?: number; travel_style?: string[]; mobility?: 'walk' | 'bike' | 'public' | 'grab'; budget_per_day?: number; languages?: string[] }) => {
+  const updateProfile = async (updates: ProfileUpdates) => {
     if (!session?.access_token) {
       return { profile: null, error: 'No session' }
     }
@@ -164,8 +175,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        return { profile: null, error: errorData.error || 'Failed to update profile' }
+        const errorData = await response.json().catch(() => ({}))
+        // zod validation errors come back as an object, not a message
+        const message = typeof errorData.error === 'string' ? errorData.error : 'Some profile fields are invalid'
+        return { profile: null, error: message }
       }
 
       const data = await response.json()

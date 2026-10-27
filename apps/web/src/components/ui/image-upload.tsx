@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from './button'
 import { Input } from './input'
 import { Label } from './label'
-import { Upload, X, Loader2, Camera, User } from 'lucide-react'
+import { X, Loader2, Camera, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ImageUploadProps {
@@ -14,6 +14,8 @@ interface ImageUploadProps {
   onImageRemove: () => void
   disabled?: boolean
   size?: 'sm' | 'md' | 'lg'
+  /** inline: avatar beside the buttons; stacked: avatar above, buttons in a row (narrow columns) */
+  layout?: 'inline' | 'stacked'
   className?: string
 }
 
@@ -23,6 +25,7 @@ export function ImageUpload({
   onImageRemove, 
   disabled = false,
   size = 'md',
+  layout = 'inline',
   className = ''
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
@@ -67,6 +70,7 @@ export function ImageUpload({
       const validationError = validateFile(file)
       if (validationError) {
         toast.error(validationError)
+        setPreviewUrl(null)
         return
       }
 
@@ -74,24 +78,6 @@ export function ImageUpload({
       if (!supabase) {
         toast.error('Cannot Upload Right Now')
         return
-      }
-
-      // Remove current image first if it exists
-      if (currentImageUrl && currentImageUrl.includes('supabase')) {
-        try {
-          const pathParts = currentImageUrl.split('/storage/v1/object/public/user-uploads/')
-          if (pathParts.length > 1) {
-            const oldPath = pathParts[1]
-            console.log('Removing current image before upload:', oldPath)
-            await supabase.storage
-              .from('user-uploads')
-              .remove([oldPath])
-            console.log('Current image removed successfully')
-          }
-        } catch (removeError) {
-          console.warn('Failed to remove current image, continuing with upload:', removeError)
-          // Continue with upload even if removal fails
-        }
       }
 
       // Create unique filename
@@ -109,6 +95,7 @@ export function ImageUpload({
 
       if (error) {
         toast.error(`Upload failed: ${error.message}`)
+        setPreviewUrl(null)
         return
       }
 
@@ -130,7 +117,7 @@ export function ImageUpload({
 
       onImageUpload(publicUrl)
       setPreviewUrl(null)
-      toast.success('Image uploaded successfully!')
+      toast.success('Photo uploaded — save your profile to keep it')
 
     } catch (error: any) {
       console.error('Upload error details:', {
@@ -139,13 +126,16 @@ export function ImageUpload({
         stack: error.stack
       })
       toast.error(`Upload failed: ${error.message || 'Unknown error'}`)
+      setPreviewUrl(null)
     } finally {
       setUploading(false)
     }
-  }, [supabase, onImageUpload, currentImageUrl])
+  }, [supabase, onImageUpload])
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    // Reset so picking the same file again still fires onChange
+    event.target.value = ''
     if (!file) return
 
     // Show preview
@@ -159,29 +149,11 @@ export function ImageUpload({
     uploadImage(file)
   }, [uploadImage])
 
-  const handleRemoveImage = useCallback(async () => {
-    try {
-      // If there's a current image, try to delete it from storage
-      if (currentImageUrl && currentImageUrl.includes('supabase')) {
-        const pathParts = currentImageUrl.split('/storage/v1/object/public/user-uploads/')
-        if (pathParts.length > 1) {
-          const path = pathParts[1]
-          await supabase.storage
-            .from('user-uploads')
-            .remove([path])
-        }
-      }
-
-      onImageRemove()
-      setPreviewUrl(null)
-      toast.success('Image removed successfully!')
-    } catch (error: any) {
-      console.error('Remove error:', error)
-      // Still call onImageRemove even if storage deletion fails
-      onImageRemove()
-      toast.success('Image removed successfully!')
-    }
-  }, [currentImageUrl, onImageRemove, supabase])
+  // Only clears the field; the stored file is left alone until the profile is saved elsewhere
+  const handleRemoveImage = useCallback(() => {
+    onImageRemove()
+    setPreviewUrl(null)
+  }, [onImageRemove])
 
   const openFileDialog = () => {
     fileInputRef.current?.click()
@@ -189,11 +161,13 @@ export function ImageUpload({
 
   const displayUrl = previewUrl || currentImageUrl
 
+  const stacked = layout === 'stacked'
+
   return (
     <div className={`space-y-4 ${className}`}>
       <Label className="sr-only">Profile picture</Label>
-      
-      <div className="flex items-center space-x-4">
+
+      <div className={stacked ? 'flex flex-col items-center gap-4 text-center' : 'flex items-center gap-4'}>
         {/* Avatar Display */}
         <div className={`relative ${sizeClasses[size]} flex-shrink-0`}>
           <div className={`${sizeClasses[size]} rounded-full border-2 border-dashed border-border bg-teal-soft flex items-center justify-center overflow-hidden`}>
@@ -210,46 +184,35 @@ export function ImageUpload({
 
           {/* Loading overlay */}
           {uploading && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+            <div className="absolute inset-0 bg-foreground/50 rounded-full flex items-center justify-center">
               <Loader2 className="h-6 w-6 text-white animate-spin" />
             </div>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col space-y-2">
+        <div className={stacked ? 'flex flex-wrap justify-center gap-2' : 'flex flex-col gap-2'}>
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onClick={openFileDialog}
             disabled={disabled || uploading}
-            className="flex items-center space-x-2 rounded-full"
+            className="h-10 rounded-full px-4"
           >
-            {uploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <Camera className="h-4 w-4" />
-                <span>Change Photo</span>
-              </>
-            )}
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            {uploading ? 'Uploading…' : 'Change photo'}
           </Button>
 
           {displayUrl && (
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={handleRemoveImage}
               disabled={disabled || uploading}
-              className="flex items-center space-x-2 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="h-10 rounded-full px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <X className="h-4 w-4" />
-              <span>Remove</span>
+              Remove
             </Button>
           )}
         </div>
@@ -259,18 +222,15 @@ export function ImageUpload({
       <Input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         onChange={handleFileSelect}
         disabled={disabled || uploading}
         className="hidden"
       />
 
-      {/* Upload guidelines */}
-      <div className="text-xs text-muted-foreground space-y-1">
-        <p>• Supported formats: JPEG, PNG, WebP</p>
-        <p>• Maximum file size: 5MB</p>
-        <p>• Recommended size: 400x400 pixels</p>
-      </div>
+      <p className={`text-xs text-muted-foreground ${stacked ? 'text-center' : ''}`}>
+        JPEG, PNG or WebP · up to 5MB · square works best
+      </p>
     </div>
   )
 }

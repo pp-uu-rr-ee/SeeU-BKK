@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,6 +44,9 @@ export default function ProfilePage() {
     budget_per_day: undefined as number | undefined,
     languages: ['th'] as string[],
   })
+  // Last loaded/saved values, used to show "unsaved changes"
+  const [savedSnapshot, setSavedSnapshot] = useState('')
+  const isDirty = useMemo(() => savedSnapshot !== '' && JSON.stringify(formData) !== savedSnapshot, [formData, savedSnapshot])
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -62,15 +65,17 @@ export default function ProfilePage() {
             toast.error(`${t('profile.loadFailed')} ${error}`)
           } else {
             setProfile(profileData)
-            setFormData({
+            const loaded = {
               nick_name: profileData?.nick_name || '',
               avatar_url: profileData?.avatar_url || '',
               birth_year: profileData?.birth_year || undefined,
               travel_style: profileData?.travel_style || [],
               mobility: profileData?.mobility || 'public',
-              budget_per_day: profileData?.budget_per_day || 1500,
+              budget_per_day: profileData?.budget_per_day ?? 1500,
               languages: profileData?.languages || ['th'],
-            })
+            }
+            setFormData(loaded)
+            setSavedSnapshot(JSON.stringify(loaded))
           }
         } catch (error) {
           toast.error(t('profile.loadFailed'))
@@ -121,14 +126,15 @@ export default function ProfilePage() {
     setSaving(true)
 
     try {
+      // Send explicit empty values ('' / null / []) so removed photos and cleared fields are persisted
       const updates = {
         nick_name: formData.nick_name.trim() || undefined,
-        avatar_url: formData.avatar_url || undefined,
-        birth_year: formData.birth_year,
-        travel_style: formData.travel_style.length > 0 ? formData.travel_style : undefined,
+        avatar_url: formData.avatar_url || '',
+        birth_year: formData.birth_year ?? null,
+        travel_style: formData.travel_style,
         mobility: formData.mobility,
-        budget_per_day: formData.budget_per_day,
-        languages: formData.languages.filter(lang => lang.trim() !== ''),
+        budget_per_day: formData.budget_per_day ?? null,
+        languages: formData.languages.map(lang => lang.trim().toLowerCase()).filter(Boolean),
       }
 
       const { profile: updatedProfile, error } = await updateProfile(updates)
@@ -138,15 +144,17 @@ export default function ProfilePage() {
       } else {
         setProfile(updatedProfile)
         if (updatedProfile) {
-          setFormData({
+          const saved = {
             nick_name: updatedProfile.nick_name || '',
             avatar_url: updatedProfile.avatar_url || '',
             birth_year: updatedProfile.birth_year || undefined,
             travel_style: updatedProfile.travel_style || [],
             mobility: updatedProfile.mobility || 'public',
-            budget_per_day: updatedProfile.budget_per_day || 1500,
-            languages: updatedProfile.languages || ['th'],
-          })
+            budget_per_day: updatedProfile.budget_per_day ?? undefined,
+            languages: updatedProfile.languages?.length ? updatedProfile.languages : ['th'],
+          }
+          setFormData(saved)
+          setSavedSnapshot(JSON.stringify(saved))
         }
         await refreshProfile()
         toast.success(t('profile.saved'))
@@ -205,16 +213,19 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[300px_minmax(0,1fr)]">
         {/* Identity column */}
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+          <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
             <ImageUpload
               currentImageUrl={formData.avatar_url}
               onImageUpload={handleImageUpload}
               onImageRemove={handleImageRemove}
               disabled={saving}
               size="lg"
+              layout="stacked"
             />
-            <p className="mt-4 truncate font-display text-xl font-semibold text-foreground">{displayName}</p>
-            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+            <div className="mt-5 border-t border-border pt-5">
+              <p className="truncate font-display text-xl font-semibold text-foreground">{displayName}</p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-border bg-accent/60 p-6">
@@ -419,12 +430,24 @@ export default function ProfilePage() {
             <p className="mt-3 text-sm text-muted-foreground">{t("profile.languageCodeHint")}</p>
           </section>
 
-          {/* Save bar */}
-          <div className="sticky bottom-4 z-10 flex justify-end rounded-full border border-border bg-background/90 p-2 shadow-card backdrop-blur">
-            <Button type="submit" disabled={saving} className="h-12 min-w-44 rounded-full px-6 text-base">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />}
-              {saving ? t("profile.saving") : t("profile.saveProfile")}
-            </Button>
+          {/* Save bar: compact pill pinned to the bottom-right while scrolling */}
+          <div className="pointer-events-none sticky bottom-4 z-10 flex justify-end">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-card/95 py-1.5 pl-5 pr-1.5 shadow-card-hover backdrop-blur">
+              <span className="text-sm text-muted-foreground" aria-live="polite">
+                {isDirty ? (
+                  <span className="inline-flex items-center gap-2 text-accent-foreground">
+                    <span aria-hidden className="h-2 w-2 rounded-full bg-saffron" />
+                    {t("profile.unsaved")}
+                  </span>
+                ) : (
+                  t("profile.allSaved")
+                )}
+              </span>
+              <Button type="submit" disabled={saving || !isDirty} className="h-11 rounded-full px-6">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />}
+                {saving ? t("profile.saving") : t("profile.saveProfile")}
+              </Button>
+            </div>
           </div>
         </div>
       </form>
