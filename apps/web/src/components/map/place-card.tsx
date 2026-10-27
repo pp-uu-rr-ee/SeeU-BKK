@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, Camera } from 'lucide-react';
 import { motion } from 'motion/react';
-import { generateMockRating, formatRating, getRatingStars, generateMockReviewCount } from '@/lib/rating-utils';
+import { formatRating, getRatingStars } from '@/lib/rating-utils';
+import { useTranslation } from '@/contexts/language-context';
 
 interface PlaceCardProps {
   id: string;
@@ -14,6 +15,8 @@ interface PlaceCardProps {
   tags?: string[];
   image_url?: string;
   slug?: string;
+  avgRating?: number | null;
+  reviewCount?: number;
   onClick?: () => void;
   variant?: 'default' | 'compact';
   className?: string;
@@ -24,7 +27,7 @@ interface PlaceCardProps {
  * 
  * Features:
  * - Lazy-loaded image with gradient fallback
- * - Mock rating with stars
+ * - Average rating from user reviews (hidden until a place has reviews)
  * - Tags as badges
  * - Hover animations
  */
@@ -34,6 +37,8 @@ export const PlaceCard = memo(function PlaceCard({
   description,
   tags = [],
   image_url,
+  avgRating = null,
+  reviewCount = 0,
   onClick,
   variant = 'default',
   className = '',
@@ -41,9 +46,8 @@ export const PlaceCard = memo(function PlaceCard({
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Generate deterministic mock rating based on place ID
-  const rating = generateMockRating(id);
-  const reviewCount = generateMockReviewCount(id);
+  const { t } = useTranslation();
+  const rating = avgRating ?? 0;
   const { fullStars, halfStar, emptyStars } = getRatingStars(rating);
 
   const isCompact = variant === 'compact';
@@ -144,15 +148,21 @@ export const PlaceCard = memo(function PlaceCard({
 
           {/* Rating Row */}
           <div className="flex items-center gap-1.5 mb-2">
-            <div className="flex items-center gap-0.5">
-              {renderStars()}
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              {formatRating(rating)}
-            </span>
-            <span className="text-xs text-gray-400">
-              ({reviewCount})
-            </span>
+            {avgRating !== null ? (
+              <>
+                <div className="flex items-center gap-0.5">
+                  {renderStars()}
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {formatRating(rating)}
+                </span>
+                <span className="text-xs text-gray-400">
+                  ({reviewCount})
+                </span>
+              </>
+            ) : (
+              <span className="text-xs text-gray-400">{t('placeDetail.noReviews')}</span>
+            )}
           </div>
 
           {/* Tags */}

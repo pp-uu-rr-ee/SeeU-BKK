@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import {
+  PlaceDetailsFields,
+  emptyPlaceDetails,
+  placeDetailsFromApi,
+  placeDetailsToPayload,
+  type PlaceDetailsValue,
+} from '@/components/admin/place-details-fields'
 
 type PlacePayload = {
   name?: string
@@ -22,7 +29,7 @@ type PlacePayload = {
   image_url?: string
   embedding?: number[]
   compute_embedding?: boolean
-}
+} & Partial<ReturnType<typeof placeDetailsToPayload>>
 
 interface Place {
   id: string
@@ -51,6 +58,8 @@ export default function AdminEditPlacePage() {
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [originalPlace, setOriginalPlace] = useState<Place | null>(null)
+  const [details, setDetails] = useState<PlaceDetailsValue>(emptyPlaceDetails())
+  const [originalDetails, setOriginalDetails] = useState<PlaceDetailsValue>(emptyPlaceDetails())
 
   const update = (k: keyof PlacePayload, v: any) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -96,6 +105,9 @@ export default function AdminEditPlacePage() {
         image_url: place.image_url
       })
       setTagsText(Array.isArray(place.tags) ? place.tags.join(', ') : '')
+      const loadedDetails = placeDetailsFromApi(place)
+      setDetails(loadedDetails)
+      setOriginalDetails(loadedDetails)
     } catch (e: any) {
       setError(e?.message || 'Failed to load place')
     } finally {
@@ -164,6 +176,15 @@ export default function AdminEditPlacePage() {
         changedPayload.tags = newTags
       }
       
+      // Detail fields: send each one that changed (opening hours are replaced as a whole)
+      const nextDetails = placeDetailsToPayload(details)
+      const prevDetails = placeDetailsToPayload(originalDetails)
+      for (const key of Object.keys(nextDetails) as Array<keyof typeof nextDetails>) {
+        if (JSON.stringify(nextDetails[key]) !== JSON.stringify(prevDetails[key])) {
+          (changedPayload as any)[key] = nextDetails[key]
+        }
+      }
+
       if (embedding) {
         changedPayload.embedding = embedding
       } else if (changedPayload.name || changedPayload.description) {
@@ -351,6 +372,11 @@ export default function AdminEditPlacePage() {
                   onChange={(e) => setTagsText(e.target.value)} 
                   placeholder="temple, history, culture" 
                 />
+              </div>
+
+              <div className="pt-4 border-t">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Visit details</h2>
+                <PlaceDetailsFields value={details} onChange={setDetails} />
               </div>
 
               <div className="flex items-center gap-3">

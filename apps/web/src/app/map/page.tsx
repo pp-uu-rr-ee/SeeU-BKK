@@ -47,6 +47,8 @@ interface PlaceItem extends TripPlaceCandidate {
   address?: string;
   image_url?: string;
   price?: number;
+  avg_rating?: number | null;
+  review_count?: number;
 }
 
 interface ChatSession {
@@ -104,6 +106,8 @@ export default function TripPlannerPage() {
 
   // Panel visibility states
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatPrefill, setChatPrefill] = useState<string | undefined>(undefined);
+  const [pendingPlaceSlug, setPendingPlaceSlug] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(true);
   const [isNewTripDialogOpen, setIsNewTripDialogOpen] = useState(false);
@@ -268,6 +272,19 @@ export default function TripPlannerPage() {
     }
   }, []);
 
+  // Deep links from place pages: /map?place=<slug> and /map?chat=true&about=<name>
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const placeSlug = params.get('place');
+    const about = params.get('about');
+    if (placeSlug) setPendingPlaceSlug(placeSlug);
+    if (params.get('chat') === 'true') {
+      setIsChatOpen(true);
+      if (about) setChatPrefill(t('map.askAboutPlace', { name: about }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fetch initial places on mount
   useEffect(() => {
     const fetchInitialPlaces = async () => {
@@ -292,6 +309,8 @@ export default function TripPlannerPage() {
             description: p.description || '',
             address: p.address || p.name || 'Address not available',
             image_url: p.image_url || '',
+            avg_rating: p.avg_rating ?? null,
+            review_count: p.review_count ?? 0,
           })));
         }
       } catch (error) {
@@ -342,6 +361,8 @@ export default function TripPlannerPage() {
           description: p.description || '',
           address: p.address || p.name || 'Address not available',
           image_url: p.image_url || '',
+          avg_rating: p.avg_rating ?? null,
+          review_count: p.review_count ?? 0,
         })));
       }
     } catch (error) {
@@ -687,6 +708,30 @@ export default function TripPlannerPage() {
       }));
   };
 
+  // Select the deep-linked place once the initial list is available
+  useEffect(() => {
+    if (!pendingPlaceSlug || initialPlaces.length === 0) return;
+    const slug = pendingPlaceSlug;
+    setPendingPlaceSlug(null);
+
+    const select = (place: PlaceItem) => {
+      const mapPlace = transformPlacesForMap([place])[0];
+      if (mapPlace) setSelectedPlace(mapPlace);
+    };
+    const known = initialPlaces.find((p) => p.slug === slug);
+    if (known) {
+      select(known);
+      return;
+    }
+    fetch(`${serverUrl}/api/places/${encodeURIComponent(slug)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((result) => {
+        if (result?.success && result.data) select(result.data);
+      })
+      .catch((error) => console.error('Error loading linked place:', error));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPlaceSlug, initialPlaces, serverUrl]);
+
   const transformTripStopsForMap = (trip: Trip | null): any[] => {
     if (!trip || !trip.stops) return [];
     return trip.stops
@@ -924,7 +969,9 @@ export default function TripPlannerPage() {
                         id={place.id}
                         name={place.name}
                         tags={place.tags}
-                        image_url={undefined} // API doesn't return image_url in list
+                        image_url={place.image_url}
+                        avgRating={place.avg_rating ?? null}
+                        reviewCount={place.review_count ?? 0}
                         variant="compact"
                         onClick={() => {
                           const mapPlace = transformPlacesForMap([place])[0];
@@ -1154,6 +1201,7 @@ export default function TripPlannerPage() {
         onSessionCreated={handleSessionCreated}
         sessionMessages={chatSessionMessages}
         contextPlaces={chatContextPlaces}
+        initialPrompt={chatPrefill}
       />
 
       {/* New Trip Dialog */}

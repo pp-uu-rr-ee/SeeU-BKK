@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { nameToSlug } from './slug-utils'
+import { PLACE_COLUMNS, placeSearchFilter, sanitizeSearchTerm } from './place-data'
 import { traceable } from 'langsmith/traceable'
 
 export type LatLng = { lat: number; lng: number }
@@ -68,18 +69,19 @@ export async function search_places(params: SearchPlacesParams): Promise<PlaceIt
   const { query, categories, limit = 10 } = params
 
   let q = applyRattanakosinBounds(
-    supabase.from('bangkok_unseen').select('*').order('name').limit(limit)
+    supabase.from('bangkok_unseen').select(PLACE_COLUMNS).eq('is_published', true).order('name').limit(limit)
   )
 
-  if (query && query.trim()) {
-    const kw = query.trim()
-    q = q.or(`name.ilike.%${kw}%,description.ilike.%${kw}%`)
+  const filter = query ? placeSearchFilter(query) : null
+  if (filter) {
+    q = q.or(filter)
   }
 
-  if (categories && categories.length) {
+  const safeCategories = (categories || []).map(sanitizeSearchTerm).filter(Boolean)
+  if (safeCategories.length) {
     // Filter by tags containing any of the categories
     // Supabase array contains: .contains('tags', ['food']) matches array contains all provided, so for ANY we can OR conditions
-    const orParts = categories.map((cat) => `tags.cs.{"${cat}"}`)
+    const orParts = safeCategories.map((cat) => `tags.cs.{"${cat}"}`)
     q = q.or(orParts.join(','))
   }
 
@@ -112,7 +114,8 @@ export async function nearby_places(params: NearbyPlacesParams): Promise<PlaceIt
 
   const { data, error } = await supabase
     .from('bangkok_unseen')
-    .select('*')
+    .select(PLACE_COLUMNS)
+    .eq('is_published', true)
     .gte('lat', minLat)
     .lte('lat', maxLat)
     .gte('lng', minLng)

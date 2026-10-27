@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS itinerary_stops (
     suggested_time_min INT,
     distance_from_prev_km DOUBLE PRECISION,
     notes TEXT DEFAULT '',
-    created_at TIMESTAMPTZ WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMPTZ WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(itinerary_id, position)
 );
 
@@ -123,7 +123,7 @@ CREATE POLICY "Users can view own itineraries" ON itineraries
     FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can modify own itineraries" ON itineraries
-    FOR INSERT, UPDATE, DELETE USING (auth.uid() = user_id)
+    FOR ALL USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can view itinerary stops for own itineraries" ON itinerary_stops
@@ -132,7 +132,7 @@ CREATE POLICY "Users can view itinerary stops for own itineraries" ON itinerary_
     );
 
 CREATE POLICY "Users can modify itinerary stops for own itineraries" ON itinerary_stops
-    FOR INSERT, UPDATE, DELETE USING (
+    FOR ALL USING (
         itinerary_id IN (SELECT id FROM itineraries WHERE user_id = auth.uid())
     )
     WITH CHECK (

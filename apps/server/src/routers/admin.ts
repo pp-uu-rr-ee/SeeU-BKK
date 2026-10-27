@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { supabase } from '../lib/supabase'
 import { openaiEmbed } from '../lib/openai'
 import { nameToSlug } from '../lib/slug-utils'
+import { buildPlaceEmbeddingText } from '../lib/place-data'
 import { authMiddleware, roleGuard } from '../middleware/auth'
 
 const admin = new Hono()
@@ -12,6 +13,42 @@ const admin = new Hono()
 admin.use('*', authMiddleware)
 admin.use('*', roleGuard('admin'))
 
+
+const openingHoursSchema = z.array(z.object({
+  day_of_week: z.number().int().min(0).max(6),
+  open_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+  close_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+  is_closed: z.boolean().optional().default(false),
+  note: z.string().optional(),
+}).refine((h) => h.is_closed || (h.open_time && h.close_time), {
+  message: 'open_time and close_time are required unless is_closed',
+})).max(7)
+
+const placeDetailFields = {
+  phone: z.string().max(50).nullable().optional(),
+  website: z.string().url().nullable().optional().or(z.literal('')),
+  suggested_duration_min: z.number().int().positive().nullable().optional(),
+  best_for: z.array(z.string()).optional(),
+  opening_hours: openingHoursSchema.optional(),
+}
+
+// Replace a place's weekly opening hours with the given rows
+async function saveOpeningHours(placeId: string, hours: z.infer<typeof openingHoursSchema>) {
+  const { error: deleteError } = await supabase.from('place_opening_hours').delete().eq('place_id', placeId)
+  if (deleteError) throw deleteError
+  if (hours.length === 0) return
+  const { error } = await supabase.from('place_opening_hours').insert(
+    hours.map((h) => ({
+      place_id: placeId,
+      day_of_week: h.day_of_week,
+      open_time: h.is_closed ? null : h.open_time,
+      close_time: h.is_closed ? null : h.close_time,
+      is_closed: h.is_closed,
+      note: h.note || null,
+    }))
+  )
+  if (error) throw error
+}
 
 export const placeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,6 +70,7 @@ export const placeSchema = z.object({
   is_published: z.boolean().optional().default(true),
   embedding: z.array(z.number()).length(1536).optional(),
   compute_embedding: z.boolean().optional().default(false),
+  ...placeDetailFields,
 })
 
 const updatePlaceSchema = z.object({
@@ -47,8 +85,10 @@ const updatePlaceSchema = z.object({
   address: z.string().optional(),
   price: z.number().optional(),
   image_url: z.string().optional(),
+  is_published: z.boolean().optional(),
   embedding: z.array(z.number()).optional(),
   compute_embedding: z.boolean().optional().default(false),
+  ...placeDetailFields,
 })
 
 // Compute embedding for given text (name + description recommended)
@@ -159,15 +199,25 @@ admin.get('/places/:id', async (c) => {
       }, error.code === 'PGRST116' ? 404 : 500)
     }
 
+    const { data: openingHours } = await supabase
+      .from('place_opening_hours')
+      .select('day_of_week, open_time, close_time, is_closed, note')
+      .eq('place_id', id)
+      .order('day_of_week')
+
     // Clean the data and add slug
+    const { embedding: _embedding, ...rest } = data
     const cleanData = {
-      ...data,
+      ...rest,
+      has_embedding: Array.isArray(_embedding) ? _embedding.length > 0 : !!_embedding,
       image_url: data.image_url || '',
       tags: Array.isArray(data.tags) ? data.tags : [],
+      best_for: Array.isArray(data.best_for) ? data.best_for : [],
       price: typeof data.price === 'number' ? data.price : 0,
       address: data.address || '',
       description: data.description || '',
-      slug: nameToSlug(data.name)
+      slug: data.slug || nameToSlug(data.name),
+      opening_hours: openingHours || [],
     }
 
     return c.json({
@@ -192,15 +242,7 @@ admin.post('/places', zValidator('json', placeSchema), async (c) => {
     let embedding = body.embedding
     let embeddingError = null
     if ((!embedding || embedding.length === 0) && body.compute_embedding) {
-      // Build a rich text representation for embedding
-      const text = `
-Name: ${body.name}
-Area: ${body.area || 'Unknown'}
-Description: ${body.description || ''}
-Tags: ${body.tags ? body.tags.join(', ') : ''}
-Address: ${body.address || ''}
-Price: ${body.price ? body.price + ' Baht' : 'Free'}
-      `.trim()
+      const text = buildPlaceEmbeddingText(body)
 
       try {
         embedding = await openaiEmbed(text)
@@ -230,6 +272,10 @@ Price: ${body.price ? body.price + ' Baht' : 'Free'}
       image_url: body.image_url || null,
       is_published: body.is_published ?? false,
       embedding: embedding ?? null,
+      phone: body.phone || null,
+      website: body.website || null,
+      suggested_duration_min: body.suggested_duration_min ?? null,
+      best_for: body.best_for || [],
     }
 
     const { data, error } = await supabase
@@ -239,6 +285,7 @@ Price: ${body.price ? body.price + ' Baht' : 'Free'}
       .single()
 
     if (error) throw error
+    if (body.opening_hours) await saveOpeningHours(data.id, body.opening_hours)
     
     const responseBody: any = { success: true, data }
     if (embeddingError) responseBody.warning = embeddingError
@@ -291,27 +338,17 @@ admin.put('/places/:id', zValidator('json', updatePlaceSchema), async (c) => {
     if (body.address !== undefined) updatePayload.address = body.address
     if (body.price !== undefined) updatePayload.price = body.price
     if (body.image_url !== undefined) updatePayload.image_url = body.image_url
+    if (body.is_published !== undefined) updatePayload.is_published = body.is_published
+    if (body.phone !== undefined) updatePayload.phone = body.phone || null
+    if (body.website !== undefined) updatePayload.website = body.website || null
+    if (body.suggested_duration_min !== undefined) updatePayload.suggested_duration_min = body.suggested_duration_min
+    if (body.best_for !== undefined) updatePayload.best_for = body.best_for
 
     // Handle embedding
     let embedding = body.embedding
     let embeddingError = null
     if ((!embedding || embedding.length === 0) && body.compute_embedding) {
-      // Use existing values if not provided in update
-      const name = body.name || existingPlace.name
-      const area = body.area !== undefined ? body.area : (existingPlace.area || 'Unknown')
-      const description = body.description !== undefined ? body.description : (existingPlace.description || '')
-      const tags = body.tags !== undefined ? body.tags : (existingPlace.tags || [])
-      const address = body.address !== undefined ? body.address : (existingPlace.address || '')
-      const price = body.price !== undefined ? body.price : existingPlace.price
-
-      const text = `
-Name: ${name}
-Area: ${area}
-Description: ${description}
-Tags: ${Array.isArray(tags) ? tags.join(', ') : ''}
-Address: ${address}
-Price: ${price ? price + ' Baht' : 'Free'}
-      `.trim()
+      const text = buildPlaceEmbeddingText({ ...existingPlace, ...body, name: body.name || existingPlace.name })
 
       try {
         embedding = await openaiEmbed(text)
@@ -333,6 +370,7 @@ Price: ${price ? price + ' Baht' : 'Free'}
       .single()
 
     if (error) throw error
+    if (body.opening_hours) await saveOpeningHours(id, body.opening_hours)
     
     const responseBody: any = { success: true, data }
     if (embeddingError) responseBody.warning = embeddingError

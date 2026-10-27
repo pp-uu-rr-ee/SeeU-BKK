@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/auth-context'
-import { Clock3, ListChecks, Edit, Trash2, Plus, Search, ArrowRight, MapPinned, CalendarDays } from 'lucide-react'
+import { Clock3, ListChecks, Edit, Trash2, Plus, Search, ArrowRight, MapPinned, CalendarDays, Heart, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { NewTripDialog } from '@/components/trips/new-trip-dialog'
 import { EditTripDialog } from '@/components/trips/edit-trip-dialog'
@@ -20,6 +20,17 @@ type Stop = {
   place: { id: string; name: string; lat?: number; lng?: number; tags?: string[] }
 }
 
+type FavoritePlace = {
+  id: string
+  name: string
+  name_th?: string | null
+  slug: string
+  image_url: string
+  tags: string[]
+  avg_rating: number | null
+  review_count: number
+}
+
 type Trip = {
   id: string
   title: string
@@ -30,7 +41,7 @@ type Trip = {
 }
 
 export default function SavedTripsPage() {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const { session, loading } = useAuth()
   const router = useRouter()
   const [trips, setTrips] = useState<Trip[]>([])
@@ -42,6 +53,7 @@ export default function SavedTripsPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'recent' | 'short' | 'long'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTripId, setActiveTripId] = useState<string | null>(null)
+  const [favorites, setFavorites] = useState<FavoritePlace[]>([])
 
   const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
   const isAuthed = !!session?.access_token
@@ -67,8 +79,41 @@ export default function SavedTripsPage() {
     }
   }
 
+  const fetchFavorites = async () => {
+    if (!session?.access_token) return
+    try {
+      const res = await fetch(`${serverUrl}/api/favorites`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const j = await res.json()
+      if (res.ok && j.success) setFavorites(j.data || [])
+    } catch (e) {
+      console.error('Failed to load favorites:', e)
+    }
+  }
+
+  const handleRemoveFavorite = async (placeId: string) => {
+    if (!session?.access_token) return
+    const previous = favorites
+    setFavorites((prev) => prev.filter((p) => p.id !== placeId))
+    try {
+      const res = await fetch(`${serverUrl}/api/favorites/${placeId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      toast.success(t("placeDetail.removedFavorite"))
+    } catch (e) {
+      setFavorites(previous)
+      toast.error(t("placeDetail.favoriteFailed"))
+    }
+  }
+
   useEffect(() => {
-    if (isAuthed) fetchTrips()
+    if (isAuthed) {
+      fetchTrips()
+      fetchFavorites()
+    }
   }, [isAuthed])
 
   useEffect(() => {
@@ -396,6 +441,58 @@ export default function SavedTripsPage() {
           </aside>
         )}
       </main>
+
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Heart className="h-5 w-5 text-red-500" />
+          <h2 className="text-xl font-medium tracking-tight">{t("savedTrips.favoritesTitle")}</h2>
+          <span className="text-sm text-slate-500">({favorites.length})</span>
+        </div>
+        {favorites.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
+            {t("savedTrips.favoritesEmpty")}{' '}
+            <Link href="/places" className="font-medium text-blue-600 hover:underline">{t("savedTrips.browsePlaces")}</Link>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {favorites.map((place) => (
+              <div key={place.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-md">
+                <Link href={`/places/${place.slug}`} className="block">
+                  <div className="h-32 bg-gradient-to-br from-blue-100 to-purple-100">
+                    {place.image_url && (
+                      <img src={place.image_url} alt={place.name} loading="lazy" className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="p-4 pb-2">
+                    <p className="line-clamp-1 font-medium text-slate-900 group-hover:text-blue-600">
+                      {(locale === 'th' && place.name_th) || place.name}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                      {place.avg_rating !== null ? (
+                        <>
+                          <Star className="h-3.5 w-3.5 fill-current text-yellow-400" />
+                          {place.avg_rating.toFixed(1)} ({place.review_count})
+                        </>
+                      ) : (
+                        t("placeDetail.noReviews")
+                      )}
+                    </p>
+                  </div>
+                </Link>
+                <div className="px-4 pb-4">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFavorite(place.id)}
+                    className="text-xs font-medium text-red-600 hover:underline"
+                  >
+                    {t("savedTrips.removeFavorite")}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <EditTripDialog
         isOpen={editingTrip !== null}

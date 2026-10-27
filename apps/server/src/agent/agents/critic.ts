@@ -51,6 +51,7 @@ Remember: Your goal is to ensure users get high-quality, feasible trip plans. Be
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createCriticAgent(model?: ChatOpenAI): any {
 	const llm = model || new ChatOpenAI({
+		maxRetries: 2,
 		modelName: "gpt-5-nano",
 		temperature: 0,
 	});

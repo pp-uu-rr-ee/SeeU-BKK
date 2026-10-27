@@ -144,4 +144,6 @@ export interface ChatPanelProps {
 	onSessionCreated?: (id: string | null) => void;
 	sessionMessages?: Array<{ role: string; content: string }> | null;
 	contextPlaces?: Array<{ id: string; name: string; slug?: string; tags?: string[] }>;
+	/** Text to prefill in the input (e.g. arriving from a place page); not sent automatically */
+	initialPrompt?: string;
 }

@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import Supercluster from 'supercluster';
 import { MapControls } from './map-controls';
 import { PlacePopupContent } from './place-popup-content';
+import { useAuth } from '@/contexts/auth-context';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { motion, AnimatePresence } from 'motion/react';
@@ -200,6 +201,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
   tripRoute = [],
   onRouteInfo,
 }) => {
+  // Popups render in a separate React root, so pass the token down explicitly
+  const { session } = useAuth();
+  const authToken = session?.access_token;
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
@@ -865,6 +869,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
             onPlaceDeselect();
           }}
           userLocation={userLocation}
+          authToken={authToken}
         />
       );
 
@@ -891,7 +896,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
         onPlaceDeselectRef.current();
       });
     },
-    [closePopup, onPlaceDeselect, userLocation]
+    [closePopup, onPlaceDeselect, userLocation, authToken]
   );
 
   // Get marker color based on tags

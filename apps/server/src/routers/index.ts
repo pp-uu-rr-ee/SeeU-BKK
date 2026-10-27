@@ -6,6 +6,7 @@ import admin from './admin'
 import itineraries from './itineraries'
 import agentV2 from './agent-v2'
 import sessions from './sessions'
+import favorites from './favorites'
 
 const appRouter = new Hono()
 
@@ -16,6 +17,7 @@ appRouter.route('/tools', tools)
 appRouter.route('/admin', admin)
 appRouter.route('/itineraries', itineraries)
 appRouter.route('/sessions', sessions)
+appRouter.route('/favorites', favorites)
 
 // Health check
 appRouter.get('/', (c) => {

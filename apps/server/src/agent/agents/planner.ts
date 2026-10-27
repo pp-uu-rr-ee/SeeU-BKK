@@ -87,6 +87,7 @@ Remember: You are creating practical, enjoyable trip plans. Balance efficiency w
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createPlannerAgent(model?: ChatOpenAI): any {
 	const llm = model || new ChatOpenAI({
+		maxRetries: 2,
 		modelName: "gpt-5-nano",
 		temperature: 0,
 	});

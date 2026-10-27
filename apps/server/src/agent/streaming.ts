@@ -245,6 +245,10 @@ export async function* streamAgentExecution(
 					}
 					break;
 
+				case "error":
+					// Surface graph failures (e.g. OpenAI quota/auth errors) instead of ending with an empty "ok"
+					throw event.data instanceof Error ? event.data : new Error(String(event.data ?? "Agent processing failed"));
+
 				case "done":
 					await persistConversationResult({
 						memory,

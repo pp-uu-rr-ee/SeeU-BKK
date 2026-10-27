@@ -589,7 +589,7 @@ export function createTripPlannerSupervisor() {
 		prompt: SUPERVISOR_PROMPT,
 		async invoke(input: { messages: Array<{ role: string; content: string }> }) {
 			const policy = deriveSupervisorRoutingPolicy({ messages: input.messages, currentTripDraft: parseLatestTripDraft(input.messages) });
-			const state = await supervisorGraph.invoke({ messages: input.messages, policy, llm: new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 }) });
+			const state = await supervisorGraph.invoke({ messages: input.messages, policy, llm: new ChatOpenAI({ maxRetries: 2, modelName: "gpt-4o-mini", temperature: 0 }) });
 			return { messages: state.messages };
 		},
 	};
@@ -614,7 +614,7 @@ export async function invokeSupervisor(
 		userId: options.userId,
 		userPreferences: options.userPreferences,
 		policy,
-		llm: new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 })
+		llm: new ChatOpenAI({ maxRetries: 2, modelName: "gpt-4o-mini", temperature: 0 })
 	});
 	return normalizeSupervisorInvocationResult({ messages: state.messages });
 }
@@ -646,7 +646,7 @@ export async function* streamSupervisor(
 		userId: options.userId,
 		userPreferences: options.userPreferences,
 		policy,
-		llm: new ChatOpenAI({ modelName: "gpt-4o-mini", temperature: 0 }),
+		llm: new ChatOpenAI({ maxRetries: 2, modelName: "gpt-4o-mini", temperature: 0 }),
 		collector: {
 			onAgent: async (agent: string) => pushEvent({ type: "agent", data: { agent } }),
 			onTool: async (tool: string, args: any) => pushEvent({ type: "tool", data: { tool, args } }),

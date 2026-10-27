@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +27,10 @@ interface PlacePopupContentProps {
   onGetDirections: () => void;
   onClose: () => void;
   userLocation?: [number, number] | null;
+  authToken?: string;
 }
+
+const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
 
 export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
   place,
@@ -34,6 +38,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
   onGetDirections,
   onClose,
   userLocation,
+  authToken,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -60,9 +65,39 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
     }
   };
 
-  const handleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // TODO: Integrate with backend to save favorite
+  // Load whether this place is already a favorite
+  useEffect(() => {
+    if (!authToken) return;
+    let cancelled = false;
+    fetch(`${serverUrl}/api/favorites`, { headers: { Authorization: `Bearer ${authToken}` } })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((result) => {
+        if (!cancelled && result?.success) setIsFavorite((result.placeIds || []).includes(place.id));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authToken, place.id]);
+
+  const handleFavorite = async () => {
+    if (!authToken) {
+      window.location.href = '/auth/login';
+      return;
+    }
+    const next = !isFavorite;
+    setIsFavorite(next);
+    try {
+      const res = await fetch(`${serverUrl}/api/favorites/${place.id}`, {
+        method: next ? 'PUT' : 'DELETE',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+      setIsFavorite(!next);
+      toast.error('Could not update favorites');
+    }
   };
 
   // Calculate distance if user location is available

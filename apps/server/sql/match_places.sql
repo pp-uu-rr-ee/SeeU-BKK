@@ -21,6 +21,7 @@ returns table (
 )
 language sql
 stable
+set search_path = public
 as $$
   select
     id,
@@ -35,11 +36,14 @@ as $$
     1 - (embedding <=> query_embedding) as similarity
   from public.bangkok_unseen
   where embedding is not null
+    and coalesce(is_published, true)
     and (1 - (embedding <=> query_embedding)) >= similarity_threshold
     and (
       search is null
       or name ilike '%'||search||'%'
       or description ilike '%'||search||'%'
+      or name_th ilike '%'||search||'%'
+      or description_th ilike '%'||search||'%'
     )
   order by embedding <=> query_embedding
   limit greatest(match_count, 1);

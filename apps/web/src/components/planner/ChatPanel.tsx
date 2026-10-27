@@ -27,6 +27,7 @@ export function ChatPanel({
 	onSessionCreated,
 	sessionMessages,
 	contextPlaces,
+	initialPrompt,
 }: ChatPanelProps) {
 	const [isOpen, setIsOpen] = useState(defaultOpen);
 	const [isMinimized, setIsMinimized] = useState(false);
@@ -95,6 +96,12 @@ export function ChatPanel({
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [turns, pendingTurn]);
+
+	// Prefill the input when arriving with a prompt (e.g. "Ask Trip Assistant" on a place page)
+	useEffect(() => {
+		if (initialPrompt) setInput(initialPrompt);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [initialPrompt]);
 
 	if (!isOpen) {
 		return (

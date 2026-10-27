@@ -8,6 +8,12 @@ import { Label } from '@/components/ui/label'
 import { AdminMapPicker } from '@/components/map/admin-map-picker'
 import { MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import {
+  PlaceDetailsFields,
+  emptyPlaceDetails,
+  placeDetailsToPayload,
+  type PlaceDetailsValue,
+} from '@/components/admin/place-details-fields'
 
 type PlacePayload = {
   name: string
@@ -25,7 +31,7 @@ type PlacePayload = {
   is_published?: boolean
   embedding?: number[]
   compute_embedding?: boolean
-}
+} & Partial<ReturnType<typeof placeDetailsToPayload>>
 
 function slugify(s: string) {
   return s
@@ -46,6 +52,7 @@ export default function AdminNewPlacePage() {
   const [error, setError] = useState<string | null>(null)
   const [slugTouched, setSlugTouched] = useState(false)
   const [showMap, setShowMap] = useState(false)
+  const [details, setDetails] = useState<PlaceDetailsValue>(emptyPlaceDetails())
 
   const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 
@@ -95,11 +102,11 @@ export default function AdminNewPlacePage() {
           .filter(Boolean),
         lat: Number(latNum),
         lng: Number(lngNum),
-        address: 'Bangkok, Thailand',
+        address: (form.address || '').trim() || 'Bangkok, Thailand',
         price: priceNum === null ? null : Number(priceNum),
         image_url: (form.image_url || undefined)?.trim() || undefined,
-        is_published: form.is_published ?? false,
         compute_embedding: true,
+        ...placeDetailsToPayload(details),
       }
 
       const res = await fetch(`${serverUrl}/api/admin/places`, {
@@ -124,6 +131,7 @@ export default function AdminNewPlacePage() {
       setForm({ name: '', is_published: true })
       setTagsText('')
       setSlugTouched(false)
+      setDetails(emptyPlaceDetails())
     } catch (e: any) {
       setError(e?.message || 'Insert error')
     } finally {
@@ -318,6 +326,12 @@ export default function AdminNewPlacePage() {
           />
         </div>
         
+        {/* Visit details & opening hours */}
+        <div className="pt-4 border-t border-gray-300">
+          <h2 className="text-lg font-semibold mb-3">Visit details</h2>
+          <PlaceDetailsFields value={details} onChange={setDetails} />
+        </div>
+
         {/* Actions */}
         <div className="flex gap-3 items-center">
           <Button onClick={handleSubmit} disabled={!canSubmit} className='bg-blue-600 hover:bg-blue-700 text-white'>
