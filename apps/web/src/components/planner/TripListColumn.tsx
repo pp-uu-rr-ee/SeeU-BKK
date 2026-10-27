@@ -98,11 +98,11 @@ export function TripListColumn({
         aria-label="Trip list"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-800">My Trips</h2>
+          <h2 className="font-display text-xl font-semibold text-foreground">My Trips</h2>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center py-12 px-4">
-            <p className="text-slate-500 mb-4">No trips yet</p>
+            <p className="text-muted-foreground mb-4">No trips yet</p>
             <Button onClick={onNewTripClick}>Create Your First Trip</Button>
           </div>
         </div>
@@ -117,7 +117,7 @@ export function TripListColumn({
       aria-label="Trip list"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800">My Trips</h2>
+        <h2 className="font-display text-xl font-semibold text-foreground">My Trips</h2>
         <Button size="sm" onClick={onNewTripClick} aria-label="Create new trip">
           + New Trip
         </Button>
@@ -125,7 +125,7 @@ export function TripListColumn({
 
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
           aria-hidden="true"
         />
         <Input
@@ -140,7 +140,7 @@ export function TripListColumn({
       {/* No results state */}
       {filteredTrips.length === 0 && searchQuery && (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-slate-500 text-sm">
+          <p className="text-muted-foreground text-sm">
             No trips found matching "{searchQuery}"
           </p>
         </div>
@@ -165,8 +165,8 @@ export function TripListColumn({
                     <SortableTripCard key={trip.id} id={trip.id}>
                       <Card
                         className={cn(
-                          "cursor-pointer transition-all bg-white border border-slate-200 shadow-sm hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2",
-                          isSelected && "bg-blue-50 border-blue-400"
+                          "cursor-pointer transition-all bg-card border border-border shadow-sm hover:shadow-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+                          isSelected && "bg-teal-soft border-primary/30"
                         )}
                         role="listitem"
                       >
@@ -185,16 +185,16 @@ export function TripListColumn({
                           >
                             <h3
                               className={cn(
-                                "font-semibold text-slate-800",
-                                isSelected && "text-blue-900"
+                                "font-semibold text-foreground",
+                                isSelected && "text-primary"
                               )}
                             >
                               {trip.name}
                             </h3>
                             <p
                               className={cn(
-                                "text-sm text-slate-500",
-                                isSelected && "text-blue-700"
+                                "text-sm text-muted-foreground",
+                                isSelected && "text-primary"
                               )}
                             >
                               {trip.date}
@@ -226,7 +226,7 @@ export function TripListColumn({
                                 {onDeleteTrip && (
                                   <DropdownMenuItem
                                     onClick={() => onDeleteTrip(trip.id)}
-                                    className="text-red-600 focus:text-red-600"
+                                    className="text-destructive focus:text-destructive"
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete Trip

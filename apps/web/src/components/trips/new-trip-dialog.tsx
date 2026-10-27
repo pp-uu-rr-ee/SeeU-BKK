@@ -172,21 +172,24 @@ export function NewTripDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-foreground/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Create New Trip"
+        className="bg-card rounded-2xl shadow-card-hover max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b p-6">
-          <h2 className="text-2xl font-semibold text-gray-900">Create New Trip</h2>
+          <h2 className="font-display text-2xl font-semibold text-foreground">Create New Trip</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-secondary rounded-lg transition"
           >
-            <X className="w-6 h-6 text-gray-600" />
+            <X className="w-6 h-6 text-muted-foreground" />
           </button>
         </div>
 
@@ -195,7 +198,7 @@ export function NewTripDialog({
           <div className="p-6 space-y-6">
             {/* Trip Title Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground/80 mb-2">
                 Trip Title
               </label>
               <Input
@@ -209,11 +212,11 @@ export function NewTripDialog({
 
             {/* Search Bar */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground/80 mb-2">
                 Search Places
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="search"
                   value={searchQuery}
@@ -228,7 +231,7 @@ export function NewTripDialog({
             {/* Selected Places Display */}
             {selectedPlaces.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground/80 mb-2">
                   Selected Places ({selectedPlaces.length})
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -242,12 +245,12 @@ export function NewTripDialog({
                       >
                         <Badge
                           variant="default"
-                          className="bg-blue-500 hover:bg-blue-600 pr-1 flex items-center gap-1"
+                          className="bg-primary hover:bg-primary/90 pr-1 flex items-center gap-1"
                         >
                           {place.name}
                           <button
                             onClick={() => togglePlaceSelection(place)}
-                            className="ml-1 p-0 hover:bg-blue-700 rounded"
+                            className="ml-1 p-0 hover:bg-primary/90 rounded"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -261,19 +264,19 @@ export function NewTripDialog({
 
             {/* Places List */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground/80 mb-2">
                 Available Places
               </label>
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-2" />
-                    <p className="text-gray-600">Loading places...</p>
+                    <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-2" />
+                    <p className="text-muted-foreground">Loading places...</p>
                   </div>
                 </div>
               ) : filteredPlaces.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {allPlaces.length === 0
                       ? "No places available"
                       : "No places match your search"}
@@ -295,17 +298,17 @@ export function NewTripDialog({
                           onClick={() => togglePlaceSelection(place)}
                           className={`p-3 rounded-lg border-2 text-left transition ${
                             isSelected
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-gray-200 bg-white hover:border-gray-300"
+                              ? "border-primary bg-teal-soft"
+                              : "border-border bg-card hover:border-primary/40"
                           }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="font-medium text-gray-900">
+                              <h3 className="font-medium text-foreground">
                                 {place.name}
                               </h3>
                               {place.description && (
-                                <p className="text-xs text-gray-500 line-clamp-1 mt-1">
+                                <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
                                   {place.description}
                                 </p>
                               )}
@@ -314,7 +317,7 @@ export function NewTripDialog({
                                   {place.tags.slice(0, 2).map((tag, idx) => (
                                     <span
                                       key={idx}
-                                      className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded"
+                                      className="text-xs bg-secondary text-foreground/80 px-2 py-0.5 rounded"
                                     >
                                       {tag}
                                     </span>
@@ -326,8 +329,8 @@ export function NewTripDialog({
                               <div
                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                                   isSelected
-                                    ? "bg-blue-500 border-blue-500"
-                                    : "border-gray-300"
+                                    ? "bg-primary border-primary"
+                                    : "border-border"
                                 }`}
                               >
                                 {isSelected && (
@@ -373,7 +376,7 @@ export function NewTripDialog({
               !tripTitle.trim() ||
               selectedPlaces.length === 0
             }
-            className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-6 bg-primary hover:bg-primary/90 text-white"
           >
             {isSubmitting ? (
               <>

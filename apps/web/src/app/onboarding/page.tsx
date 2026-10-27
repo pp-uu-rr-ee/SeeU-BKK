@@ -1,28 +1,25 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Check, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth, type OnboardingPreferences } from '@/contexts/auth-context'
+import { useTranslation } from '@/contexts/language-context'
+import { cn } from '@/lib/utils'
 
+// Stored ids/values stay stable; labels come from locales (onboarding.*)
 const vibeCards = [
-  { id: 'v1', label: 'Concrete & Chrome', category: 'Urban Brutalism', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800&auto=format&fit=crop', color: 'bg-slate-800' },
-  { id: 'v2', label: 'Neon Rain', category: 'Nightlife Cyber', img: 'https://images.unsplash.com/photo-1555899434-94d1368aa7af?q=80&w=800&auto=format&fit=crop', color: 'bg-indigo-900' },
-  { id: 'v3', label: 'Woven Heritage', category: 'Local Crafts', img: 'https://images.unsplash.com/photo-1528181304800-259b08848526?q=80&w=800&auto=format&fit=crop', color: 'bg-orange-900' },
-  { id: 'v4', label: 'Canopy Filter', category: 'Hidden Nature', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop', color: 'bg-emerald-900' },
-  { id: 'v5', label: 'Minimalist Brew', category: 'Specialty Coffee', img: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=800&auto=format&fit=crop', color: 'bg-stone-800' },
-  { id: 'v6', label: 'Midnight Smoke', category: 'Street Food', img: 'https://images.unsplash.com/photo-1582293041079-7814c2f12063?q=80&w=800&auto=format&fit=crop', color: 'bg-red-900' },
+  { id: 'v1', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800&auto=format&fit=crop' },
+  { id: 'v2', img: 'https://images.unsplash.com/photo-1555899434-94d1368aa7af?q=80&w=800&auto=format&fit=crop' },
+  { id: 'v3', img: 'https://images.unsplash.com/photo-1528181304800-259b08848526?q=80&w=800&auto=format&fit=crop' },
+  { id: 'v4', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=800&auto=format&fit=crop' },
+  { id: 'v5', img: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=800&auto=format&fit=crop' },
+  { id: 'v6', img: 'https://images.unsplash.com/photo-1582293041079-7814c2f12063?q=80&w=800&auto=format&fit=crop' },
 ]
 
-const travelStyles = [
-  { id: 'flaneur', title: 'The Flâneur', desc: 'Unstructured urban wandering and low schedule adherence.' },
-  { id: 'archivist', title: 'The Archivist', desc: 'Context-first exploration of history and culture.' },
-  { id: 'epicurean', title: 'The Epicurean', desc: 'Itinerary driven by food targets and local flavor.' },
-  { id: 'synthesizer', title: 'The Synthesizer', desc: 'Modern art, coffee, and design against tradition.' },
-]
+const travelStyles = ['flaneur', 'archivist', 'epicurean', 'synthesizer']
 
 const preferences = {
   transit: ['Public Rail / BTS', 'Pedestrian Routes', 'Private Rides (Grab)', 'River Ferries', 'Motorcycle Taxis'],
@@ -30,11 +27,42 @@ const preferences = {
   boundaries: ['Tourist Traps', 'High-Density Crowds', 'Chain Establishments', 'Intense Humidity Walks', 'Loud Nightclubs', 'Early Morning Starts'],
 }
 
-
 const totalSteps = 4
+
+function Chip({
+  active,
+  tone = 'primary',
+  onClick,
+  children,
+}: {
+  active: boolean
+  tone?: 'primary' | 'avoid'
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        'inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors',
+        active
+          ? tone === 'avoid'
+            ? 'border-destructive/40 bg-destructive/10 text-destructive'
+            : 'border-primary bg-teal-soft text-primary'
+          : 'border-border bg-card text-foreground hover:border-primary/40'
+      )}
+    >
+      {active && <Check className="h-4 w-4" aria-hidden />}
+      {children}
+    </button>
+  )
+}
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const { user, loading: authLoading, saveOnboarding } = useAuth()
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -60,10 +88,6 @@ export default function OnboardingPage() {
     }))
   }
 
-  const stepLabel = useMemo(() => {
-    return ['Visual Telemetry', 'Operational Style', 'Rhythm Calibration', 'Parameters & Limits'][step - 1]
-  }, [step])
-
   const submit = async (skipped: boolean) => {
     setSubmitting(true)
     const { error } = await saveOnboarding(selections, { skipped })
@@ -74,207 +98,202 @@ export default function OnboardingPage() {
       return
     }
 
-    toast.success(skipped ? 'Skipped for now. You can edit later in Profile.' : 'Preferences saved successfully!')
+    toast.success(skipped ? t('onboarding.skipped') : t('onboarding.saved'))
     router.push('/')
   }
 
   if (authLoading || !user) {
-    return <div className="flex min-h-[70vh] items-center justify-center text-slate-500">Loading...</div>
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground" role="status">
+        <Loader2 className="mr-3 h-5 w-5 animate-spin text-primary" aria-hidden />
+        {t('onboarding.loading')}
+      </div>
+    )
   }
 
-  return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span>Personalize your first Bangkok itinerary</span>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold">Travel Preference Survey</h1>
-              <p className="text-slate-500">Step {step} of {totalSteps} · {stepLabel}</p>
-            </div>
-            <Button variant="ghost" className="text-slate-700" onClick={() => submit(true)} disabled={submitting}>
-              Skip for now
-            </Button>
-          </div>
-          <div className="h-2 w-full rounded-full bg-slate-200">
-            <div className="h-2 rounded-full bg-gradient-to-r from-amber-400 to-purple-500" style={{ width: `${(step / totalSteps) * 100}%` }} />
-          </div>
-        </div>
+  const stepTitle = t(`onboarding.s${step}Title`)
+  const stepDesc = t(`onboarding.s${step}Desc`)
 
-        <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-8 shadow-xl">
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 md:py-14">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="mb-3 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-saffron" />
+            {t('onboarding.eyebrow')}
+          </p>
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{t('onboarding.title')}</h1>
+        </div>
+        <Button variant="ghost" className="h-11 rounded-full text-muted-foreground" onClick={() => submit(true)} disabled={submitting}>
+          {t('onboarding.skip')}
+        </Button>
+      </header>
+
+      {/* Stepper */}
+      <ol className="mt-8 grid grid-cols-4 gap-2" aria-label={t('onboarding.stepOf', { step: String(step), total: String(totalSteps) })}>
+        {[1, 2, 3, 4].map((n) => (
+          <li key={n} aria-current={n === step ? 'step' : undefined}>
+            <div className={cn('h-1.5 rounded-full', n <= step ? 'bg-primary' : 'bg-secondary')} />
+            <p className={cn('mt-2 hidden text-xs sm:block', n === step ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+              {n}. {t(`onboarding.steps.${n - 1}`)}
+            </p>
+          </li>
+        ))}
+      </ol>
+
+      <section className="mt-10" aria-labelledby="step-title">
+        <p className="text-sm text-muted-foreground">{t('onboarding.stepOf', { step: String(step), total: String(totalSteps) })}</p>
+        <h2 id="step-title" className="mt-1 font-display text-2xl font-semibold text-foreground md:text-3xl">{stepTitle}</h2>
+        <p className="mt-2 text-muted-foreground">{stepDesc}</p>
+
+        <div className="mt-8">
           {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold">Choose visual vibes you want to experience</h2>
-                <p className="text-slate-500">Pick 2-4 styles to guide mood, color, and neighborhoods.</p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                {vibeCards.map((card) => {
-                  const selected = selections.vibes.includes(card.id)
-                  return (
-                    <button
-                      key={card.id}
-                      onClick={() => toggleArrayItem('vibes', card.id)}
-                      className={`group relative overflow-hidden rounded-2xl border ${selected ? 'border-amber-400' : 'border-slate-300'} bg-white text-left transition hover:-translate-y-1`}
-                      type="button"
-                    >
-                      <Image src={card.img} alt={card.label} width={600} height={420} className="h-40 w-full object-cover opacity-80 transition group-hover:opacity-100" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent" />
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm uppercase tracking-wider text-amber-100">{card.category}</p>
-                            <h3 className="text-lg font-semibold text-white">{card.label}</h3>
-                          </div>
-                          {selected && <Check className="h-5 w-5 text-amber-300" />}
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              {vibeCards.map((card) => {
+                const selected = selections.vibes.includes(card.id)
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleArrayItem('vibes', card.id)}
+                    className={cn(
+                      'group relative aspect-[4/3] overflow-hidden rounded-2xl bg-teal-soft text-left ring-offset-2 ring-offset-background transition',
+                      selected ? 'ring-[3px] ring-primary' : 'hover:ring-2 hover:ring-primary/30'
+                    )}
+                  >
+                    <img src={card.img} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                    {selected && (
+                      <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-4 w-4" aria-hidden />
+                      </span>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/80">{t(`onboarding.vibes.${card.id}.1`)}</p>
+                      <p className="font-display text-lg font-semibold leading-snug text-white">{t(`onboarding.vibes.${card.id}.0`)}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold">Select your travel archetype</h2>
-                <p className="text-slate-500">We will tune recommendations to your decision style.</p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {travelStyles.map((style) => {
-                  const active = selections.travelStyle === style.id
-                  return (
-                    <button
-                      key={style.id}
-                      onClick={() => setSelections((prev) => ({ ...prev, travelStyle: style.id }))}
-                      className={`rounded-2xl border p-5 text-left transition ${active ? 'border-amber-400 bg-amber-50' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
-                      type="button"
+            <div className="grid gap-4 md:grid-cols-2" role="radiogroup" aria-labelledby="step-title">
+              {travelStyles.map((id) => {
+                const active = selections.travelStyle === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setSelections((prev) => ({ ...prev, travelStyle: id }))}
+                    className={cn(
+                      'flex items-start gap-4 rounded-2xl border p-5 text-left transition-colors',
+                      active ? 'border-primary bg-teal-soft' : 'border-border bg-card hover:border-primary/40'
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
+                        active ? 'border-primary' : 'border-input'
+                      )}
                     >
-                      <h3 className="text-lg font-semibold">{style.title}</h3>
-                      <p className="text-sm text-slate-600">{style.desc}</p>
-                    </button>
-                  )
-                })}
-              </div>
+                      {active && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                    </span>
+                    <span>
+                      <span className="block font-display text-xl font-semibold text-foreground">{t(`onboarding.styles.${id}.0`)}</span>
+                      <span className="mt-1 block text-muted-foreground">{t(`onboarding.styles.${id}.1`)}</span>
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold">Set your pace</h2>
-                <p className="text-slate-500">Slow travel or packed itinerary? Drag the dial.</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                <div className="flex items-center justify-between text-sm text-slate-600">
-                  <span>Slow & flexible</span>
-                  <span>Fast & packed</span>
-                </div>
+            <div className="space-y-10">
+              <div className="rounded-2xl border border-border bg-card p-6">
+                <label htmlFor="pace" className="text-sm font-medium text-foreground">{t('onboarding.paceLabel')}</label>
                 <input
+                  id="pace"
                   type="range"
                   min={0}
                   max={100}
+                  step={10}
                   value={selections.pace}
                   onChange={(e) => setSelections((prev) => ({ ...prev, pace: Number(e.target.value) }))}
-                  className="mt-4 w-full"
+                  className="mt-5 h-2 w-full cursor-pointer accent-[var(--primary)]"
+                  aria-valuetext={`${selections.pace}%`}
                 />
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Current</span>
-                  <span className="font-semibold text-amber-600">{selections.pace}%</span>
+                <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{t('onboarding.paceSlow')}</span>
+                  <span className="font-display text-xl font-semibold text-primary">{selections.pace}%</span>
+                  <span>{t('onboarding.paceFast')}</span>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                {preferences.transit.map((item) => {
-                  const active = selections.transit.includes(item)
-                  return (
-                    <button
-                      key={item}
-                      onClick={() => toggleArrayItem('transit', item)}
-                      className={`rounded-xl border px-4 py-3 text-sm transition ${active ? 'border-amber-400 bg-amber-100' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
-                      type="button"
-                    >
-                      {item}
-                    </button>
-                  )
-                })}
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-foreground">{t('onboarding.transitTitle')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {preferences.transit.map((item) => (
+                    <Chip key={item} active={selections.transit.includes(item)} onClick={() => toggleArrayItem('transit', item)}>
+                      {t(`onboarding.transit.${item}`)}
+                    </Chip>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="space-y-6">
+            <div className="grid gap-10 md:grid-cols-2">
               <div>
-                <h2 className="text-xl font-semibold">Set boundaries & food priorities</h2>
-                <p className="text-slate-500">Tell us what to avoid and what you crave.</p>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-600">Culinary targets</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {preferences.culinary.map((item) => {
-                      const active = selections.culinary.includes(item)
-                      return (
-                        <button
-                          key={item}
-                          onClick={() => toggleArrayItem('culinary', item)}
-                          className={`rounded-full border px-4 py-2 text-sm transition ${active ? 'border-amber-400 bg-amber-100' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
-                          type="button"
-                        >
-                          {item}
-                        </button>
-                      )
-                    })}
-                  </div>
+                <h3 className="mb-3 text-sm font-medium text-foreground">{t('onboarding.culinaryTitle')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {preferences.culinary.map((item) => (
+                    <Chip key={item} active={selections.culinary.includes(item)} onClick={() => toggleArrayItem('culinary', item)}>
+                      {t(`onboarding.culinary.${item}`)}
+                    </Chip>
+                  ))}
                 </div>
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-600">Avoid</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {preferences.boundaries.map((item) => {
-                      const active = selections.boundaries.includes(item)
-                      return (
-                        <button
-                          key={item}
-                          onClick={() => toggleArrayItem('boundaries', item)}
-                          className={`rounded-full border px-4 py-2 text-sm transition ${active ? 'border-rose-400 bg-rose-100' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
-                          type="button"
-                        >
-                          {item}
-                        </button>
-                      )
-                    })}
-                  </div>
+              </div>
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-foreground">{t('onboarding.avoidTitle')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {preferences.boundaries.map((item) => (
+                    <Chip key={item} tone="avoid" active={selections.boundaries.includes(item)} onClick={() => toggleArrayItem('boundaries', item)}>
+                      {t(`onboarding.boundaries.${item}`)}
+                    </Chip>
+                  ))}
                 </div>
               </div>
             </div>
           )}
         </div>
+      </section>
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <Button
-            variant="ghost"
-            className="text-slate-700"
-            disabled={step === 1}
-            onClick={() => setStep((prev) => Math.max(1, prev - 1))}
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back
+      <div className="mt-12 flex items-center justify-between gap-4 border-t border-border pt-6">
+        <Button
+          variant="ghost"
+          className="h-12 rounded-full px-5"
+          disabled={step === 1}
+          onClick={() => setStep((prev) => Math.max(1, prev - 1))}
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden /> {t('onboarding.back')}
+        </Button>
+        {step < totalSteps ? (
+          <Button className="h-12 rounded-full px-7 text-base" onClick={() => setStep((prev) => Math.min(totalSteps, prev + 1))} disabled={submitting}>
+            {t('onboarding.next')} <ChevronRight className="h-4 w-4" aria-hidden />
           </Button>
-          <div className="flex items-center gap-3">
-            {step < totalSteps ? (
-              <Button onClick={() => setStep((prev) => Math.min(totalSteps, prev + 1))} disabled={submitting}>
-                Next <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={() => submit(false)} disabled={submitting}>
-                Save & Continue
-              </Button>
-            )}
-          </div>
-        </div>
+        ) : (
+          <Button className="h-12 rounded-full px-7 text-base" onClick={() => submit(false)} disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+            {t('onboarding.finish')}
+          </Button>
+        )}
       </div>
     </div>
   )

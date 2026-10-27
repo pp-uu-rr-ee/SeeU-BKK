@@ -5,10 +5,9 @@ import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ImageUpload } from '@/components/ui/image-upload'
-import { Checkbox } from '@/components/ui/checkbox'
-import { User, Save, Loader2, Mail, Calendar, MapPin, DollarSign, Languages, Heart } from 'lucide-react'
+import { Save, Loader2, Footprints, Bike, Bus, Car, Check, X, Plus, ClipboardList } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/contexts/language-context'
@@ -60,7 +59,7 @@ export default function ProfilePage() {
         try {
           const { profile: profileData, error } = await getProfile()
           if (error) {
-            toast.error(`Failed to load profile: ${error}`)
+            toast.error(`${t('profile.loadFailed')} ${error}`)
           } else {
             setProfile(profileData)
             setFormData({
@@ -74,7 +73,7 @@ export default function ProfilePage() {
             })
           }
         } catch (error) {
-          toast.error('An error occurred while loading profile')
+          toast.error(t('profile.loadFailed'))
         } finally {
           setLoading(false)
         }
@@ -135,7 +134,7 @@ export default function ProfilePage() {
       const { profile: updatedProfile, error } = await updateProfile(updates)
       
       if (error) {
-        toast.error(`Failed to update profile: ${error}`)
+        toast.error(`${t('profile.saveFailed')} ${error}`)
       } else {
         setProfile(updatedProfile)
         if (updatedProfile) {
@@ -150,10 +149,10 @@ export default function ProfilePage() {
           })
         }
         await refreshProfile()
-        toast.success(t("profile.saveProfile") + " ✓")
+        toast.success(t('profile.saved'))
       }
     } catch (error) {
-      toast.error('An error occurred while updating profile')
+      toast.error(t('profile.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -162,11 +161,9 @@ export default function ProfilePage() {
   // Show loading state
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="text-lg">{t("profile.loading")}</span>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center" role="status">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+        <span className="ml-3 text-muted-foreground">{t("profile.loading")}</span>
       </div>
     )
   }
@@ -183,291 +180,254 @@ export default function ProfilePage() {
     { value: 'history', labelKey: 'profile.styleHistory', descKey: 'profile.styleHistoryDesc' },
   ]
 
+  const mobilityOptions = [
+    { value: 'walk' as const, labelKey: 'profile.mobilityWalk', icon: Footprints },
+    { value: 'bike' as const, labelKey: 'profile.mobilityBike', icon: Bike },
+    { value: 'public' as const, labelKey: 'profile.mobilityPublic', icon: Bus },
+    { value: 'grab' as const, labelKey: 'profile.mobilityGrab', icon: Car },
+  ]
+
+  const inputClass = 'h-12 rounded-xl bg-card px-4 text-base'
+  const sectionTitle = 'font-display text-2xl font-semibold text-foreground'
+  const displayName = formData.nick_name || user.email
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14">
+      <header className="mb-10">
+        <p className="mb-3 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-primary">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-saffron" />
+          {t("profile.eyebrow")}
+        </p>
+        <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{t("profile.pageTitle")}</h1>
+        <p className="mt-3 max-w-2xl text-muted-foreground">{t("profile.pageSubtitle")}</p>
+      </header>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Heart className="h-5 w-5 text-amber-500" />
-                <span>{t("profile.travelSurvey")}</span>
-              </CardTitle>
-              <CardDescription>
-                {t("profile.surveyDesc")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  {profile?.onboarding_completed
-                    ? t("profile.surveyCompleted")
-                    : t("profile.surveyPending")}
-                </p>
-              </div>
-              <Button type="button" onClick={() => router.push('/onboarding')}>
-                {profile?.onboarding_completed ? t("profile.editSurvey") : t("profile.completeSurvey")}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Profile Picture & Basic Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>{t("profile.profileInfo")}</span>
-              </CardTitle>
-              <CardDescription>
-                {t("profile.profileInfoDesc")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Profile Picture */}
-                <div className="flex justify-center lg:justify-start">
-                  <ImageUpload
-                    currentImageUrl={formData.avatar_url}
-                    onImageUpload={handleImageUpload}
-                    onImageRemove={handleImageRemove}
-                    disabled={saving}
-                    size="lg"
-                  />
-                </div>
-
-                {/* Basic Info */}
-                <div className="space-y-4">
-                  {/* Email (read-only) */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4" />
-                      <span>{t("profile.emailLabel")}</span>
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={user.email || ''}
-                      disabled
-                      className="bg-gray-100"
-                    />
-                    <p className="text-sm text-gray-600">
-                      {t("profile.emailReadOnly")}
-                    </p>
-                  </div>
-
-                  {/* Nickname */}
-                  <div className="space-y-2">
-                    <Label htmlFor="nick_name" className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
-                      <span>{t("profile.displayName")} *</span>
-                    </Label>
-                    <Input
-                      id="nick_name"
-                      name="nick_name"
-                      type="text"
-                      value={formData.nick_name}
-                      onChange={handleInputChange}
-                      placeholder={t("profile.displayNamePlaceholder")}
-                      required
-                    />
-                    <p className="text-sm text-gray-600">
-                      {t("profile.displayNameDesc")}
-                    </p>
-                  </div>
-
-                  {/* Birth Year */}
-                  <div className="space-y-2">
-                    <Label htmlFor="birth_year" className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>{t("profile.birthYear")}</span>
-                    </Label>
-                    <Input
-                      id="birth_year"
-                      name="birth_year"
-                      type="number"
-                      min="1900"
-                      max="2010"
-                      value={formData.birth_year || ''}
-                      onChange={handleInputChange}
-                      placeholder={t("profile.birthYearPlaceholder")}
-                    />
-                    <p className="text-sm text-gray-600">
-                      {t("profile.birthYearDesc")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Travel Preferences */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Travel Style */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  <span>{t("profile.travelStyle")}</span>
-                </CardTitle>
-                <CardDescription>
-                  {t("profile.travelStyleDesc")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {travelStyles.map((style) => (
-                    <div key={style.value} className="flex items-start space-x-3 p-2 rounded hover:bg-gray-50">
-                      <Checkbox
-                        id={style.value}
-                        checked={formData.travel_style.includes(style.value)}
-                        onCheckedChange={(checked) => handleCheckboxChange(style.value, checked as boolean)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <label htmlFor={style.value} className="text-sm font-medium cursor-pointer">
-                          {t(style.labelKey)}
-                        </label>
-                        <p className="text-xs text-gray-600">{t(style.descKey)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Transportation & Budget */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MapPin className="h-5 w-5 text-green-500" />
-                  <span>{t("profile.travelPrefs")}</span>
-                </CardTitle>
-                <CardDescription>
-                  {t("profile.travelPrefsDesc")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Mobility */}
-                <div className="space-y-2">
-                  <Label htmlFor="mobility" className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{t("profile.mobility")}</span>
-                  </Label>
-                  <select
-                    id="mobility"
-                    name="mobility"
-                    value={formData.mobility}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="walk">🚶 {t("profile.mobilityWalk")}</option>
-                    <option value="bike">🚴 {t("profile.mobilityBike")}</option>
-                    <option value="public">🚌 {t("profile.mobilityPublic")}</option>
-                    <option value="grab">🚗 {t("profile.mobilityGrab")}</option>
-                  </select>
-                </div>
-
-                {/* Budget */}
-                <div className="space-y-2">
-                  <Label htmlFor="budget_per_day" className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4" />
-                    <span>{t("profile.budget")}</span>
-                  </Label>
-                  <Input
-                    id="budget_per_day"
-                    name="budget_per_day"
-                    type="number"
-                    min="0"
-                    step="100"
-                    value={formData.budget_per_day || ''}
-                    onChange={handleInputChange}
-                    placeholder={t("profile.budgetPlaceholder")}
-                  />
-                  <p className="text-sm text-gray-600">
-                    {t("profile.budgetDesc")}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+      <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[300px_minmax(0,1fr)]">
+        {/* Identity column */}
+        <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+            <ImageUpload
+              currentImageUrl={formData.avatar_url}
+              onImageUpload={handleImageUpload}
+              onImageRemove={handleImageRemove}
+              disabled={saving}
+              size="lg"
+            />
+            <p className="mt-4 truncate font-display text-xl font-semibold text-foreground">{displayName}</p>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
           </div>
 
-          {/* Languages */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Languages className="h-5 w-5 text-purple-500" />
-                <span>{t("profile.languages")}</span>
-              </CardTitle>
-              <CardDescription>
-                {t("profile.languagesDesc")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {formData.languages.map((lang, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Input
-                      type="text"
-                      value={lang}
-                      onChange={(e) => handleLanguageChange(index, e.target.value)}
-                      placeholder={t("profile.languagePlaceholder")}
-                    />
-                    {formData.languages.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            languages: prev.languages.filter((_, i) => i !== index)
-                          }))
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        {t("profile.remove")}
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, languages: [...prev.languages, ''] }))}
-                >
-                  {t("profile.addLanguage")}
-                </Button>
-                <p className="text-sm text-gray-600">
-                  {t("profile.languageCodeHint")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit Button */}
-          <div className="flex justify-end pt-4">
+          <div className="rounded-2xl border border-border bg-accent/60 p-6">
+            <div className="flex items-center gap-2 font-medium text-accent-foreground">
+              <ClipboardList className="h-5 w-5" aria-hidden />
+              {t("profile.travelSurvey")}
+            </div>
+            <p className="mt-2 text-sm text-accent-foreground/80">
+              {profile?.onboarding_completed ? t("profile.surveyCompleted") : t("profile.surveyPending")}
+            </p>
             <Button
-              type="submit"
-              disabled={saving}
-              className="min-w-[150px]"
+              type="button"
+              variant={profile?.onboarding_completed ? 'outline' : 'default'}
+              onClick={() => router.push('/onboarding')}
+              className="mt-4 h-11 w-full rounded-full"
             >
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("profile.saving")}
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {t("profile.saveProfile")}
-                </>
-              )}
+              {profile?.onboarding_completed ? t("profile.editSurvey") : t("profile.completeSurvey")}
             </Button>
           </div>
-        </form>
-      </div>
+        </aside>
+
+        {/* Form sections */}
+        <div className="min-w-0 space-y-12">
+          <section aria-labelledby="info-heading">
+            <h2 id="info-heading" className={sectionTitle}>{t("profile.profileInfo")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("profile.profileInfoDesc")}</p>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="nick_name">{t("profile.displayName")}</Label>
+                <Input
+                  id="nick_name"
+                  name="nick_name"
+                  type="text"
+                  value={formData.nick_name}
+                  onChange={handleInputChange}
+                  placeholder={t("profile.displayNamePlaceholder")}
+                  required
+                  aria-describedby="nick-help"
+                  className={inputClass}
+                />
+                <p id="nick-help" className="text-sm text-muted-foreground">{t("profile.displayNameDesc")}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">{t("profile.emailLabel")}</Label>
+                <Input id="email" type="email" value={user.email || ''} disabled aria-describedby="email-help" className={cn(inputClass, 'bg-muted')} />
+                <p id="email-help" className="text-sm text-muted-foreground">{t("profile.emailReadOnly")}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="birth_year">{t("profile.birthYear")}</Label>
+                <Input
+                  id="birth_year"
+                  name="birth_year"
+                  type="number"
+                  inputMode="numeric"
+                  min="1900"
+                  max="2010"
+                  value={formData.birth_year || ''}
+                  onChange={handleInputChange}
+                  placeholder={t("profile.birthYearPlaceholder")}
+                  aria-describedby="birth-help"
+                  className={inputClass}
+                />
+                <p id="birth-help" className="text-sm text-muted-foreground">{t("profile.birthYearDesc")}</p>
+              </div>
+            </div>
+          </section>
+
+          <section aria-labelledby="style-heading">
+            <h2 id="style-heading" className={sectionTitle}>{t("profile.travelStyle")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("profile.travelStyleDesc")}</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2" role="group" aria-labelledby="style-heading">
+              {travelStyles.map((style) => {
+                const selected = formData.travel_style.includes(style.value)
+                return (
+                  <button
+                    key={style.value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => handleCheckboxChange(style.value, !selected)}
+                    className={cn(
+                      'flex items-start gap-3 rounded-2xl border p-4 text-left transition-colors',
+                      selected ? 'border-primary bg-teal-soft' : 'border-border bg-card hover:border-primary/40'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border',
+                        selected ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-card'
+                      )}
+                      aria-hidden
+                    >
+                      {selected && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                    <span>
+                      <span className="block font-medium text-foreground">{t(style.labelKey)}</span>
+                      <span className="block text-sm text-muted-foreground">{t(style.descKey)}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          <section aria-labelledby="prefs-heading">
+            <h2 id="prefs-heading" className={sectionTitle}>{t("profile.travelPrefs")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("profile.travelPrefsDesc")}</p>
+
+            <fieldset className="mt-6">
+              <legend className="mb-3 text-sm font-medium text-foreground">{t("profile.mobility")}</legend>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {mobilityOptions.map(({ value, labelKey, icon: Icon }) => {
+                  const selected = formData.mobility === value
+                  return (
+                    <label
+                      key={value}
+                      className={cn(
+                        'flex cursor-pointer flex-col items-center gap-2 rounded-2xl border p-4 text-center text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
+                        selected ? 'border-primary bg-teal-soft text-primary' : 'border-border bg-card text-foreground hover:border-primary/40'
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="mobility"
+                        value={value}
+                        checked={selected}
+                        onChange={handleInputChange}
+                        className="sr-only"
+                      />
+                      <Icon className="h-6 w-6" aria-hidden />
+                      {t(labelKey)}
+                    </label>
+                  )
+                })}
+              </div>
+            </fieldset>
+
+            <div className="mt-6 max-w-xs space-y-2">
+              <Label htmlFor="budget_per_day">{t("profile.budget")}</Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">฿</span>
+                <Input
+                  id="budget_per_day"
+                  name="budget_per_day"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="100"
+                  value={formData.budget_per_day || ''}
+                  onChange={handleInputChange}
+                  placeholder={t("profile.budgetPlaceholder")}
+                  aria-describedby="budget-help"
+                  className={cn(inputClass, 'pl-9')}
+                />
+              </div>
+              <p id="budget-help" className="text-sm text-muted-foreground">{t("profile.budgetDesc")}</p>
+            </div>
+          </section>
+
+          <section aria-labelledby="lang-heading">
+            <h2 id="lang-heading" className={sectionTitle}>{t("profile.languages")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("profile.languagesDesc")}</p>
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              {formData.languages.map((lang, index) => (
+                <div key={index} className="flex items-center rounded-full border border-border bg-card pl-3">
+                  <label htmlFor={`lang-${index}`} className="sr-only">{t("profile.languagePlaceholder")}</label>
+                  <input
+                    id={`lang-${index}`}
+                    type="text"
+                    value={lang}
+                    onChange={(e) => handleLanguageChange(index, e.target.value)}
+                    placeholder="th"
+                    maxLength={8}
+                    className="h-10 w-14 bg-transparent text-sm font-medium uppercase text-foreground focus:outline-none"
+                  />
+                  {formData.languages.length > 1 && (
+                    <button
+                      type="button"
+                      aria-label={`${t("profile.remove")} ${lang}`}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          languages: prev.languages.filter((_, i) => i !== index)
+                        }))
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFormData(prev => ({ ...prev, languages: [...prev.languages, ''] }))}
+                className="h-10 rounded-full border-dashed"
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                {t("profile.addLanguage")}
+              </Button>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{t("profile.languageCodeHint")}</p>
+          </section>
+
+          {/* Save bar */}
+          <div className="sticky bottom-4 z-10 flex justify-end rounded-full border border-border bg-background/90 p-2 shadow-card backdrop-blur">
+            <Button type="submit" disabled={saving} className="h-12 min-w-44 rounded-full px-6 text-base">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />}
+              {saving ? t("profile.saving") : t("profile.saveProfile")}
+            </Button>
+          </div>
+        </div>
+      </form>
     </div>
   )
 }

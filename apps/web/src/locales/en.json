@@ -6,7 +6,9 @@
     "savedTrips": "Saved Trips",
     "admin": "Admin",
     "current": "Current",
-    "all": "All"
+    "all": "All",
+    "signIn": "Sign in",
+    "signUp": "Sign up"
   },
   "categories": {
     "restaurants": "Restaurants",
@@ -21,7 +23,52 @@
   "auth": {
     "login": "Login",
     "logout": "Logout",
-    "profile": "Profile"
+    "profile": "Profile",
+    "panelEyebrow": "SeeU Bangkok",
+    "panelTitle": "Save the places you love. Plan the walk that connects them.",
+    "panelPoint1": "Keep favorites and trips across devices",
+    "panelPoint2": "Chat history with the AI trip planner",
+    "panelPoint3": "Write reviews for other travelers",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to see your saved trips and favorites.",
+    "signIn": "Sign in",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "New to SeeU Bangkok?",
+    "createAccount": "Create an account",
+    "signedIn": "Signed in",
+    "unexpectedError": "Something went wrong. Please try again.",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "It takes a minute — then start saving places and trips.",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "What should we call you?",
+    "newPassword": "Password",
+    "newPasswordPlaceholder": "At least 6 characters",
+    "passwordHint": "Use at least 6 characters.",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Type it again",
+    "passwordMismatch": "Passwords don't match.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "register": "Create account",
+    "registered": "Account created — check your email to verify it.",
+    "haveAccount": "Already have an account?",
+    "resetTitle": "Reset your password",
+    "resetSubtitle": "Enter your email and we'll send you a reset link.",
+    "sendReset": "Send reset link",
+    "resetSent": "Reset link sent — check your inbox.",
+    "checkEmailTitle": "Check your email",
+    "resetSentTo": "We sent a reset link to {email}.",
+    "notReceived": "Didn't get it? Check your spam folder, or try again.",
+    "tryAgain": "Try again",
+    "backToSignIn": "Back to sign in",
+    "verifyTitle": "Verify your email",
+    "verifyDesc": "We sent you a verification link. Open it to activate your account, then sign in.",
+    "verifyHelp": "Didn't get it? Check your spam folder."
   },
   "map": {
     "searchPlaceholder": "Search places, temples, restaurants...",
@@ -38,8 +85,36 @@
   "home": {
     "title1": "Discover Bangkok's",
     "title2": "Hidden Gems",
-    "exploreMap": "Explore Map",
-    "tripPlanner": "Trip Planner"
+    "exploreMap": "Explore the map",
+    "tripPlanner": "Trip Planner",
+    "eyebrow": "Rattanakosin · Bangkok's old town",
+    "heroTitle": "Bangkok, beyond",
+    "heroTitleAccent": "the guidebook.",
+    "heroSubtitle": "Temples, riverside communities and morning markets — curated by locals, mapped for walking, and one question away from an AI trip planner.",
+    "searchPlaceholder": "Search a temple, market, or neighborhood",
+    "searchLabel": "Search places",
+    "searchButton": "Search",
+    "askPlanner": "Ask the trip planner",
+    "statLanguages": "Thai & English",
+    "statPlanner": "AI trip planner",
+    "featuredEyebrow": "Featured",
+    "featuredTitle": "Places worth the detour",
+    "featuredSubtitle": "A few favorites from the old town to start your walk.",
+    "seeAll": "See all places",
+    "howEyebrow": "How it works",
+    "howTitle": "From idea to walking route in three steps",
+    "step1Title": "Discover",
+    "step1Desc": "Browse hand-picked places by mood or category, with honest details and reviews from travelers.",
+    "step2Title": "Map your day",
+    "step2Desc": "Drop places onto the map, check walking distances, and save the route as a trip.",
+    "step3Title": "Ask the planner",
+    "step3Desc": "Tell the AI planner what you enjoy, in Thai or English, and get a route you can edit.",
+    "ctaTitle": "Ready to see a different Bangkok?",
+    "ctaSubtitle": "Start on the map, or let the planner draft your first route.",
+    "ctaPrimary": "Open the map",
+    "ctaSecondary": "Browse places",
+    "loadError": "Places couldn't load right now.",
+    "statPlacesLabel": "curated places"
   },
   "features": {
     "title": "Explore Bangkok Like Never Before",
@@ -126,7 +201,7 @@
     "languagesDesc": "Languages you speak (helps connect with locals and other travelers)",
     "languagePlaceholder": "e.g., th, en, zh",
     "languageCodeHint": "Use language codes like 'th' (Thai), 'en' (English), 'zh' (Chinese).",
-    "addLanguage": "+ Add Language",
+    "addLanguage": "Add language",
     "remove": "Remove",
     "saving": "Saving...",
     "saveProfile": "Save Profile",
@@ -139,7 +214,13 @@
     "styleFoodie": "Foodie",
     "styleFoodieDesc": "Culinary experiences",
     "styleHistory": "History",
-    "styleHistoryDesc": "Cultural & historical sites"
+    "styleHistoryDesc": "Cultural & historical sites",
+    "eyebrow": "Your account",
+    "pageTitle": "Profile & preferences",
+    "pageSubtitle": "These details shape the places and routes the trip planner suggests.",
+    "saved": "Profile saved",
+    "loadFailed": "Couldn't load your profile.",
+    "saveFailed": "Couldn't save your profile."
   },
   "savedTrips": {
     "signInPrompt": "Please sign in to view your saved trips.",
@@ -171,7 +252,26 @@
     "deleteError": "Failed to delete trip",
     "favoritesTitle": "Favorite places",
     "favoritesEmpty": "Tap the heart on any place to save it here.",
-    "removeFavorite": "Remove"
+    "removeFavorite": "Remove",
+    "detailBack": "Back to saved trips",
+    "detailSignIn": "Sign in to view this itinerary.",
+    "detailLoading": "Loading itinerary…",
+    "detailSummary": "{stops} stops · {minutes} min planned",
+    "share": "Share",
+    "linkCopied": "Link copied",
+    "editInPlanner": "Edit in planner",
+    "schedule": "Schedule",
+    "overview": "Overview",
+    "day1": "Day 1",
+    "startsAt": "Starts 9:00",
+    "locations": "{count} locations",
+    "kmTotal": "{km} km total",
+    "openRoute": "Open in Google Maps",
+    "noCoords": "No coordinates for this itinerary.",
+    "stopN": "Stop {n}",
+    "noNotes": "No notes for this stop yet.",
+    "minutesShort": "{n} min",
+    "fromPrev": "+{km} km from previous"
   },
   "placeDetail": {
     "back": "Go Back",
@@ -235,6 +335,106 @@
       "Thursday",
       "Friday",
       "Saturday"
-    ]
+    ],
+    "save": "Save",
+    "saved": "Saved"
+  },
+  "onboarding": {
+    "eyebrow": "Personalize your trip",
+    "title": "Tell us how you like to travel",
+    "stepOf": "Step {step} of {total}",
+    "skip": "Skip for now",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Save & start exploring",
+    "loading": "Loading…",
+    "steps": [
+      "Vibes",
+      "Travel style",
+      "Pace & transport",
+      "Food & limits"
+    ],
+    "s1Title": "Which vibes do you want to experience?",
+    "s1Desc": "Pick a few — they shape the neighborhoods and moods we suggest.",
+    "s2Title": "What kind of traveler are you?",
+    "s2Desc": "We'll tune recommendations to how you like to decide.",
+    "s3Title": "Set your pace",
+    "s3Desc": "Slow wandering or a packed day? Then pick how you'll get around.",
+    "paceSlow": "Slow & flexible",
+    "paceFast": "Fast & packed",
+    "paceLabel": "Travel pace",
+    "transitTitle": "Getting around",
+    "s4Title": "Food priorities & things to avoid",
+    "s4Desc": "Tell us what you crave and what you'd rather skip.",
+    "culinaryTitle": "Food you're after",
+    "avoidTitle": "Avoid",
+    "skipped": "Skipped for now — you can edit this later in your profile.",
+    "saved": "Preferences saved",
+    "vibes": {
+      "v1": [
+        "Concrete & Chrome",
+        "Urban architecture"
+      ],
+      "v2": [
+        "Neon Rain",
+        "Nightlife"
+      ],
+      "v3": [
+        "Woven Heritage",
+        "Local crafts"
+      ],
+      "v4": [
+        "Canopy Filter",
+        "Hidden nature"
+      ],
+      "v5": [
+        "Minimalist Brew",
+        "Specialty coffee"
+      ],
+      "v6": [
+        "Midnight Smoke",
+        "Street food"
+      ]
+    },
+    "styles": {
+      "flaneur": [
+        "The Wanderer",
+        "Unplanned strolls and getting a little lost."
+      ],
+      "archivist": [
+        "The History Buff",
+        "Context first — temples, museums, old stories."
+      ],
+      "epicurean": [
+        "The Foodie",
+        "The day is planned around what to eat next."
+      ],
+      "synthesizer": [
+        "The Modernist",
+        "Art, coffee and design next to tradition."
+      ]
+    },
+    "transit": {
+      "Public Rail / BTS": "BTS / MRT",
+      "Pedestrian Routes": "Walking",
+      "Private Rides (Grab)": "Grab / taxi",
+      "River Ferries": "River boats",
+      "Motorcycle Taxis": "Motorbike taxis"
+    },
+    "culinary": {
+      "Street Carts": "Street food",
+      "Historic Shophouses": "Old shophouses",
+      "Specialty Cafes": "Specialty cafés",
+      "Mid-tier Local": "Local restaurants",
+      "Omakase / Fine Dining": "Fine dining"
+    },
+    "boundaries": {
+      "Tourist Traps": "Tourist traps",
+      "High-Density Crowds": "Big crowds",
+      "Chain Establishments": "Chain stores",
+      "Intense Humidity Walks": "Long hot walks",
+      "Loud Nightclubs": "Loud nightclubs",
+      "Early Morning Starts": "Early starts"
+    }
   }
 }

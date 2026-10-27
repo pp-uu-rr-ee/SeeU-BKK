@@ -97,17 +97,17 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
     <div className="grid gap-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">Phone</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">Phone</label>
           <Input value={value.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+66 2 123 4567" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">Website</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">Website</label>
           <Input value={value.website} onChange={(e) => set('website', e.target.value)} placeholder="https://..." type="url" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">Suggested visit time (minutes)</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">Suggested visit time (minutes)</label>
           <Input
             value={value.suggested_duration_min}
             onChange={(e) => set('suggested_duration_min', e.target.value)}
@@ -117,11 +117,11 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">Best for (comma separated)</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">Best for (comma separated)</label>
           <Input value={value.best_for} onChange={(e) => set('best_for', e.target.value)} placeholder="families, photographers" />
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm text-gray-700">
+      <label className="flex items-center gap-2 text-sm text-foreground/80">
         <input
           type="checkbox"
           checked={value.is_published}
@@ -133,7 +133,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">Opening hours</label>
+          <label className="block text-sm font-medium text-foreground/80">Opening hours</label>
           <Button type="button" variant="outline" size="sm" onClick={applyMondayToAll}>
             Copy Monday to all days
           </Button>
@@ -141,11 +141,11 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
         <div className="rounded-lg border divide-y">
           {value.hours.map((h) => (
             <div key={h.day_of_week} className="flex flex-wrap items-center gap-3 px-3 py-2">
-              <span className="w-24 text-sm text-gray-700">{DAY_LABELS[h.day_of_week]}</span>
+              <span className="w-24 text-sm text-foreground/80">{DAY_LABELS[h.day_of_week]}</span>
               <select
                 value={h.status}
                 onChange={(e) => setHour(h.day_of_week, { status: e.target.value as DayStatus })}
-                className="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm"
+                className="h-9 rounded-md border border-border bg-card px-2 text-sm"
               >
                 <option value="unknown">Not set</option>
                 <option value="open">Open</option>
@@ -159,7 +159,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
                     onChange={(e) => setHour(h.day_of_week, { open_time: e.target.value })}
                     className="h-9 w-32"
                   />
-                  <span className="text-gray-400">–</span>
+                  <span className="text-muted-foreground">–</span>
                   <Input
                     type="time"
                     value={h.close_time}
@@ -171,7 +171,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
             </div>
           ))}
         </div>
-        <p className="mt-1 text-xs text-gray-500">A closing time earlier than the opening time means it closes after midnight.</p>
+        <p className="mt-1 text-xs text-muted-foreground">A closing time earlier than the opening time means it closes after midnight.</p>
       </div>
     </div>
   )

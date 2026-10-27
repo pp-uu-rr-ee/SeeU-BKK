@@ -81,7 +81,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   park: '#059669',
   museum: '#8B5CF6',
   shopping: '#EC4899',
-  default: '#3B82F6',
+  default: '#0E5A5F',
 };
 
 // Category icons
@@ -242,7 +242,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [mapStyle, setMapStyle] = useState<'dark' | 'light' | 'satellite'>('dark');
+  const [mapStyle, setMapStyle] = useState<'dark' | 'light' | 'satellite'>('light');
   const [currentZoom, setCurrentZoom] = useState(initialZoom);
   const [currentBounds, setCurrentBounds] = useState<[number, number, number, number] | null>(null);
   const [is3DEnabled, setIs3DEnabled] = useState(show3D);
@@ -318,7 +318,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/dark-v11',
+        style: 'mapbox://styles/mapbox/light-v11',
         center: initialCenter,
         zoom: initialZoom,
         pitch: show3D ? 45 : 0,
@@ -688,7 +688,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
               'line-cap': 'round',
             },
             paint: {
-              'line-color': '#3b82f6',
+              'line-color': '#0E5A5F',
               'line-width': 4,
               'line-opacity': 0.85,
             },
@@ -753,7 +753,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
         type: 'line',
         source: 'trip-route',
         paint: {
-          'line-color': '#3b82f6',
+          'line-color': '#0E5A5F',
           'line-width': 4,
           'line-opacity': 0.8,
           'line-dasharray': [2, 2],
@@ -808,7 +808,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
 
     const styleUrls: Record<'dark' | 'light' | 'satellite', string> = {
       dark: 'mapbox://styles/mapbox/dark-v11',
-      light: 'mapbox://styles/mapbox/streets-v12',
+      light: 'mapbox://styles/mapbox/light-v11',
       satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     };
 
@@ -925,10 +925,11 @@ const MapContainer: React.FC<MapContainerProps> = ({
 
   // Get cluster color based on count
   const getClusterColor = useCallback((count: number): string => {
-    if (count < 5) return '#3B82F6';
-    if (count < 10) return '#8B5CF6';
-    if (count < 25) return '#EF4444';
-    return '#DC2626';
+    // Brand ramp: teal → saffron → terracotta as density grows
+    if (count < 5) return '#0E5A5F';
+    if (count < 10) return '#B9770E';
+    if (count < 25) return '#B4532A';
+    return '#8E3B1E';
   }, []);
 
   // Create marker element container
@@ -1046,7 +1047,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
           marker.setLngLat([lng, lat]);
         }
 
-        const color = isSequence ? '#2563eb' : getMarkerColor(place);
+        const color = isSequence ? '#0E5A5F' : getMarkerColor(place);
         const icon = isSequence ? sequenceNumber : getMarkerIcon(place);
 
         root?.render(
@@ -1166,7 +1167,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
           'line-cap': 'round',
         },
         paint: {
-          'line-color': '#2563eb',
+          'line-color': '#0E5A5F',
           'line-width': 4,
           'line-opacity': 0.85,
         },
@@ -1346,11 +1347,11 @@ const MapContainer: React.FC<MapContainerProps> = ({
   // Error fallback
   if (mapError) {
     return (
-      <div className="relative w-full h-full bg-gray-100 flex items-center justify-center">
+      <div className="relative w-full h-full bg-secondary flex items-center justify-center">
         <div className="text-center p-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
             <svg
-              className="w-8 h-8 text-red-500"
+              className="w-8 h-8 text-destructive"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1363,10 +1364,10 @@ const MapContainer: React.FC<MapContainerProps> = ({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Map Loading Error
           </h3>
-          <p className="text-gray-600">{mapError}</p>
+          <p className="text-muted-foreground">{mapError}</p>
         </div>
       </div>
     );
@@ -1398,11 +1399,11 @@ const MapContainer: React.FC<MapContainerProps> = ({
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-gray-100 flex items-center justify-center"
+            className="absolute inset-0 bg-secondary flex items-center justify-center"
           >
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
-              <p className="text-gray-600">Initializing map...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Initializing map...</p>
             </div>
           </motion.div>
         )}

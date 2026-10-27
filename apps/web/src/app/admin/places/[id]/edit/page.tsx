@@ -229,10 +229,10 @@ export default function AdminEditPlacePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading place...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading place...</p>
         </div>
       </div>
     )
@@ -240,11 +240,11 @@ export default function AdminEditPlacePage() {
 
   if (error && !originalPlace) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-destructive mb-4">{error}</p>
           <div className="space-x-3">
-            <Button onClick={fetchPlace} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={fetchPlace} className="bg-primary hover:bg-primary/90">
               Try Again
             </Button>
             <Link href="/admin/places">
@@ -259,7 +259,7 @@ export default function AdminEditPlacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="px-4 py-10 sm:px-6 md:py-14">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -270,16 +270,16 @@ export default function AdminEditPlacePage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Place</h1>
-            <p className="text-gray-600 mt-1">Update place information</p>
+            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">Edit place</h1>
+            <p className="text-muted-foreground mt-1">Update place information</p>
           </div>
         </div>
 
         {originalPlace && (
-          <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+          <div className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
             <div className="grid gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Name (EN)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">Name (EN)</label>
                 <Input 
                   value={form.name || ''} 
                   onChange={(e) => update('name', e.target.value)} 
@@ -288,7 +288,7 @@ export default function AdminEditPlacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Description (EN)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">Description (EN)</label>
                 <Textarea 
                   value={form.description || ''} 
                   onChange={(e) => update('description', e.target.value)} 
@@ -298,7 +298,7 @@ export default function AdminEditPlacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">ชื่อภาษาไทย (name_th)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">ชื่อภาษาไทย (name_th)</label>
                 <Input 
                   value={form.name_th || ''} 
                   onChange={(e) => update('name_th', e.target.value)} 
@@ -307,7 +307,7 @@ export default function AdminEditPlacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">คำอธิบายภาษาไทย (description_th)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">คำอธิบายภาษาไทย (description_th)</label>
                 <Textarea 
                   value={form.description_th || ''} 
                   onChange={(e) => update('description_th', e.target.value)} 
@@ -318,7 +318,7 @@ export default function AdminEditPlacePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700">Latitude</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">Latitude</label>
                   <Input 
                     value={form.lat ?? ''} 
                     onChange={(e) => update('lat', e.target.value)} 
@@ -328,7 +328,7 @@ export default function AdminEditPlacePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700">Longitude</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">Longitude</label>
                   <Input 
                     value={form.lng ?? ''} 
                     onChange={(e) => update('lng', e.target.value)} 
@@ -339,7 +339,7 @@ export default function AdminEditPlacePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Address</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">Address</label>
                 <Input 
                   value={form.address || ''} 
                   onChange={(e) => update('address', e.target.value)} 
@@ -348,7 +348,7 @@ export default function AdminEditPlacePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700">Price (THB)</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">Price (THB)</label>
                   <Input 
                     value={form.price ?? ''} 
                     onChange={(e) => update('price', e.target.value)} 
@@ -357,7 +357,7 @@ export default function AdminEditPlacePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-gray-700">Image URL</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">Image URL</label>
                   <Input 
                     value={form.image_url || ''} 
                     onChange={(e) => update('image_url', e.target.value)} 
@@ -366,7 +366,7 @@ export default function AdminEditPlacePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">Tags (comma separated)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">Tags (comma separated)</label>
                 <Input 
                   value={tagsText} 
                   onChange={(e) => setTagsText(e.target.value)} 
@@ -375,7 +375,7 @@ export default function AdminEditPlacePage() {
               </div>
 
               <div className="pt-4 border-t">
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Visit details</h2>
+                <h2 className="text-lg font-semibold text-foreground mb-3">Visit details</h2>
                 <PlaceDetailsFields value={details} onChange={setDetails} />
               </div>
 
@@ -387,7 +387,7 @@ export default function AdminEditPlacePage() {
                 >
                   Generate New Embedding
                 </Button>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   {embedding ? `New embedding: ${embedding.length} dims` : 'Will use existing or compute automatically'}
                 </div>
               </div>
@@ -396,7 +396,7 @@ export default function AdminEditPlacePage() {
                 <Button 
                   onClick={handleSubmit} 
                   disabled={busy || !form.name}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   {busy ? 'Updating...' : 'Update Place'}
                 </Button>
@@ -407,11 +407,11 @@ export default function AdminEditPlacePage() {
                 </Link>
               </div>
 
-              {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</div>}
+              {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded">{error}</div>}
               {result && (
                 <div className="bg-green-50 p-3 rounded">
                   <p className="text-green-800 text-sm font-medium mb-2">Update successful!</p>
-                  <pre className="text-xs text-gray-600 overflow-auto max-h-32">
+                  <pre className="text-xs text-muted-foreground overflow-auto max-h-32">
                     {JSON.stringify(result, null, 2)}
                   </pre>
                 </div>

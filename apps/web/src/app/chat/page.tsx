@@ -235,7 +235,7 @@ export default function ChatTestPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-black">Trip Planner Test</h1>
         {/* <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-700 font-medium">Mode:</label>
+          <label className="text-sm text-foreground/80 font-medium">Mode:</label>
           <Button
             variant={useAgent ? 'outline' : 'default'}
             size="sm"
@@ -254,14 +254,14 @@ export default function ChatTestPage() {
       </div>
 
       {useAgent && (
-        <div className="p-3 rounded-md bg-blue-50 border border-blue-200 text-sm text-blue-800">
+        <div className="p-3 rounded-md bg-teal-soft border border-primary/30 text-sm text-primary">
           <strong>RAG Agent v2 Mode:</strong> Uses multi-agent supervisor with vector search, specialized researcher/planner/critic agents, and memory management.
         </div>
       )}
 
       <div className="flex gap-2 items-center flex-wrap text-black">
         <Input
-          className='border-2 border-indigo-500 flex-1'
+          className='border-2 border-primary flex-1'
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !isStreaming && handleSend()}
@@ -276,11 +276,11 @@ export default function ChatTestPage() {
       </div>
 
       {coords && (
-        <div className="text-sm text-gray-600">📍 Location: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</div>
+        <div className="text-sm text-muted-foreground">📍 Location: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</div>
       )}
 
       {statusText && (
-        <div className="text-sm text-blue-600">⏳ Status: {statusText}</div>
+        <div className="text-sm text-primary">⏳ Status: {statusText}</div>
       )}
 
       {/* RAG Agent specific info */}
@@ -314,7 +314,7 @@ export default function ChatTestPage() {
       {/* Streamed assistant messages */}
       <div className="space-y-2">
         {events.filter((e) => e.type === 'message').map((e, i) => (
-          <div key={i} className="p-3 rounded-md bg-gray-100 text-gray-800">{(e as any).text}</div>
+          <div key={i} className="p-3 rounded-md bg-secondary text-foreground">{(e as any).text}</div>
         ))}
       </div>
 
@@ -326,9 +326,9 @@ export default function ChatTestPage() {
             {suggestions.map((p) => (
               <li key={p.slug} className="p-3 rounded-md border">
                 <div className="font-semibold">{p.name}</div>
-                <div className="text-xs text-gray-600">{p.slug}</div>
+                <div className="text-xs text-muted-foreground">{p.slug}</div>
                 {/* {p.maps_url && (
-                  <a className="text-blue-600 text-sm" href={p.maps_url} target="_blank" rel="noreferrer">Open in Maps</a>
+                  <a className="text-primary text-sm" href={p.maps_url} target="_blank" rel="noreferrer">Open in Maps</a>
                 )} */}
               </li>
             ))}
@@ -347,10 +347,10 @@ export default function ChatTestPage() {
                 <li key={idx}>
                   <span className="font-medium">{s.name}</span>
                   {typeof s.distance_from_prev_km === 'number' && (
-                    <span className="text-gray-600 ml-2">(+{s.distance_from_prev_km} km)</span>
+                    <span className="text-muted-foreground ml-2">(+{s.distance_from_prev_km} km)</span>
                   )}
-                  <div className="text-sm text-gray-600">{s.suggested_time_min} min</div>
-                  {s.notes && <div className="text-sm text-gray-500">{s.notes}</div>}
+                  <div className="text-sm text-muted-foreground">{s.suggested_time_min} min</div>
+                  {s.notes && <div className="text-sm text-muted-foreground">{s.notes}</div>}
                 </li>
               ))}
             </ol>
@@ -392,7 +392,7 @@ export default function ChatTestPage() {
 
       {/* Errors */}
       {events.filter((e) => e.type === 'error').length > 0 && (
-        <div className="text-red-600 text-sm">
+        <div className="text-destructive text-sm">
           {events.filter((e) => e.type === 'error').map((e, i) => (
             <div key={i}>Error: {(e as any).text}</div>
           ))}

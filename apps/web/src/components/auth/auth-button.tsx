@@ -14,9 +14,11 @@ import { User, LogOut, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
+import { useTranslation } from '@/contexts/language-context'
 
 export function AuthButton() {
   const { user, signOut, loading, getProfile, refreshProfile } = useAuth()
+  const { t } = useTranslation()
   const [profile, setProfile] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(false)
 
@@ -73,21 +75,19 @@ export function AuthButton() {
 
   if (loading) {
     return (
-      <Button variant="ghost" disabled className="text-black">
-        Loading...
-      </Button>
+      <div className="h-10 w-36 animate-pulse rounded-full bg-secondary" aria-hidden />
     )
   }
 
   if (!user) {
     return (
-      <div className="flex gap-2">
-        <Link href="/auth/login">
-          <Button variant="ghost" className="text-black hover:text-blue-600">Sign in</Button>
-        </Link>
-        <Link href="/auth/register">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">Sign up</Button>
-        </Link>
+      <div className="flex items-center gap-1">
+        <Button asChild variant="ghost" className="h-10 rounded-full px-4 text-foreground hover:bg-secondary">
+          <Link href="/auth/login">{t("nav.signIn")}</Link>
+        </Button>
+        <Button asChild className="h-10 rounded-full px-5">
+          <Link href="/auth/register">{t("nav.signUp")}</Link>
+        </Button>
       </div>
     )
   }
@@ -95,17 +95,19 @@ export function AuthButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center gap-2 text-black hover:text-blue-600">
+        <Button variant="ghost" className="flex h-10 items-center gap-2 rounded-full px-3 text-foreground hover:bg-secondary">
           {profile?.avatar_url ? (
             <img 
               src={profile.avatar_url} 
               alt="Profile" 
-              className="h-6 w-6 rounded-full object-cover border border-gray-200"
+              className="h-7 w-7 rounded-full object-cover border border-border"
             />
           ) : (
-            <User className="h-4 w-4" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-soft text-primary">
+              <User className="h-4 w-4" />
+            </span>
           )}
-          {profile?.nick_name || user.user_metadata?.display_name || user.email}
+          <span className="max-w-[10rem] truncate">{profile?.nick_name || user.user_metadata?.display_name || user.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-white text-slate-950 border border-slate-200 shadow-lg">

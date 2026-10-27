@@ -35,8 +35,8 @@ export const SmartFilterBar: React.FC<SmartFilterBarProps> = ({
         >
             <div
                 className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full shadow-lg backdrop-blur-md overflow-x-auto scrollbar-hide ${isDarkMode
-                        ? "bg-gray-900/80 border border-gray-700/50"
-                        : "bg-white/90 border border-gray-200"
+                        ? "bg-foreground/80 border border-border"
+                        : "bg-card/90 border border-border"
                     }`}
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
@@ -54,8 +54,8 @@ export const SmartFilterBar: React.FC<SmartFilterBarProps> = ({
                 ${isActive
                                     ? "text-white"
                                     : isDarkMode
-                                        ? "text-gray-300 hover:text-white hover:bg-gray-700/50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                        ? "text-muted-foreground hover:text-white hover:bg-secondary"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                                 }
               `}
                             title={`Show ${cat.label}`}

@@ -40,10 +40,10 @@ export function CollapsiblePanel({
     >
       <div
         className={cn(
-          "h-full bg-white/95 backdrop-blur-md shadow-2xl flex flex-col",
+          "h-full bg-card/95 backdrop-blur-md shadow-2xl flex flex-col",
           position === "left"
-            ? "border-r border-slate-200"
-            : "border-l border-slate-200"
+            ? "border-r border-border"
+            : "border-l border-border"
         )}
       >
 

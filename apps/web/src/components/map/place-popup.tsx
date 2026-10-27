@@ -62,7 +62,7 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
   return (
     <Card className="w-80 max-w-sm shadow-lg border-0 overflow-hidden">
       {/* Header Image */}
-      <div className="relative h-32 bg-gradient-to-br from-blue-500 to-purple-600">
+      <div className="relative h-32 bg-teal-soft">
         {place.image_url && (
           <Image
             src={place.image_url}
@@ -77,7 +77,7 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="absolute bottom-3 left-3 right-3">
-          <h3 className="text-white font-bold text-lg leading-tight">
+          <h3 className="font-display text-white font-semibold text-xl leading-tight">
             {place.name}
           </h3>
         </div>
@@ -85,7 +85,8 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="absolute top-2 right-2 h-8 w-8 p-0 text-white hover:bg-white/20"
+          aria-label="Close"
+          className="absolute top-2 right-2 h-9 w-9 rounded-full p-0 text-white hover:bg-white/20"
         >
           ×
         </Button>
@@ -93,7 +94,7 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
 
       <CardContent className="p-4">
         {/* Description */}
-        <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+        <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
           {place.description.length > 120 
             ? `${place.description.substring(0, 120)}...` 
             : place.description
@@ -111,7 +112,7 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
             {place.tags.slice(0, 2).map((tag, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                className="px-2 py-1 bg-secondary text-foreground/80 text-xs rounded-full"
               >
                 {tag}
               </span>
@@ -122,8 +123,8 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
         {/* Address */}
         {place.address && (
           <div className="flex items-start gap-2 mb-4">
-            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <span className="text-gray-600 text-sm leading-tight">
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <span className="text-muted-foreground text-sm leading-tight">
               {place.address}
             </span>
           </div>
@@ -133,7 +134,7 @@ export const PlacePopup: React.FC<PlacePopupProps> = ({
         <div className="flex gap-2">
           <Button
             onClick={handleViewDetails}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 bg-primary hover:bg-primary/90 text-white"
             size="sm"
           >
             View Details

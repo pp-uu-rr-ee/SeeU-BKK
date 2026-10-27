@@ -13,6 +13,9 @@ interface PlaceApiRecord {
 	price?: number | null;
 	image_url?: string | null;
 	slug?: string | null;
+	area?: string | null;
+	avg_rating?: number | null;
+	review_count?: number | null;
 }
 
 export interface PlaceListItem {
@@ -28,6 +31,9 @@ export interface PlaceListItem {
 	price: number;
 	image_url: string;
 	slug: string;
+	area?: string;
+	avg_rating: number | null;
+	review_count: number;
 }
 
 type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
@@ -51,6 +57,9 @@ function normalizePlace(place: PlaceApiRecord): PlaceListItem {
 		price: typeof place.price === "number" ? place.price : 0,
 		image_url: place.image_url || "",
 		slug: place.slug || nameToSlug(place.name || "unknown-place"),
+		...(place.area ? { area: place.area } : {}),
+		avg_rating: typeof place.avg_rating === "number" ? place.avg_rating : null,
+		review_count: typeof place.review_count === "number" ? place.review_count : 0,
 	};
 }
 

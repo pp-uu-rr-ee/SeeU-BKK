@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AdminMapPicker } from '@/components/map/admin-map-picker'
-import { MapPin } from 'lucide-react'
+import { MapPin, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   PlaceDetailsFields,
@@ -140,23 +141,29 @@ export default function AdminNewPlacePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6 text-black bg-gray-200/60 border-2 border-gray-300 rounded-lg shadow-md mt-10">
-      <h1 className="text-2xl font-semibold">Admin: New Place</h1>
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 md:py-14">
+      <Link href="/admin/places" className="mb-6 inline-flex items-center gap-2 rounded-full py-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to places
+      </Link>
+      <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">New place</h1>
+      <p className="mt-2 text-muted-foreground">Add a place to the catalog. Fields marked * are required.</p>
+      <div className="mt-8 space-y-6 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
 
       <div className="grid gap-4">
         {/* Name & Slug */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="mb-1 block text-black">Name *</Label>
+            <Label className="mb-1.5 block">Name *</Label>
             <Input
               value={form.name || ''}
               onChange={(e) => update('name', e.target.value)}
               placeholder="Wat Pho"
-              className="text-black"
+              className="h-11 rounded-xl"
             />
           </div>
           <div>
-            <Label className="mb-1 block text-black">Slug (auto)</Label>
+            <Label className="mb-1.5 block">Slug (auto)</Label>
             <Input
               value={slugTouched ? (form.slug || '') : autoSlug}
               onChange={(e) => {
@@ -164,66 +171,66 @@ export default function AdminNewPlacePage() {
                 update('slug', e.target.value)
               }}
               placeholder="wat-pho"
-              className="text-black"
+              className="h-11 rounded-xl"
             />
-            <p className="text-xs text-gray-500 mt-1">* แก้ได้; เว้นว่างจะใช้ auto-slug</p>
+            <p className="text-xs text-muted-foreground mt-1">* แก้ได้; เว้นว่างจะใช้ auto-slug</p>
           </div>
         </div>
 
         {/* Area */}
         <div>
-          <Label className="mb-1 block text-black">Area</Label>
+          <Label className="mb-1.5 block">Area</Label>
           <Input
             value={form.area || ''}
             onChange={(e) => update('area', e.target.value)}
             placeholder="Talat Noi / Ari / ... "
-            className="text-black"
+            className="h-11 rounded-xl"
           />
         </div>
 
         {/* Description */}
         <div>
-          <Label className="mb-1 block text-black">Description (EN)</Label>
+          <Label className="mb-1.5 block">Description (EN)</Label>
           <Textarea
             value={form.description || ''}
             onChange={(e) => update('description', e.target.value)}
             rows={5}
             placeholder="Write a short description"
-            className="text-black border-gray-400 dark:border-gray-700"
+            className="text-black border-border dark:border-border"
           />
         </div>
 
         {/* Thai translations */}
         <div>
-          <Label className="mb-1 block text-black">ชื่อภาษาไทย (name_th)</Label>
+          <Label className="mb-1.5 block">ชื่อภาษาไทย (name_th)</Label>
           <Input
             value={form.name_th || ''}
             onChange={(e) => update('name_th', e.target.value)}
             placeholder="วัดโพธิ์"
-            className="text-black"
+            className="h-11 rounded-xl"
           />
         </div>
         <div>
-          <Label className="mb-1 block text-black">คำอธิบายภาษาไทย (description_th)</Label>
+          <Label className="mb-1.5 block">คำอธิบายภาษาไทย (description_th)</Label>
           <Textarea
             value={form.description_th || ''}
             onChange={(e) => update('description_th', e.target.value)}
             rows={5}
             placeholder="คำอธิบายภาษาไทย"
-            className="text-black border-gray-400 dark:border-gray-700"
+            className="text-black border-border dark:border-border"
           />
         </div>
 
         {/* Lat/Lng with Map Picker */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <Label className="text-black font-semibold">Location Coordinates *</Label>
+            <Label className="font-semibold">Location Coordinates *</Label>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowMap(!showMap)}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              className="text-primary border-primary hover:bg-teal-soft"
             >
               <MapPin className="h-4 w-4 mr-2" />
               {showMap ? 'Hide Map' : 'Show Map Picker'}
@@ -245,28 +252,28 @@ export default function AdminNewPlacePage() {
           {/* Manual Input Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="mb-1 block text-black">Latitude *</Label>
+              <Label className="mb-1.5 block">Latitude *</Label>
               <Input
                 type="number"
                 step="any"
                 value={form.lat ?? ''}
                 onChange={(e) => update('lat', e.target.value)}
                 placeholder="13.746"
-                className="text-black"
+                className="h-11 rounded-xl"
               />
-              {!latValid && <p className="text-xs text-red-600 mt-1">ต้องอยู่ระหว่าง -90 ถึง 90</p>}
+              {!latValid && <p className="text-xs text-destructive mt-1">ต้องอยู่ระหว่าง -90 ถึง 90</p>}
             </div>
             <div>
-              <Label className="mb-1 block text-black">Longitude *</Label>
+              <Label className="mb-1.5 block">Longitude *</Label>
               <Input
                 type="number"
                 step="any"
                 value={form.lng ?? ''}
                 onChange={(e) => update('lng', e.target.value)}
                 placeholder="100.535"
-                className="text-black"
+                className="h-11 rounded-xl"
               />
-              {!lngValid && <p className="text-xs text-red-600 mt-1">ต้องอยู่ระหว่าง -180 ถึง 180</p>}
+              {!lngValid && <p className="text-xs text-destructive mt-1">ต้องอยู่ระหว่าง -180 ถึง 180</p>}
             </div>
           </div>
           
@@ -280,19 +287,19 @@ export default function AdminNewPlacePage() {
 
         {/* Address */}
         {/* <div>
-          <Label className="mb-1 block text-black">Address</Label>
+          <Label className="mb-1.5 block">Address</Label>
           <Input
             value={form.address || ''}
             onChange={(e) => update('address', e.target.value)}
             placeholder="Bangkok, Thailand"
-            className="text-black"
+            className="h-11 rounded-xl"
           />
         </div> */}
 
         {/* Price & Image */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="mb-1 block text-black">Price (THB)</Label>
+            <Label className="mb-1.5 block">Price (THB)</Label>
             <Input
               type="number"
               step="1"
@@ -300,52 +307,53 @@ export default function AdminNewPlacePage() {
               value={form.price ?? ''}
               onChange={(e) => update('price', e.target.value)}
               placeholder="200"
-              className="text-black"
+              className="h-11 rounded-xl"
             />
-            {!priceValid && <p className="text-xs text-red-600 mt-1">ต้องเป็นจำนวนเต็ม ≥ 0 หรือเว้นว่าง</p>}
+            {!priceValid && <p className="text-xs text-destructive mt-1">ต้องเป็นจำนวนเต็ม ≥ 0 หรือเว้นว่าง</p>}
           </div>
           <div>
-            <Label className="mb-1 block text-black">Image URL</Label>
+            <Label className="mb-1.5 block">Image URL</Label>
             <Input
               value={form.image_url || ''}
               onChange={(e) => update('image_url', e.target.value)}
               placeholder="https://..."
-              className="text-black"
+              className="h-11 rounded-xl"
             />
           </div>
         </div>
 
         {/* Tags */}
         <div>
-          <Label className="mb-1 block text-black">Tags (comma separated)</Label>
+          <Label className="mb-1.5 block">Tags (comma separated)</Label>
           <Input
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
             placeholder="temple, history, culture"
-            className="text-black"
+            className="h-11 rounded-xl"
           />
         </div>
         
         {/* Visit details & opening hours */}
-        <div className="pt-4 border-t border-gray-300">
+        <div className="pt-4 border-t border-border">
           <h2 className="text-lg font-semibold mb-3">Visit details</h2>
           <PlaceDetailsFields value={details} onChange={setDetails} />
         </div>
 
         {/* Actions */}
         <div className="flex gap-3 items-center">
-          <Button onClick={handleSubmit} disabled={!canSubmit} className='bg-blue-600 hover:bg-blue-700 text-white'>
+          <Button onClick={handleSubmit} disabled={!canSubmit} className='h-12 rounded-full px-7 text-base'>
             Add place
           </Button>
-          {busy && <div className="text-sm text-gray-600">Working...</div>}
+          {busy && <div className="text-sm text-muted-foreground">Working...</div>}
         </div>
 
-        {error && <div className="text-sm text-red-600">{error}</div>}
+        {error && <div className="text-sm text-destructive">{error}</div>}
         {result && (
-          <pre className="text-xs bg-gray-50 p-3 rounded-md border overflow-auto max-h-64 text-black">
+          <pre className="text-xs bg-muted p-3 rounded-md border overflow-auto max-h-64 text-foreground">
             {JSON.stringify(result, null, 2)}
           </pre>
         )}
+      </div>
       </div>
     </div>
   )

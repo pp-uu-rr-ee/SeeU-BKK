@@ -1,32 +1,27 @@
+"use client"
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, ArrowLeft } from 'lucide-react'
+import { MailCheck, ArrowLeft } from 'lucide-react'
+import { AuthHeading } from '@/components/auth/auth-shell'
+import { useTranslation } from '@/contexts/language-context'
 
 export default function VerifyEmailPage() {
+  const { t } = useTranslation()
+
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1 text-center">
-        <div className="flex justify-center mb-4">
-          <Mail className="h-16 w-16 text-blue-500" />
-        </div>
-        <CardTitle className="text-2xl">Check your email</CardTitle>
-        <CardDescription>
-          We&apos;ve sent you a verification email. Click the link in the email to verify your account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-center text-sm text-muted-foreground">
-          <p>Didn&apos;t receive the email?</p>
-          <p>Check your spam folder or contact support if you need help.</p>
-        </div>
-        <Link href="/auth/login" className="w-full block">
-          <Button variant="outline" className="w-full">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to sign in
-          </Button>
+    <div role="status">
+      <span className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-teal-soft text-primary">
+        <MailCheck className="h-7 w-7" aria-hidden />
+      </span>
+      <AuthHeading title={t('auth.verifyTitle')} subtitle={t('auth.verifyDesc')} />
+      <p className="text-sm text-muted-foreground">{t('auth.verifyHelp')}</p>
+      <Button asChild variant="secondary" className="mt-6 h-12 w-full rounded-full text-base">
+        <Link href="/auth/login">
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          {t('auth.backToSignIn')}
         </Link>
-      </CardContent>
-    </Card>
+      </Button>
+    </div>
   )
 }

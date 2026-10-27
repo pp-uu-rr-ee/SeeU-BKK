@@ -4,7 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { supabase } from '../lib/supabase'
 import { openaiEmbed } from '../lib/openai'
 import { nameToSlug } from '../lib/slug-utils'
-import { buildPlaceEmbeddingText } from '../lib/place-data'
+import { PLACE_COLUMNS, buildPlaceEmbeddingText, placeSearchFilter } from '../lib/place-data'
 import { authMiddleware, roleGuard } from '../middleware/auth'
 
 const admin = new Hono()
@@ -107,23 +107,23 @@ admin.get('/places', async (c) => {
   try {
     const { search, limit = '20', offset = '0' } = c.req.query()
 
+    // Exclude the heavy embedding vector; embedding presence is looked up separately below
     let query = supabase
       .from('bangkok_unseen')
-      .select('*')
-      // Order by name to avoid missing timestamp columns
+      .select(PLACE_COLUMNS, { count: 'exact' })
       .order('name', { ascending: true })
 
-    // Add search functionality if search parameter is provided
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+    const filter = search ? placeSearchFilter(search) : null
+    if (filter) {
+      query = query.or(filter)
     }
 
     // Pagination
-    const limitNum = parseInt(limit)
-    const offsetNum = parseInt(offset)
+    const limitNum = Math.min(Math.max(parseInt(limit) || 20, 1), 100)
+    const offsetNum = Math.max(parseInt(offset) || 0, 0)
     query = query.range(offsetNum, offsetNum + limitNum - 1)
 
-    const { data, error } = await query
+    const { data: rows, error, count: totalCount } = await query
 
     if (error) {
       console.error('Error fetching places:', error)
@@ -135,18 +135,20 @@ admin.get('/places', async (c) => {
       }, 500)
     }
 
-    // Get total count for pagination
-    const { count: totalCount } = await supabase
-      .from('bangkok_unseen')
-      .select('*', { count: 'exact', head: true })
+    const data = (rows || []) as any[]
+    const { data: embedded } = data.length
+      ? await supabase.from('bangkok_unseen').select('id').in('id', data.map((p) => p.id)).not('embedding', 'is', null)
+      : { data: [] as { id: string }[] }
+    const embeddedIds = new Set((embedded || []).map((r) => r.id))
 
     // Clean the data and add slugs
-    const cleanData = (data || []).map(place => ({
+    const cleanData = data.map(place => ({
       ...place,
       image_url: place.image_url || '',
       tags: Array.isArray(place.tags) ? place.tags : [],
       price: typeof place.price === 'number' ? place.price : 0,
-      slug: nameToSlug(place.name || 'unknown-place')
+      slug: place.slug || nameToSlug(place.name || 'unknown-place'),
+      has_embedding: embeddedIds.has(place.id),
     }))
 
     return c.json({

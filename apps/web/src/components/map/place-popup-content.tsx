@@ -140,9 +140,9 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
-      <Card className="w-80 shadow-xl border-0 overflow-hidden bg-white">
+      <Card className="w-80 shadow-xl border-0 overflow-hidden bg-card">
         {/* Header Image */}
-        <div className="relative h-36 bg-gradient-to-br from-blue-500 to-purple-600">
+        <div className="relative h-36 bg-teal-soft">
           {popupImageUrl && !imageError ? (
             <img
               src={popupImageUrl}
@@ -152,7 +152,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Camera className="w-12 h-12 text-white/50" />
+              <Camera className="w-12 h-12 text-primary/40" />
             </div>
           )}
           
@@ -164,7 +164,8 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
+            aria-label="Close"
+            className="absolute top-2 right-2 h-9 w-9 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -174,9 +175,11 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             variant="ghost"
             size="icon"
             onClick={handleFavorite}
-            className={`absolute top-2 left-2 h-8 w-8 rounded-full ${
+            aria-label="Save to favorites"
+            aria-pressed={isFavorite}
+            className={`absolute top-2 left-2 h-9 w-9 rounded-full ${
               isFavorite
-                ? 'bg-red-500 text-white hover:bg-red-600'
+                ? 'bg-destructive text-white hover:bg-destructive/90'
                 : 'bg-black/30 text-white hover:bg-black/50'
             } hover:text-white`}
           >
@@ -185,11 +188,11 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
 
           {/* Title and price overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-bold text-lg leading-tight mb-1 drop-shadow-md">
+            <h3 className="font-display text-white font-semibold text-xl leading-tight mb-1 drop-shadow-md">
               {place.name}
             </h3>
             <div className="flex items-center gap-2">
-              <span className="text-green-400 font-semibold text-sm drop-shadow-md">
+              <span className="text-saffron font-semibold text-sm drop-shadow-md">
                 {place.price > 0 ? `฿${place.price}` : 'Free'}
               </span>
               {distance && (
@@ -210,7 +213,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  className="text-xs px-2 py-0.5 bg-secondary text-foreground/80 hover:bg-secondary"
                 >
                   {tag}
                 </Badge>
@@ -218,7 +221,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
               {place.tags.length > 3 && (
                 <Badge
                   variant="outline"
-                  className="text-xs px-2 py-0.5 text-gray-500"
+                  className="text-xs px-2 py-0.5 text-muted-foreground"
                 >
                   +{place.tags.length - 3}
                 </Badge>
@@ -227,7 +230,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
           )}
 
           {/* Description */}
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+          <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
             {place.description.length > 100
               ? `${place.description.substring(0, 100)}...`
               : place.description}
@@ -235,21 +238,21 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
 
           {/* Address */}
           {place.address && (
-            <div className="flex items-start gap-2 mb-4 text-sm text-gray-500">
-              <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-2 mb-4 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <span className="leading-tight line-clamp-2">{place.address}</span>
             </div>
           )}
 
           {/* Quick info row */}
-          <div className="flex items-center justify-between mb-4 p-2 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded-lg">
             <div className="flex items-center gap-1.5 text-sm">
-              <Star className="h-4 w-4 text-yellow-400 fill-current" />
-              <span className="font-medium text-gray-700">4.5</span>
-              <span className="text-gray-400 text-xs">(128)</span>
+              <Star className="h-4 w-4 text-saffron fill-current" />
+              <span className="font-medium text-foreground/80">4.5</span>
+              <span className="text-muted-foreground text-xs">(128)</span>
             </div>
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-              <Clock className="h-4 w-4 text-gray-400" />
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 text-muted-foreground" />
               <span>~1 hour</span>
             </div>
           </div>
@@ -258,7 +261,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
           <div className="flex gap-2">
             <Button
               onClick={onViewDetails}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium"
               size="sm"
             >
               View Details

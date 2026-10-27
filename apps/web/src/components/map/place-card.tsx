@@ -61,7 +61,7 @@ export const PlaceCard = memo(function PlaceCard({
       stars.push(
         <Star 
           key={`full-${i}`} 
-          className="h-3.5 w-3.5 text-yellow-400 fill-current" 
+          className="h-3.5 w-3.5 text-saffron fill-current" 
         />
       );
     }
@@ -70,9 +70,9 @@ export const PlaceCard = memo(function PlaceCard({
     if (halfStar) {
       stars.push(
         <div key="half" className="relative">
-          <Star className="h-3.5 w-3.5 text-gray-300" />
+          <Star className="h-3.5 w-3.5 text-muted-foreground" />
           <div className="absolute inset-0 overflow-hidden w-1/2">
-            <Star className="h-3.5 w-3.5 text-yellow-400 fill-current" />
+            <Star className="h-3.5 w-3.5 text-saffron fill-current" />
           </div>
         </div>
       );
@@ -83,7 +83,7 @@ export const PlaceCard = memo(function PlaceCard({
       stars.push(
         <Star 
           key={`empty-${i}`} 
-          className="h-3.5 w-3.5 text-gray-300" 
+          className="h-3.5 w-3.5 text-muted-foreground" 
         />
       );
     }
@@ -99,13 +99,13 @@ export const PlaceCard = memo(function PlaceCard({
       className={className}
     >
       <Card 
-        className={`overflow-hidden cursor-pointer bg-white border-0 shadow-md hover:shadow-xl transition-shadow duration-300 ${
+        className={`overflow-hidden cursor-pointer bg-card border-0 shadow-md hover:shadow-xl transition-shadow duration-300 ${
           isCompact ? 'h-auto' : ''
         }`}
         onClick={onClick}
       >
         {/* Image Section */}
-        <div className={`relative bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 ${
+        <div className={`relative bg-teal-soft ${
           isCompact ? 'h-24' : 'h-32'
         }`}>
           {image_url && !imageError ? (
@@ -113,7 +113,7 @@ export const PlaceCard = memo(function PlaceCard({
               {/* Placeholder while loading */}
               {!imageLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-white/50 animate-pulse" />
+                  <Camera className="w-8 h-8 text-primary/40 animate-pulse" />
                 </div>
               )}
               <img
@@ -130,7 +130,7 @@ export const PlaceCard = memo(function PlaceCard({
           ) : (
             // Gradient placeholder with icon
             <div className="absolute inset-0 flex items-center justify-center">
-              <Camera className="w-8 h-8 text-white/50" />
+              <Camera className="w-8 h-8 text-primary/40" />
             </div>
           )}
           
@@ -140,7 +140,7 @@ export const PlaceCard = memo(function PlaceCard({
 
         <CardContent className={`${isCompact ? 'p-3' : 'p-4'}`}>
           {/* Place Name */}
-          <h3 className={`font-semibold text-gray-900 leading-tight mb-1.5 line-clamp-1 ${
+          <h3 className={`font-semibold text-foreground leading-tight mb-1.5 line-clamp-1 ${
             isCompact ? 'text-sm' : 'text-base'
           }`}>
             {name}
@@ -153,15 +153,15 @@ export const PlaceCard = memo(function PlaceCard({
                 <div className="flex items-center gap-0.5">
                   {renderStars()}
                 </div>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-foreground/80">
                   {formatRating(rating)}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-muted-foreground">
                   ({reviewCount})
                 </span>
               </>
             ) : (
-              <span className="text-xs text-gray-400">{t('placeDetail.noReviews')}</span>
+              <span className="text-xs text-muted-foreground">{t('placeDetail.noReviews')}</span>
             )}
           </div>
 
@@ -172,7 +172,7 @@ export const PlaceCard = memo(function PlaceCard({
                 <Badge
                   key={index}
                   variant="secondary"
-                  className="text-xs px-1.5 py-0 bg-gray-100 text-gray-600 hover:bg-gray-200 capitalize"
+                  className="text-xs px-1.5 py-0 bg-secondary text-muted-foreground hover:bg-secondary capitalize"
                 >
                   {tag}
                 </Badge>
@@ -180,7 +180,7 @@ export const PlaceCard = memo(function PlaceCard({
               {tags.length > (isCompact ? 2 : 3) && (
                 <Badge
                   variant="outline"
-                  className="text-xs px-1.5 py-0 text-gray-400 border-gray-200"
+                  className="text-xs px-1.5 py-0 text-muted-foreground border-border"
                 >
                   +{tags.length - (isCompact ? 2 : 3)}
                 </Badge>
@@ -190,7 +190,7 @@ export const PlaceCard = memo(function PlaceCard({
 
           {/* Description (only in default variant) */}
           {!isCompact && description && (
-            <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
               {description}
             </p>
           )}

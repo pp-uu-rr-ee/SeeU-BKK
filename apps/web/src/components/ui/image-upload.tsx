@@ -191,12 +191,12 @@ export function ImageUpload({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <Label className="text-sm font-medium">Profile Picture</Label>
+      <Label className="sr-only">Profile picture</Label>
       
       <div className="flex items-center space-x-4">
         {/* Avatar Display */}
         <div className={`relative ${sizeClasses[size]} flex-shrink-0`}>
-          <div className={`${sizeClasses[size]} rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden`}>
+          <div className={`${sizeClasses[size]} rounded-full border-2 border-dashed border-border bg-teal-soft flex items-center justify-center overflow-hidden`}>
             {displayUrl ? (
               <img
                 src={displayUrl}
@@ -204,7 +204,7 @@ export function ImageUpload({
                 className="w-full h-full object-cover rounded-full"
               />
             ) : (
-              <User className={`${iconSizes[size]} text-gray-400`} />
+              <User className={`${iconSizes[size]} text-primary/60`} />
             )}
           </div>
 
@@ -224,7 +224,7 @@ export function ImageUpload({
             size="sm"
             onClick={openFileDialog}
             disabled={disabled || uploading}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 rounded-full"
           >
             {uploading ? (
               <>
@@ -246,7 +246,7 @@ export function ImageUpload({
               size="sm"
               onClick={handleRemoveImage}
               disabled={disabled || uploading}
-              className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+              className="flex items-center space-x-2 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <X className="h-4 w-4" />
               <span>Remove</span>
@@ -266,7 +266,7 @@ export function ImageUpload({
       />
 
       {/* Upload guidelines */}
-      <div className="text-xs text-gray-500 space-y-1">
+      <div className="text-xs text-muted-foreground space-y-1">
         <p>• Supported formats: JPEG, PNG, WebP</p>
         <p>• Maximum file size: 5MB</p>
         <p>• Recommended size: 400x400 pixels</p>

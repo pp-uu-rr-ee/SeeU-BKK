@@ -190,17 +190,17 @@ export const AdminMapPicker: React.FC<AdminMapPickerProps> = ({
       {/* Map container */}
       <div 
         ref={mapContainer} 
-        className="w-full h-full rounded-lg overflow-hidden border-2 border-gray-300"
+        className="w-full h-full rounded-lg overflow-hidden border-2 border-border"
         style={{ minHeight: '400px' }}
       />
       
       {/* Instructions overlay */}
-      <Card className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm shadow-lg p-3 max-w-xs">
+      <Card className="absolute top-4 left-4 bg-card/95 backdrop-blur-sm shadow-lg p-3 max-w-xs">
         <div className="flex items-start gap-2">
-          <MapPin className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <MapPin className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
           <div className="text-sm">
-            <p className="font-semibold text-gray-900 mb-1">Click to place marker</p>
-            <p className="text-gray-600">Click anywhere on the map to set the POI location. You can drag the marker to adjust.</p>
+            <p className="font-semibold text-foreground mb-1">Click to place marker</p>
+            <p className="text-muted-foreground">Click anywhere on the map to set the POI location. You can drag the marker to adjust.</p>
           </div>
         </div>
       </Card>
@@ -208,7 +208,7 @@ export const AdminMapPicker: React.FC<AdminMapPickerProps> = ({
       {/* Current location button */}
       <Button
         onClick={handleGetCurrentLocation}
-        className="absolute top-4 right-4 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+        className="absolute top-4 right-4 bg-primary hover:bg-primary/90 text-white shadow-lg"
         size="sm"
       >
         <Navigation className="h-4 w-4 mr-2" />
@@ -217,10 +217,10 @@ export const AdminMapPicker: React.FC<AdminMapPickerProps> = ({
 
       {/* Coordinates display */}
       {currentCoords && (
-        <Card className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm shadow-lg p-3">
+        <Card className="absolute bottom-4 left-4 bg-card/95 backdrop-blur-sm shadow-lg p-3">
           <div className="text-sm">
-            <p className="font-semibold text-gray-900 mb-1">Selected Location:</p>
-            <p className="text-gray-600">
+            <p className="font-semibold text-foreground mb-1">Selected Location:</p>
+            <p className="text-muted-foreground">
               Lat: {currentCoords.lat.toFixed(6)}, Lng: {currentCoords.lng.toFixed(6)}
             </p>
           </div>
@@ -229,10 +229,10 @@ export const AdminMapPicker: React.FC<AdminMapPickerProps> = ({
       
       {/* Loading overlay */}
       {!mapLoaded && (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center rounded-lg">
+        <div className="absolute inset-0 bg-secondary flex items-center justify-center rounded-lg">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading map...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading map...</p>
           </div>
         </div>
       )}

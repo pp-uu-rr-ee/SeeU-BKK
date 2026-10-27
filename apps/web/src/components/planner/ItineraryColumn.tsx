@@ -41,9 +41,9 @@ interface Props {
 }
 
 const categoryColors: Record<TripStop["category"], string> = {
-  Cafe: "bg-amber-100 text-amber-800 border-amber-200",
+  Cafe: "bg-accent text-accent-foreground border-saffron/40",
   Restaurant: "bg-orange-100 text-orange-800 border-orange-200",
-  Temple: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  Temple: "bg-teal-soft text-primary border-primary/30",
   Shopping: "bg-pink-100 text-pink-800 border-pink-200",
   Viewpoint: "bg-teal-100 text-teal-800 border-teal-200",
 };
@@ -128,7 +128,7 @@ export function ItineraryColumn({
         aria-label="Trip itinerary"
       >
         <div className="flex items-center justify-center h-full text-center p-8">
-          <p className="text-slate-500">Select a trip to view itinerary</p>
+          <p className="text-muted-foreground">Select a trip to view itinerary</p>
         </div>
       </aside>
     );
@@ -148,13 +148,13 @@ export function ItineraryColumn({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h2
-            className="text-xl font-bold text-slate-800 truncate pr-2"
+            className="font-display text-xl font-semibold text-foreground truncate pr-2"
             title={trip.name}
           >
             {trip.name}
           </h2>
           {mode === "draft" && (
-            <p className="text-xs text-amber-700 mt-1">AI Draft preview</p>
+            <p className="text-xs text-accent-foreground mt-1">AI Draft preview</p>
           )}
         </div>
         <div className="flex gap-2 shrink-0">
@@ -181,7 +181,7 @@ export function ItineraryColumn({
       </div>
 
       {/* Trip metadata */}
-      <div className="flex items-center gap-4 text-sm text-slate-600 pb-2 border-b border-slate-200">
+      <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2 border-b border-border">
         <span className="flex items-center gap-1">
           <Clock className="w-4 h-4" aria-hidden="true" />
           {Math.floor(displayTotalDurationMin / 60)}h {displayTotalDurationMin % 60}
@@ -194,7 +194,7 @@ export function ItineraryColumn({
       </div>
 
       {warnings.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="rounded-lg border border-saffron/40 bg-accent px-3 py-2 text-xs text-accent-foreground">
           {warnings[0]}
         </div>
       )}
@@ -218,7 +218,7 @@ export function ItineraryColumn({
               {orderedStops.map((stop, index) => (
                 <SortableStopCard key={stop.id} id={stop.id}>
                   <Card
-                    className="bg-white border border-slate-200 shadow-sm hover:shadow-md hover:cursor-pointer transition-shadow"
+                    className="bg-card border border-border shadow-sm hover:shadow-md hover:cursor-pointer transition-shadow"
                     role="listitem"
                     onClick={() => onSelectStop?.(stop)}
                   >
@@ -226,18 +226,18 @@ export function ItineraryColumn({
                       {/* Stop number and drag handle */}
                       <div className="flex flex-col items-center gap-1 pt-1">
                         <span
-                          className="font-bold text-lg text-slate-700 w-6 h-6 flex items-center justify-center"
+                          className="font-bold text-lg text-foreground/80 w-6 h-6 flex items-center justify-center"
                           aria-label={`Stop ${index + 1}`}
                         >
                           {index + 1}
                         </span>
                         <button
-                          className="cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                          className="cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring rounded"
                           aria-label={`Reorder stop: ${stop.name}`}
                           tabIndex={0}
                         >
                           <GripVertical
-                            className="w-5 h-5 text-slate-300 hover:text-slate-400"
+                            className="w-5 h-5 text-muted-foreground hover:text-foreground"
                             aria-hidden="true"
                           />
                         </button>
@@ -246,7 +246,7 @@ export function ItineraryColumn({
                       {/* Stop details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2 mb-1">
-                          <h4 className="font-semibold text-slate-800 text-sm leading-tight">
+                          <h4 className="font-semibold text-foreground text-sm leading-tight">
                             {stop.name}
                           </h4>
                           <span
@@ -261,17 +261,17 @@ export function ItineraryColumn({
                           </span>
                         </div>
                         <p
-                          className="text-xs text-slate-500 mt-1 line-clamp-1"
+                          className="text-xs text-muted-foreground mt-1 line-clamp-1"
                           title={stop.address}
                         >
                           {stop.address}
                         </p>
                         <div className="flex items-center gap-1 mt-2">
                           <Clock
-                            className="w-3 h-3 text-slate-400"
+                            className="w-3 h-3 text-muted-foreground"
                             aria-hidden="true"
                           />
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-muted-foreground">
                             Suggested: {stop.suggestedDurationMin} mins
                           </p>
                         </div>
@@ -281,7 +281,7 @@ export function ItineraryColumn({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="w-7 h-7 shrink-0 text-slate-500 hover:text-red-600"
+                        className="w-7 h-7 shrink-0 text-muted-foreground hover:text-destructive"
                         aria-label={`Delete stop: ${stop.name}`}
                         onClick={() => onDeleteStop?.(trip.id, stop.id)}
                       >

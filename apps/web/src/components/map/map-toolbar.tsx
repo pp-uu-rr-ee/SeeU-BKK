@@ -33,7 +33,7 @@ export function MapToolbar({
   return (
     <div
       className={cn(
-        "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full shadow-lg px-2 py-1.5 border border-slate-200",
+        "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-card/95 backdrop-blur-md rounded-full shadow-lg px-2 py-1.5 border border-border",
         className
       )}
     >
@@ -45,8 +45,8 @@ export function MapToolbar({
         className={cn(
           "rounded-full gap-2 transition-all",
           isTripsPanelOpen
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            ? "bg-primary text-white hover:bg-primary/90"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
         )}
         aria-label={isTripsPanelOpen ? "Hide trips panel" : "Show trips panel"}
       >
@@ -60,7 +60,7 @@ export function MapToolbar({
       </Button>
 
       {/* Divider */}
-      <div className="w-px h-6 bg-slate-200" />
+      <div className="w-px h-6 bg-secondary" />
 
       {/* Itinerary Panel Toggle */}
       <Button
@@ -70,8 +70,8 @@ export function MapToolbar({
         className={cn(
           "rounded-full gap-2 transition-all",
           isItineraryPanelOpen
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            ? "bg-primary text-white hover:bg-primary/90"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
         )}
         aria-label={
           isItineraryPanelOpen ? "Hide itinerary panel" : "Show itinerary panel"
@@ -87,7 +87,7 @@ export function MapToolbar({
       </Button>
 
       {/* Divider */}
-      <div className="w-px h-6 bg-slate-200" />
+      <div className="w-px h-6 bg-secondary" />
 
       {/* Chat Toggle */}
       <Button
@@ -97,8 +97,8 @@ export function MapToolbar({
         className={cn(
           "rounded-full gap-2 transition-all",
           isChatOpen
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            ? "bg-primary text-white hover:bg-primary/90"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
         )}
         aria-label={isChatOpen ? "Hide chat" : "Show chat"}
       >

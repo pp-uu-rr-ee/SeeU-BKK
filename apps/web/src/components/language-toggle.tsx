@@ -1,31 +1,40 @@
 "use client";
 
 import React from "react";
-import { useLanguage } from "@/contexts/language-context";
+import { useLanguage, type Locale } from "@/contexts/language-context";
+import { cn } from "@/lib/utils";
+
+const OPTIONS: Array<{ value: Locale; label: string; aria: string }> = [
+  { value: "en", label: "EN", aria: "Switch to English" },
+  { value: "th", label: "ไทย", aria: "Switch to Thai" },
+];
 
 export default function LanguageToggle({ className = "" }: { className?: string }) {
   const { locale, setLocale } = useLanguage();
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <button
-        aria-label="Switch to English"
-        className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-          locale === "en" ? "bg-blue-500 text-white border-blue-500" : "bg-transparent text-gray-700 border-gray-300"
-        }`}
-        onClick={() => setLocale("en")}
-      >
-        EN
-      </button>
-      <button
-        aria-label="Switch to Thai"
-        className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-          locale === "th" ? "bg-blue-500 text-white border-blue-500" : "bg-transparent text-gray-700 border-gray-300"
-        }`}
-        onClick={() => setLocale("th")}
-      >
-        ไทย
-      </button>
+    <div
+      role="group"
+      aria-label="Language"
+      className={cn("flex items-center rounded-full border border-border bg-card p-0.5", className)}
+    >
+      {OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-label={option.aria}
+          aria-pressed={locale === option.value}
+          className={cn(
+            "h-9 min-w-11 rounded-full px-3 text-sm font-medium transition-colors duration-200",
+            locale === option.value
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setLocale(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }

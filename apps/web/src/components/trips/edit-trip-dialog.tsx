@@ -143,50 +143,50 @@ export function EditTripDialog({
   if (!isOpen || !trip) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto text-black">
+    <div className="fixed inset-0 bg-foreground/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+      <div role="dialog" aria-modal="true" aria-label="Edit Trip" className="bg-card rounded-2xl shadow-card-hover max-w-2xl w-full max-h-[90vh] overflow-y-auto text-foreground">
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between border-b pb-4">
-            <h2 className="text-xl font-semibold">Edit Trip</h2>
+            <h2 className="font-display text-2xl font-semibold text-foreground">Edit Trip</h2>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-secondary rounded"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground/80 mb-1">
               Trip Title
             </label>
             <input
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="e.g., Weekend Temple Tour"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               Stops
             </label>
             <div className="space-y-3">
               {editStops.map((stop, index) => (
                 <div
                   key={index}
-                  className="flex gap-2 items-start p-3 border rounded-md bg-gray-50"
+                  className="flex gap-2 items-start p-3 border rounded-md bg-muted"
                 >
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
                     {index + 1}
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="font-medium text-black">{stop.label}</div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-gray-600">
+                        <label className="text-xs text-muted-foreground">
                           Suggested Time (min)
                         </label>
                         <input
@@ -203,7 +203,7 @@ export function EditTripDialog({
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-600">Notes</label>
+                        <label className="text-xs text-muted-foreground">Notes</label>
                         <input
                           type="text"
                           value={stop.notes}
@@ -218,7 +218,7 @@ export function EditTripDialog({
                     <button
                       onClick={() => moveStopUp(index)}
                       disabled={index === 0}
-                      className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-1 hover:bg-secondary rounded disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Move up"
                     >
                       ↑
@@ -226,14 +226,14 @@ export function EditTripDialog({
                     <button
                       onClick={() => moveStopDown(index)}
                       disabled={index === editStops.length - 1}
-                      className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-1 hover:bg-secondary rounded disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Move down"
                     >
                       ↓
                     </button>
                     <button
                       onClick={() => removeStop(index)}
-                      className="p-1 hover:bg-red-100 text-red-600 rounded"
+                      className="p-1 hover:bg-destructive/10 text-destructive rounded"
                       title="Remove stop"
                     >
                       <X className="w-4 h-4" />

@@ -104,10 +104,10 @@ export function BottomSheet({
         onTouchMove={handleDragMove}
         onTouchEnd={handleDragEnd}
       >
-        <div className="bg-white rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col">
+        <div className="bg-card rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col">
           {/* Drag Handle & Peek Header */}
           <div
-            className="flex flex-col items-center justify-center gap-2 px-4 pt-3 pb-3 cursor-grab active:cursor-grabbing select-none touch-none border-b border-slate-200/80"
+            className="flex flex-col items-center justify-center gap-2 px-4 pt-3 pb-3 cursor-grab active:cursor-grabbing select-none touch-none border-b border-border"
             onTouchStart={handleDragStart}
             onClick={handlePeekClick}
             role="button"
@@ -124,19 +124,19 @@ export function BottomSheet({
               }
             }}
           >
-            <div className="w-12 h-1 bg-slate-300 rounded-full" />
+            <div className="w-12 h-1 bg-secondary rounded-full" />
             <div className="flex items-center justify-between w-full text-sm">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-900 truncate">
+                <p className="font-semibold text-foreground truncate">
                   {title || "Trip details"}
                 </p>
-                <p className="text-slate-500 text-xs">
+                <p className="text-muted-foreground text-xs">
                   {isOpen ? "Swipe down or tap to collapse" : "Tap to reopen your trip and itinerary"}
                 </p>
               </div>
               <ChevronUp
                 className={cn(
-                  "h-5 w-5 text-slate-500 transition-transform duration-200",
+                  "h-5 w-5 text-muted-foreground transition-transform duration-200",
                   !isOpen && "rotate-180"
                 )}
               />

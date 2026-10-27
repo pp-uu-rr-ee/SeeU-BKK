@@ -1,22 +1,33 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, IBM_Plex_Sans_Thai, Noto_Serif_Thai } from "next/font/google";
 import "../index.css";
 import Providers from "@/components/providers";
 import Header from "@/components/header";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
+// Display serif for Latin; Thai glyphs fall back to Noto Serif Thai (see --font-display)
+const fraunces = Fraunces({
+	variable: "--font-fraunces",
 	subsets: ["latin"],
+	display: "swap",
 });
 
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+const notoSerifThai = Noto_Serif_Thai({
+	variable: "--font-noto-serif-thai",
+	subsets: ["thai"],
+	weight: ["500", "600", "700"],
+	display: "swap",
+});
+
+const plexSansThai = IBM_Plex_Sans_Thai({
+	variable: "--font-plex-thai",
+	subsets: ["thai", "latin"],
+	weight: ["400", "500", "600", "700"],
+	display: "swap",
 });
 
 export const metadata: Metadata = {
-	title: "TripPlanner-fyp",
-	description: "TripPlanner-fyp",
+	title: "SeeU Bangkok — Discover Bangkok beyond the guidebook",
+	description: "Find hidden gems in Bangkok's old town, plan walking routes on the map, and ask an AI trip planner in Thai or English.",
 };
 
 export default function RootLayout({
@@ -26,11 +37,12 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
+			{/* Font variables live on <body>: next-themes rewrites the <html> class at runtime */}
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				className={`${fraunces.variable} ${notoSerifThai.variable} ${plexSansThai.variable} font-sans antialiased`}
 			>
 				<Providers>
-					<div className="min-h-screen bg-gray-50">
+					<div className="min-h-screen bg-background">
 						<Header />
 						<main>
 							{children}

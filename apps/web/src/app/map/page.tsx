@@ -880,26 +880,26 @@ export default function TripPlannerPage() {
       >
         <div className="relative">
           <div className="relative flex items-center">
-            <Search className="absolute left-4 text-gray-400 h-5 w-5 pointer-events-none" />
+            <Search className="absolute left-4 text-muted-foreground h-5 w-5 pointer-events-none" />
             <Input
               type="text"
               placeholder={t("map.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-12 h-12 rounded-full shadow-xl border-0 bg-white/95 backdrop-blur-md text-gray-900 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="pl-12 pr-12 h-12 rounded-full shadow-xl border-0 bg-card/95 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
             />
             {(searchQuery || selectedCategory !== 'all') && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleClearSearch}
-                className="absolute right-2 h-8 w-8 rounded-full hover:bg-gray-100"
+                className="absolute right-2 h-8 w-8 rounded-full hover:bg-secondary"
               >
-                <X className="h-4 w-4 text-gray-500" />
+                <X className="h-4 w-4 text-muted-foreground" />
               </Button>
             )}
             {isSearching && (
-              <Loader2 className="absolute right-12 h-5 w-5 text-blue-500 animate-spin" />
+              <Loader2 className="absolute right-12 h-5 w-5 text-primary animate-spin" />
             )}
           </div>
         </div>
@@ -922,8 +922,8 @@ export default function TripPlannerPage() {
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
                 className={`flex items-center gap-2 whitespace-nowrap rounded-full transition-all ${isSelected
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
-                  : 'bg-white/95 backdrop-blur-md hover:bg-gray-50 border-0 shadow-md'
+                  ? 'bg-primary hover:bg-primary/90 text-white shadow-md'
+                  : 'bg-card/95 backdrop-blur-md hover:bg-secondary border-0 shadow-md'
                   }`}
               >
                 <Icon className="h-4 w-4" />
@@ -940,16 +940,16 @@ export default function TripPlannerPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-[calc(100%+0.75rem)] left-0 right-0 mt-0 overflow-hidden rounded-2xl bg-white/95 shadow-xl backdrop-blur-md max-h-[min(48vh,420px)] overflow-y-auto md:max-h-[420px]"
+              className="absolute top-[calc(100%+0.75rem)] left-0 right-0 mt-0 overflow-hidden rounded-2xl bg-card/95 shadow-xl backdrop-blur-md max-h-[min(48vh,420px)] overflow-y-auto md:max-h-[420px]"
             >
               <div className="p-3 sm:p-4">
-                <div className="px-1 py-2 text-sm text-gray-500 flex items-center justify-between gap-3">
+                <div className="px-1 py-2 text-sm text-muted-foreground flex items-center justify-between gap-3">
                   <span>Found {searchResults.length} places</span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleClearSearch}
-                    className="text-xs text-gray-400 hover:text-gray-600"
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     Clear
                   </Button>
@@ -988,11 +988,11 @@ export default function TripPlannerPage() {
                           e.stopPropagation();
                           handleAddPlaceToTrip(place);
                         }}
-                        className="absolute top-2 right-2 h-9 min-w-9 px-2 sm:h-7 sm:w-7 sm:min-w-7 sm:p-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-white/95 hover:bg-white shadow-md"
+                        className="absolute top-2 right-2 h-9 min-w-9 px-2 sm:h-7 sm:w-7 sm:min-w-7 sm:p-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-card/95 hover:bg-white shadow-md"
                         title="Add to Trip"
                         aria-label={`Add ${place.name} to trip`}
                       >
-                        <Plus className="h-4 w-4 text-blue-600" />
+                        <Plus className="h-4 w-4 text-primary" />
                         <span className="sr-only sm:not-sr-only sm:hidden">Add</span>
                       </Button>
                     </motion.div>
@@ -1002,7 +1002,7 @@ export default function TripPlannerPage() {
                 {/* Show more results if available */}
                 {searchResults.length > 6 && (
                   <div className="mt-3 text-center">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-muted-foreground">
                       +{searchResults.length - 6} more results
                     </span>
                   </div>
@@ -1023,12 +1023,12 @@ export default function TripPlannerPage() {
           width="w-[400px]"
         >
           {/* Tab switcher */}
-          <div className="flex gap-1 mb-4 p-1 bg-slate-100 rounded-lg">
+          <div className="flex gap-1 mb-4 p-1 bg-secondary rounded-lg">
             <button
               onClick={() => setLeftPanelTab('trips')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'trips'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               <MapIcon className="h-4 w-4" />
@@ -1040,8 +1040,8 @@ export default function TripPlannerPage() {
                 fetchChatSessions();
               }}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'history'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               <MessageSquare className="h-4 w-4" />
@@ -1110,12 +1110,12 @@ export default function TripPlannerPage() {
         peekHeight={120}
       >
         <div className="px-4 space-y-6">
-          <div className="flex gap-1 mb-4 p-1 bg-slate-100 rounded-lg">
+          <div className="flex gap-1 mb-4 p-1 bg-secondary rounded-lg">
             <button
               onClick={() => setLeftPanelTab('trips')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'trips'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               <MapIcon className="h-4 w-4" />
@@ -1127,8 +1127,8 @@ export default function TripPlannerPage() {
                 fetchChatSessions();
               }}
               className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'history'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
               <MessageSquare className="h-4 w-4" />
@@ -1154,7 +1154,7 @@ export default function TripPlannerPage() {
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                <h3 className="text-sm font-semibold text-foreground/80 mb-3">
                   Itinerary
                 </h3>
                 <ItineraryColumn

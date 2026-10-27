@@ -117,8 +117,8 @@ export function AddTripStopDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent className="max-w-2xl gap-0 p-0 bg-white text-slate-900 shadow-2xl border border-slate-200">
-				<DialogHeader className="border-b border-slate-200 px-6 py-4">
+			<DialogContent className="max-w-2xl gap-0 p-0 bg-card text-foreground shadow-2xl border border-border">
+				<DialogHeader className="border-b border-border px-6 py-4">
 					<DialogTitle>Add place to trip</DialogTitle>
 					<DialogDescription>
 						Search existing places and append one to the selected trip.
@@ -127,7 +127,7 @@ export function AddTripStopDialog({
 
 				<div className="space-y-4 px-6 py-4">
 					<div className="relative">
-						<Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+						<Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
 							value={searchQuery}
 							onChange={(event) => setSearchQuery(event.target.value)}
@@ -138,12 +138,12 @@ export function AddTripStopDialog({
 
 					<div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
 						{isLoading ? (
-							<div className="flex items-center justify-center py-12 text-sm text-slate-500">
+							<div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 								Loading places...
 							</div>
 						) : filteredPlaces.length === 0 ? (
-							<div className="py-12 text-center text-sm text-slate-500">
+							<div className="py-12 text-center text-sm text-muted-foreground">
 								No places matched your search.
 							</div>
 						) : (
@@ -156,16 +156,16 @@ export function AddTripStopDialog({
 										onClick={() => setSelectedPlaceId(place.id)}
 										className={`w-full rounded-lg border p-3 text-left transition ${
 											isSelected
-												? "border-blue-500 bg-blue-50"
-												: "border-slate-200 bg-white hover:border-slate-300"
+												? "border-primary bg-teal-soft"
+												: "border-border bg-card hover:border-primary/40"
 										}`}
 									>
 										<div className="flex items-start justify-between gap-3">
 											<div className="min-w-0 flex-1">
-												<div className="font-medium text-slate-900">
+												<div className="font-medium text-foreground">
 													{place.name}
 												</div>
-												<div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+												<div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
 													<MapPin className="h-3 w-3" />
 													<span className="truncate">{place.slug}</span>
 												</div>
@@ -174,7 +174,7 @@ export function AddTripStopDialog({
 														{place.tags.slice(0, 3).map((tag) => (
 															<span
 																key={tag}
-																className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+																className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground"
 															>
 																{tag}
 															</span>
@@ -186,8 +186,8 @@ export function AddTripStopDialog({
 											<div
 												className={`mt-1 h-4 w-4 rounded-full border ${
 													isSelected
-														? "border-blue-600 bg-blue-600"
-														: "border-slate-300"
+														? "border-primary bg-primary"
+														: "border-border"
 												}`}
 											/>
 										</div>

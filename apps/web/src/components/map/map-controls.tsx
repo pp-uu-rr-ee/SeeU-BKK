@@ -76,7 +76,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
       transition={{ duration: 0.5, delay: 0.3 }}
     >
       {/* Zoom Controls */}
-      <Card className={`${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-0'} backdrop-blur-md shadow-lg`}>
+      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
         <CardContent className="p-1 sm:p-1.5">
           <div className="flex flex-col gap-0.5">
             <Button
@@ -85,22 +85,22 @@ export const MapControls: React.FC<MapControlsProps> = ({
               onClick={onZoomIn}
               className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isDarkMode 
-                  ? 'text-gray-200 hover:bg-gray-700 hover:text-white' 
-                  : 'hover:bg-blue-50 hover:text-blue-600'
+                  ? 'text-foreground hover:bg-secondary hover:text-foreground' 
+                  : 'hover:bg-teal-soft hover:text-primary'
               }`}
               title="Zoom In"
             >
               <Plus className="h-4 w-4" />
             </Button>
-            <div className={`h-px mx-1.5 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`} />
+            <div className={`h-px mx-1.5 ${isDarkMode ? 'bg-muted-foreground' : 'bg-secondary'}`} />
             <Button
               variant="ghost"
               size="sm"
               onClick={onZoomOut}
               className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isDarkMode 
-                  ? 'text-gray-200 hover:bg-gray-700 hover:text-white' 
-                  : 'hover:bg-blue-50 hover:text-blue-600'
+                  ? 'text-foreground hover:bg-secondary hover:text-foreground' 
+                  : 'hover:bg-teal-soft hover:text-primary'
               }`}
               title="Zoom Out"
             >
@@ -111,7 +111,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
       </Card>
 
       {/* Style Toggle (Dark/Light/Satellite) */}
-      <Card className={`${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-0'} backdrop-blur-md shadow-lg`}>
+      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
         <CardContent className="p-1 sm:p-1.5">
           <Button
             variant="ghost"
@@ -119,10 +119,10 @@ export const MapControls: React.FC<MapControlsProps> = ({
             onClick={handleStyleToggle}
             className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
               currentStyle === 'satellite'
-                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                ? 'bg-teal-soft text-primary hover:bg-teal-soft'
                 : isDarkMode
-                  ? 'text-gray-200 hover:bg-gray-700 hover:text-white'
-                  : 'hover:bg-blue-50 hover:text-blue-600'
+                  ? 'text-foreground hover:bg-secondary hover:text-foreground'
+                  : 'hover:bg-teal-soft hover:text-primary'
             }`}
             title={styleInfo.title}
           >
@@ -133,7 +133,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
 
       {/* 3D Toggle */}
       {onToggle3D && (
-        <Card className={`${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-0'} backdrop-blur-md shadow-lg`}>
+        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
           <CardContent className="p-1 sm:p-1.5">
             <Button
               variant="ghost"
@@ -143,7 +143,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 is3DEnabled 
                   ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
                   : isDarkMode
-                    ? 'text-gray-200 hover:bg-purple-900/50 hover:text-purple-400'
+                    ? 'text-foreground hover:bg-purple-900/50 hover:text-purple-400'
                     : 'hover:bg-purple-50 hover:text-purple-600'
               }`}
               title={is3DEnabled ? 'Disable 3D Buildings' : 'Enable 3D Buildings'}
@@ -156,7 +156,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
 
       {/* Traffic Toggle */}
       {onToggleTraffic && (
-        <Card className={`${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-0'} backdrop-blur-md shadow-lg`}>
+        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
           <CardContent className="p-1 sm:p-1.5">
             <Button
               variant="ghost"
@@ -166,7 +166,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 isTrafficEnabled 
                   ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' 
                   : isDarkMode
-                    ? 'text-gray-200 hover:bg-orange-900/50 hover:text-orange-400'
+                    ? 'text-foreground hover:bg-orange-900/50 hover:text-orange-400'
                     : 'hover:bg-orange-50 hover:text-orange-600'
               }`}
               title={isTrafficEnabled ? 'Hide Traffic' : 'Show Traffic'}
@@ -179,7 +179,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
 
       {/* User Location */}
       {hasUserLocation && (
-        <Card className={`${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-0'} backdrop-blur-md shadow-lg`}>
+        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
           <CardContent className="p-1 sm:p-1.5">
             <Button
               variant="ghost"
@@ -187,8 +187,8 @@ export const MapControls: React.FC<MapControlsProps> = ({
               onClick={onFlyToUserLocation}
               className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isDarkMode 
-                  ? 'text-gray-200 hover:bg-gray-700 hover:text-white' 
-                  : 'hover:bg-blue-50 hover:text-blue-600'
+                  ? 'text-foreground hover:bg-secondary hover:text-foreground' 
+                  : 'hover:bg-teal-soft hover:text-primary'
               }`}
               title="Go to My Location"
             >
@@ -199,7 +199,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
       )}
 
       {/* Fullscreen Toggle */}
-      <Card className={`${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-0'} backdrop-blur-md shadow-lg`}>
+      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
         <CardContent className="p-1 sm:p-1.5">
           <Button
             variant="ghost"
@@ -213,8 +213,8 @@ export const MapControls: React.FC<MapControlsProps> = ({
             }}
             className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
               isDarkMode 
-                ? 'text-gray-200 hover:bg-gray-700 hover:text-white' 
-                : 'hover:bg-blue-50 hover:text-blue-600'
+                ? 'text-foreground hover:bg-secondary hover:text-foreground' 
+                : 'hover:bg-teal-soft hover:text-primary'
             }`}
             title="Toggle Fullscreen"
           >
