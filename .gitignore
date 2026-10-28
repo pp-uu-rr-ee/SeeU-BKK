@@ -10,6 +10,8 @@ node_modules
 web-bundles
 .github
 *.md
+!docs/**/*.md
+!design-system/**/*.md
 
 *.cursor
 
