@@ -13,52 +13,11 @@ import {
 import { User, LogOut, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { useEffect, useState } from 'react'
 import { useTranslation } from '@/contexts/language-context'
 
 export function AuthButton() {
-  const { user, signOut, loading, getProfile, refreshProfile } = useAuth()
+  const { user, signOut, loading, profile } = useAuth()
   const { t } = useTranslation()
-  const [profile, setProfile] = useState<any>(null)
-  const [profileLoading, setProfileLoading] = useState(false)
-
-  // Load user profile to get nickname
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (user && !profileLoading) {
-        setProfileLoading(true)
-        const { profile: profileData } = await getProfile()
-        setProfile(profileData)
-        setProfileLoading(false)
-      }
-    }
-    loadProfile()
-  }, [user, getProfile])
-
-  // Add a refresh interval to update profile periodically
-  useEffect(() => {
-    if (user) {
-      const interval = setInterval(async () => {
-        const { profile: profileData } = await getProfile()
-        setProfile(profileData)
-      }, 5000) // Refresh every 5 seconds when active
-
-      return () => clearInterval(interval)
-    }
-  }, [user, getProfile])
-
-  // Refresh profile when window gains focus
-  useEffect(() => {
-    const handleFocus = async () => {
-      if (user) {
-        const { profile: profileData } = await getProfile()
-        setProfile(profileData)
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [user, getProfile])
 
   const handleSignOut = async () => {
     try {

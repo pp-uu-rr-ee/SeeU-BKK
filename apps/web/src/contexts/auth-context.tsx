@@ -44,6 +44,8 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  /** Cached profile: loaded once after sign-in, replaced by updateProfile/refreshProfile, cleared on sign-out */
+  profile: UserProfile | null
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signUp: (email: string, password: string, metadata?: { display_name?: string }) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
@@ -268,10 +270,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user])
 
+  // Load the profile once after sign-in (or on page load with an existing session)
+  useEffect(() => {
+    if (user && session?.access_token && !profileCache) {
+      getProfile()
+    }
+  }, [user?.id, session?.access_token])
+
   const value = {
     user,
     session,
     loading,
+    profile: profileCache,
     signIn,
     signUp,
     signOut,
