@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { nameToSlug } from '@/lib/slug-utils';
-import { formatTime, isOpenAt, type OpeningHour } from '@/lib/opening-hours';
+import { bangkokClock, formatTime, isOpenAt, type OpeningHour } from '@/lib/opening-hours';
 import { useAuth } from '@/contexts/auth-context';
 import { useTranslation } from '@/contexts/language-context';
 import Link from 'next/link';
@@ -396,7 +396,7 @@ export default function PlaceDetailPage() {
     );
   }
 
-  const today = new Date().getDay();
+  const today = bangkokClock(new Date()).day;
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
   return (

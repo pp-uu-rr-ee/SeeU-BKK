@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import { formatTime, isOpenAt, type OpeningHour } from "../opening-hours";
+import { bangkokClock, formatTime, isOpenAt, type OpeningHour } from "../opening-hours";
 
-// 2026-10-26 is a Monday (day_of_week 1)
+// Bangkok is UTC+7. 2026-10-26 is a Monday in Bangkok.
 const at = (day: number, time: string) => {
 	const [h, m] = time.split(":").map(Number);
-	return new Date(2026, 9, 25 + day, h, m);
+	return new Date(Date.UTC(2026, 9, 25 + day, h - 7, m));
 };
+
+test("bangkokClock ignores the machine timezone", () => {
+	expect(bangkokClock(new Date("2026-10-26T02:30:00Z"))).toEqual({ day: 1, minutes: 9 * 60 + 30 });
+	expect(bangkokClock(new Date("2026-10-25T20:00:00Z"))).toEqual({ day: 1, minutes: 3 * 60 }); // Sun 20:00 UTC = Mon 03:00 BKK
+});
 
 const daily = (open: string, close: string): OpeningHour[] =>
 	[0, 1, 2, 3, 4, 5, 6].map((d) => ({ day_of_week: d, open_time: open, close_time: close, is_closed: false }));
