@@ -11,10 +11,11 @@ const fraunces = Fraunces({
 	display: "swap",
 });
 
+// Variable font: no explicit weights, so each subset is one @font-face over the full wght range.
+// Listing weights repeats the same file per weight, which breaks the Turbopack production build.
 const notoSerifThai = Noto_Serif_Thai({
 	variable: "--font-noto-serif-thai",
 	subsets: ["thai"],
-	weight: ["500", "600", "700"],
 	display: "swap",
 });
 
