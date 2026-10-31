@@ -5,8 +5,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Heart, Share2, X, Clock, Star, Camera } from 'lucide-react';
+import { MapPin, Navigation, Heart, Share2, X, Camera } from 'lucide-react';
 import { motion } from 'motion/react';
+import type { Locale } from '@/contexts/language-context';
 
 interface Place {
   id: string;
@@ -28,6 +29,9 @@ interface PlacePopupContentProps {
   onClose: () => void;
   userLocation?: [number, number] | null;
   authToken?: string;
+  /** Passed in because the popup is rendered through createRoot, outside the language provider */
+  t: (key: string, vars?: Record<string, string> | string) => string;
+  locale: Locale;
 }
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
@@ -39,6 +43,8 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
   onClose,
   userLocation,
   authToken,
+  t,
+  locale,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -96,7 +102,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
     } catch (error) {
       console.error('Error updating favorite:', error);
       setIsFavorite(!next);
-      toast.error('Could not update favorites');
+      toast.error(t('mapPopup.favoriteFailed'));
     }
   };
 
@@ -164,7 +170,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('mapPopup.close')}
             className="absolute top-2 right-2 h-9 w-9 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
           >
             <X className="h-4 w-4" />
@@ -175,7 +181,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             variant="ghost"
             size="icon"
             onClick={handleFavorite}
-            aria-label="Save to favorites"
+            aria-label={t('mapPopup.saveFavorite')}
             aria-pressed={isFavorite}
             className={`absolute top-2 left-2 h-9 w-9 rounded-full ${
               isFavorite
@@ -193,7 +199,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             </h3>
             <div className="flex items-center gap-2">
               <span className="text-saffron font-semibold text-sm drop-shadow-md">
-                {place.price > 0 ? `฿${place.price}` : 'Free'}
+                {place.price > 0 ? `฿${place.price.toLocaleString(locale === 'th' ? 'th-TH' : 'en-US')}` : t('mapPopup.free')}
               </span>
               {distance && (
                 <>
@@ -244,19 +250,6 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             </div>
           )}
 
-          {/* Quick info row */}
-          <div className="flex items-center justify-between mb-4 p-2 bg-muted rounded-lg">
-            <div className="flex items-center gap-1.5 text-sm">
-              <Star className="h-4 w-4 text-saffron fill-current" />
-              <span className="font-medium text-foreground/80">4.5</span>
-              <span className="text-muted-foreground text-xs">(128)</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>~1 hour</span>
-            </div>
-          </div>
-
           {/* Action buttons */}
           <div className="flex gap-2">
             <Button
@@ -264,7 +257,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
               className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium"
               size="sm"
             >
-              View Details
+              {t('mapPopup.viewDetails')}
             </Button>
 
             <Button
@@ -272,7 +265,8 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
               variant="outline"
               size="icon"
               className="flex-shrink-0"
-              title="Get Directions"
+              title={t('mapPopup.directions')}
+              aria-label={t('mapPopup.directions')}
             >
               <Navigation className="h-4 w-4" />
             </Button>
@@ -282,7 +276,8 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
               variant="outline"
               size="icon"
               className="flex-shrink-0"
-              title="Share"
+              title={t('mapPopup.share')}
+              aria-label={t('mapPopup.share')}
               disabled={isSharing}
             >
               <Share2 className="h-4 w-4" />

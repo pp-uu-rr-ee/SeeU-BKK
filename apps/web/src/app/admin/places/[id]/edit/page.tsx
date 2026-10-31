@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslation } from '@/contexts/language-context'
 import {
   PlaceDetailsFields,
   emptyPlaceDetails,
@@ -49,6 +50,7 @@ export default function AdminEditPlacePage() {
   const params = useParams()
   const router = useRouter()
   const placeId = params?.id as string
+  const { t } = useTranslation()
   
   const [form, setForm] = useState<PlacePayload>({})
   const [tagsText, setTagsText] = useState('')
@@ -85,10 +87,10 @@ export default function AdminEditPlacePage() {
       })
       
       const contentType = res.headers.get('content-type') || ''
-      const data = contentType.includes('application/json') ? await res.json() : { success: false, error: (await res.text()) || 'Unexpected response from server' }
+      const data = contentType.includes('application/json') ? await res.json() : { success: false, error: (await res.text()) || t('admin.unexpectedResponse') }
       
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch place')
+        throw new Error(data.error || t('admin.loadPlaceFailed'))
       }
       
       const place = data.data
@@ -109,7 +111,7 @@ export default function AdminEditPlacePage() {
       setDetails(loadedDetails)
       setOriginalDetails(loadedDetails)
     } catch (e: any) {
-      setError(e?.message || 'Failed to load place')
+      setError(e?.message || t('admin.loadPlaceFailed'))
     } finally {
       setLoading(false)
     }
@@ -131,11 +133,11 @@ export default function AdminEditPlacePage() {
         body: JSON.stringify({ text }),
       })
       const contentType = res.headers.get('content-type') || ''
-      const j = contentType.includes('application/json') ? await res.json() : { success: false, error: (await res.text()) || 'Unexpected response from server' }
-      if (!res.ok || !j.success) throw new Error(j.error || 'Failed to generate embedding')
+      const j = contentType.includes('application/json') ? await res.json() : { success: false, error: (await res.text()) || t('admin.unexpectedResponse') }
+      if (!res.ok || !j.success) throw new Error(j.error || t('admin.embeddingFailed'))
       setEmbedding(j.embedding)
     } catch (e: any) {
-      setError(e?.message || 'Embedding error')
+      setError(e?.message || t('admin.embeddingFailed'))
     } finally {
       setBusy(false)
     }
@@ -193,7 +195,7 @@ export default function AdminEditPlacePage() {
       
       // If no changes, show message
       if (Object.keys(changedPayload).length === 0) {
-        setError('No changes detected')
+        setError(t('admin.noChanges'))
         return
       }
 
@@ -208,14 +210,14 @@ export default function AdminEditPlacePage() {
       })
       
       const contentType = res.headers.get('content-type') || ''
-      const j = contentType.includes('application/json') ? await res.json() : { success: false, error: (await res.text()) || 'Unexpected response from server' }
-      if (!res.ok || !j.success) throw new Error(j.error || 'Update failed')
+      const j = contentType.includes('application/json') ? await res.json() : { success: false, error: (await res.text()) || t('admin.unexpectedResponse') }
+      if (!res.ok || !j.success) throw new Error(j.error || t('admin.updateFailed'))
       
       setResult(j)
-      alert('Place updated successfully!' + (j.warning ? '\nWarning: ' + j.warning : ''))
+      alert(t('admin.updated') + (j.warning ? '\n' + t('admin.warning', { message: j.warning }) : ''))
       router.push('/admin/places')
     } catch (e: any) {
-      setError(e?.message || 'Update error')
+      setError(e?.message || t('admin.updateFailed'))
     } finally {
       setBusy(false)
     }
@@ -232,7 +234,7 @@ export default function AdminEditPlacePage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading place...</p>
+          <p className="text-muted-foreground">{t('admin.loadingPlace')}</p>
         </div>
       </div>
     )
@@ -245,11 +247,11 @@ export default function AdminEditPlacePage() {
           <p className="text-destructive mb-4">{error}</p>
           <div className="space-x-3">
             <Button onClick={fetchPlace} className="bg-primary hover:bg-primary/90">
-              Try Again
+              {t('common.retry')}
             </Button>
             <Link href="/admin/places">
               <Button variant="outline">
-                Back to Places
+                {t('admin.backToPlaces')}
               </Button>
             </Link>
           </div>
@@ -266,12 +268,12 @@ export default function AdminEditPlacePage() {
           <Link href="/admin/places">
             <Button variant="outline" size="sm" className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Back to Places
+              {t('admin.backToPlaces')}
             </Button>
           </Link>
           <div>
-            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">Edit place</h1>
-            <p className="text-muted-foreground mt-1">Update place information</p>
+            <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">{t('admin.editTitle')}</h1>
+            <p className="text-muted-foreground mt-1">{t('admin.editSubtitle')}</p>
           </div>
         </div>
 
@@ -279,7 +281,7 @@ export default function AdminEditPlacePage() {
           <div className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
             <div className="grid gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground/80">Name (EN)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldNameEn')}</label>
                 <Input 
                   value={form.name || ''} 
                   onChange={(e) => update('name', e.target.value)} 
@@ -288,17 +290,17 @@ export default function AdminEditPlacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground/80">Description (EN)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldDescriptionEn')}</label>
                 <Textarea 
                   value={form.description || ''} 
                   onChange={(e) => update('description', e.target.value)} 
                   rows={5} 
-                  placeholder="Write a short description" 
+                  placeholder={t('admin.descriptionPlaceholder')} 
                   className="" 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground/80">ชื่อภาษาไทย (name_th)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldNameTh')}</label>
                 <Input 
                   value={form.name_th || ''} 
                   onChange={(e) => update('name_th', e.target.value)} 
@@ -307,18 +309,18 @@ export default function AdminEditPlacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground/80">คำอธิบายภาษาไทย (description_th)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldDescriptionTh')}</label>
                 <Textarea 
                   value={form.description_th || ''} 
                   onChange={(e) => update('description_th', e.target.value)} 
                   rows={5} 
-                  placeholder="คำอธิบายภาษาไทย" 
+                  placeholder={t('admin.descriptionThPlaceholder')} 
                   className="" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Latitude</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldLat')}</label>
                   <Input 
                     value={form.lat ?? ''} 
                     onChange={(e) => update('lat', e.target.value)} 
@@ -328,7 +330,7 @@ export default function AdminEditPlacePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Longitude</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldLng')}</label>
                   <Input 
                     value={form.lng ?? ''} 
                     onChange={(e) => update('lng', e.target.value)} 
@@ -339,7 +341,7 @@ export default function AdminEditPlacePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground/80">Address</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldAddress')}</label>
                 <Input 
                   value={form.address || ''} 
                   onChange={(e) => update('address', e.target.value)} 
@@ -348,7 +350,7 @@ export default function AdminEditPlacePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Price (THB)</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldPrice')}</label>
                   <Input 
                     value={form.price ?? ''} 
                     onChange={(e) => update('price', e.target.value)} 
@@ -357,7 +359,7 @@ export default function AdminEditPlacePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Image URL</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldImageUrl')}</label>
                   <Input 
                     value={form.image_url || ''} 
                     onChange={(e) => update('image_url', e.target.value)} 
@@ -366,7 +368,7 @@ export default function AdminEditPlacePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-foreground/80">Tags (comma separated)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.fieldTags')}</label>
                 <Input 
                   value={tagsText} 
                   onChange={(e) => setTagsText(e.target.value)} 
@@ -375,7 +377,7 @@ export default function AdminEditPlacePage() {
               </div>
 
               <div className="pt-4 border-t">
-                <h2 className="text-lg font-semibold text-foreground mb-3">Visit details</h2>
+                <h2 className="text-lg font-semibold text-foreground mb-3">{t('admin.visitDetails')}</h2>
                 <PlaceDetailsFields value={details} onChange={setDetails} />
               </div>
 
@@ -385,10 +387,10 @@ export default function AdminEditPlacePage() {
                   disabled={busy || !form.name}
                   variant="outline"
                 >
-                  Generate New Embedding
+                  {t('admin.generateEmbedding')}
                 </Button>
                 <div className="text-sm text-muted-foreground">
-                  {embedding ? `New embedding: ${embedding.length} dims` : 'Will use existing or compute automatically'}
+                  {embedding ? t('admin.newEmbedding', { dims: String(embedding.length) }) : t('admin.embeddingAuto')}
                 </div>
               </div>
 
@@ -398,19 +400,19 @@ export default function AdminEditPlacePage() {
                   disabled={busy || !form.name}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  {busy ? 'Updating...' : 'Update Place'}
+                  {busy ? t('admin.updating') : t('admin.updatePlace')}
                 </Button>
                 <Link href="/admin/places">
                   <Button variant="outline" disabled={busy}>
-                    Cancel
+                    {t('admin.cancel')}
                   </Button>
                 </Link>
               </div>
 
               {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded">{error}</div>}
               {result && (
-                <div className="bg-green-50 p-3 rounded">
-                  <p className="text-green-800 text-sm font-medium mb-2">Update successful!</p>
+                <div className="bg-teal-soft p-3 rounded">
+                  <p className="text-primary text-sm font-medium mb-2">{t('admin.updateSuccess')}</p>
                   <pre className="text-xs text-muted-foreground overflow-auto max-h-32">
                     {JSON.stringify(result, null, 2)}
                   </pre>

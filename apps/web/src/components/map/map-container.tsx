@@ -7,6 +7,7 @@ import Supercluster from 'supercluster';
 import { MapControls } from './map-controls';
 import { PlacePopupContent } from './place-popup-content';
 import { useAuth } from '@/contexts/auth-context';
+import { useTranslation } from '@/contexts/language-context';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { motion, AnimatePresence } from 'motion/react';
@@ -203,6 +204,10 @@ const MapContainer: React.FC<MapContainerProps> = ({
 }) => {
   // Popups render in a separate React root, so pass the token down explicitly
   const { session } = useAuth();
+  const { t, locale } = useTranslation();
+  // t is recreated on every provider render; read it through a ref so the popup callback only changes with the locale
+  const tRef = useRef(t);
+  tRef.current = t;
   const authToken = session?.access_token;
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -870,6 +875,8 @@ const MapContainer: React.FC<MapContainerProps> = ({
           }}
           userLocation={userLocation}
           authToken={authToken}
+          t={tRef.current}
+          locale={locale}
         />
       );
 
@@ -896,7 +903,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
         onPlaceDeselectRef.current();
       });
     },
-    [closePopup, onPlaceDeselect, userLocation, authToken]
+    [closePopup, onPlaceDeselect, userLocation, authToken, locale]
   );
 
   // Get marker color based on tags

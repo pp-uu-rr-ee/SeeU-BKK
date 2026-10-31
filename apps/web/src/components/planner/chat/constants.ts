@@ -1,12 +1,5 @@
 import type { WorkflowStepType } from "./types";
 
-export const QUICK_SUGGESTIONS = [
-	"Show me temples",
-	"Find cafes near me",
-	"Plan a day trip",
-	"Hidden gems in Bangkok",
-];
-
 export function uid(): string {
 	return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }

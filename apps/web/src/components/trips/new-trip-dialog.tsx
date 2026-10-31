@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { X, Search, Loader2, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "@/contexts/language-context";
 
 interface Place {
   id: string;
@@ -35,6 +36,7 @@ export function NewTripDialog({
   serverUrl = "http://localhost:3000",
   sessionToken = "",
 }: NewTripDialogProps) {
+  const { t } = useTranslation();
   const [tripTitle, setTripTitle] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [allPlaces, setAllPlaces] = useState<Place[]>([]);
@@ -74,7 +76,7 @@ export function NewTripDialog({
       }
     } catch (error) {
       console.error("Error fetching places:", error);
-      toast.error("Failed to load places");
+      toast.error(t("trips.loadPlacesFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -113,17 +115,17 @@ export function NewTripDialog({
 
   const handleCreateTrip = async () => {
     if (!tripTitle.trim()) {
-      toast.error("Please enter a trip title");
+      toast.error(t("trips.enterTitle"));
       return;
     }
 
     if (selectedPlaces.length === 0) {
-      toast.error("Please select at least one place");
+      toast.error(t("trips.selectAtLeastOne"));
       return;
     }
 
     if (!sessionToken) {
-      toast.error("User session not found");
+      toast.error(t("trips.noSession"));
       return;
     }
 
@@ -150,10 +152,10 @@ export function NewTripDialog({
 
       const data = await response.json();
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to create trip");
+        throw new Error(data.error || t("trips.createFailed"));
       }
 
-      toast.success("Trip created successfully!");
+      toast.success(t("trips.created"));
       setTripTitle("");
       setSelectedPlaces([]);
       setSearchQuery("");
@@ -162,7 +164,7 @@ export function NewTripDialog({
     } catch (error) {
       console.error("Error creating trip:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create trip"
+        error instanceof Error ? error.message : t("trips.createFailed")
       );
     } finally {
       setIsSubmitting(false);
@@ -179,14 +181,15 @@ export function NewTripDialog({
         exit={{ opacity: 0, scale: 0.95 }}
         role="dialog"
         aria-modal="true"
-        aria-label="Create New Trip"
+        aria-label={t("trips.createTitle")}
         className="bg-card rounded-2xl shadow-card-hover max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b p-6">
-          <h2 className="font-display text-2xl font-semibold text-foreground">Create New Trip</h2>
+          <h2 className="font-display text-2xl font-semibold text-foreground">{t("trips.createTitle")}</h2>
           <button
             onClick={onClose}
+            aria-label={t("trips.close")}
             className="p-1 hover:bg-secondary rounded-lg transition"
           >
             <X className="w-6 h-6 text-muted-foreground" />
@@ -199,13 +202,13 @@ export function NewTripDialog({
             {/* Trip Title Input */}
             <div>
               <label className="block text-sm font-medium text-foreground/80 mb-2">
-                Trip Title
+                {t("trips.tripTitle")}
               </label>
               <Input
                 type="text"
                 value={tripTitle}
                 onChange={(e) => setTripTitle(e.target.value)}
-                placeholder="e.g., Bangkok Temple Tour, Weekend Adventure"
+                placeholder={t("trips.tripTitlePlaceholder")}
                 className="w-full text-black"
               />
             </div>
@@ -213,7 +216,7 @@ export function NewTripDialog({
             {/* Search Bar */}
             <div>
               <label className="block text-sm font-medium text-foreground/80 mb-2">
-                Search Places
+                {t("trips.searchPlaces")}
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -221,7 +224,7 @@ export function NewTripDialog({
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, description, or tag..."
+                  placeholder={t("trips.searchPlaceholder")}
                   className="pl-10 text-black"
                   disabled={isLoading}
                 />
@@ -232,7 +235,7 @@ export function NewTripDialog({
             {selectedPlaces.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-foreground/80 mb-2">
-                  Selected Places ({selectedPlaces.length})
+                  {t("trips.selectedPlaces", { count: String(selectedPlaces.length) })}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   <AnimatePresence>
@@ -250,6 +253,7 @@ export function NewTripDialog({
                           {place.name}
                           <button
                             onClick={() => togglePlaceSelection(place)}
+                            aria-label={t("trips.removePlace", { name: place.name })}
                             className="ml-1 p-0 hover:bg-primary/90 rounded"
                           >
                             <X className="w-3 h-3" />
@@ -265,21 +269,21 @@ export function NewTripDialog({
             {/* Places List */}
             <div>
               <label className="block text-sm font-medium text-foreground/80 mb-2">
-                Available Places
+                {t("trips.availablePlaces")}
               </label>
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-2" />
-                    <p className="text-muted-foreground">Loading places...</p>
+                    <p className="text-muted-foreground">{t("trips.loadingPlaces")}</p>
                   </div>
                 </div>
               ) : filteredPlaces.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">
                     {allPlaces.length === 0
-                      ? "No places available"
-                      : "No places match your search"}
+                      ? t("trips.noPlacesAvailable")
+                      : t("trips.noPlacesMatch")}
                   </p>
                 </div>
               ) : (
@@ -367,7 +371,7 @@ export function NewTripDialog({
             disabled={isSubmitting}
             className="px-6"
           >
-            Cancel
+            {t("trips.cancel")}
           </Button>
           <Button
             onClick={handleCreateTrip}
@@ -381,10 +385,10 @@ export function NewTripDialog({
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
+                {t("trips.creating")}
               </>
             ) : (
-              "Create Trip"
+              t("trips.createTrip")
             )}
           </Button>
         </div>

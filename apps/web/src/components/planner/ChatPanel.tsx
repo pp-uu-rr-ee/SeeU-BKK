@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslation } from "@/contexts/language-context";
 import { ChatInputBar } from "./chat/ChatInputBar";
 import { ChatMessageList } from "./chat/ChatMessageList";
-import { QUICK_SUGGESTIONS } from "./chat/constants";
 import { useChatActions } from "./chat/hooks/useChatActions";
 import { useChatHistory } from "./chat/hooks/useChatHistory";
 import { useChatStream } from "./chat/hooks/useChatStream";
@@ -29,6 +29,8 @@ export function ChatPanel({
 	contextPlaces,
 	initialPrompt,
 }: ChatPanelProps) {
+	const { t } = useTranslation();
+	const quickSuggestions = [0, 1, 2, 3].map((i) => t(`chat.suggestions.${i}`));
 	const [isOpen, setIsOpen] = useState(defaultOpen);
 	const [isMinimized, setIsMinimized] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -173,7 +175,7 @@ export function ChatPanel({
 									isStreaming={isStreaming}
 									isSavingItinerary={isSavingItinerary}
 									isItinerarySaved={isItinerarySaved}
-									quickSuggestions={QUICK_SUGGESTIONS}
+									quickSuggestions={quickSuggestions}
 									messagesEndRef={messagesEndRef}
 									onQuickSuggestion={(text) => {
 										void startWithMessage(text);

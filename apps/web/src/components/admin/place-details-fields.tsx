@@ -2,8 +2,9 @@
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/contexts/language-context'
 
-const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const DAYS = [0, 1, 2, 3, 4, 5, 6]
 
 type DayStatus = 'unknown' | 'open' | 'closed'
 
@@ -30,7 +31,7 @@ export function emptyPlaceDetails(): PlaceDetailsValue {
     suggested_duration_min: '',
     best_for: '',
     is_published: true,
-    hours: DAY_LABELS.map((_, day) => ({ day_of_week: day, status: 'unknown', open_time: '09:00', close_time: '17:00' })),
+    hours: DAYS.map((day) => ({ day_of_week: day, status: 'unknown', open_time: '09:00', close_time: '17:00' })),
   }
 }
 
@@ -83,6 +84,7 @@ interface PlaceDetailsFieldsProps {
 }
 
 export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps) {
+  const { t } = useTranslation()
   const set = <K extends keyof PlaceDetailsValue>(key: K, v: PlaceDetailsValue[K]) => onChange({ ...value, [key]: v })
   const setHour = (day: number, patch: Partial<OpeningHourInput>) =>
     set('hours', value.hours.map((h) => (h.day_of_week === day ? { ...h, ...patch } : h)))
@@ -97,17 +99,17 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
     <div className="grid gap-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-foreground/80">Phone</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.phone')}</label>
           <Input value={value.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+66 2 123 4567" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-foreground/80">Website</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.website')}</label>
           <Input value={value.website} onChange={(e) => set('website', e.target.value)} placeholder="https://..." type="url" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-foreground/80">Suggested visit time (minutes)</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.suggestedDuration')}</label>
           <Input
             value={value.suggested_duration_min}
             onChange={(e) => set('suggested_duration_min', e.target.value)}
@@ -117,7 +119,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1 text-foreground/80">Best for (comma separated)</label>
+          <label className="block text-sm font-medium mb-1 text-foreground/80">{t('admin.bestFor')}</label>
           <Input value={value.best_for} onChange={(e) => set('best_for', e.target.value)} placeholder="families, photographers" />
         </div>
       </div>
@@ -128,28 +130,29 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
           onChange={(e) => set('is_published', e.target.checked)}
           className="h-4 w-4"
         />
-        Published (visible to users)
+        {t('admin.publishedVisible')}
       </label>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-foreground/80">Opening hours</label>
+          <label className="block text-sm font-medium text-foreground/80">{t('admin.openingHours')}</label>
           <Button type="button" variant="outline" size="sm" onClick={applyMondayToAll}>
-            Copy Monday to all days
+            {t('admin.copyMonday')}
           </Button>
         </div>
         <div className="rounded-lg border divide-y">
           {value.hours.map((h) => (
             <div key={h.day_of_week} className="flex flex-wrap items-center gap-3 px-3 py-2">
-              <span className="w-24 text-sm text-foreground/80">{DAY_LABELS[h.day_of_week]}</span>
+              <span className="w-24 text-sm text-foreground/80">{t(`placeDetail.days.${h.day_of_week}`)}</span>
               <select
                 value={h.status}
                 onChange={(e) => setHour(h.day_of_week, { status: e.target.value as DayStatus })}
+                aria-label={t(`placeDetail.days.${h.day_of_week}`)}
                 className="h-9 rounded-md border border-border bg-card px-2 text-sm"
               >
-                <option value="unknown">Not set</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
+                <option value="unknown">{t('admin.hoursNotSet')}</option>
+                <option value="open">{t('admin.hoursOpen')}</option>
+                <option value="closed">{t('admin.hoursClosed')}</option>
               </select>
               {h.status === 'open' && (
                 <div className="flex items-center gap-2">
@@ -157,6 +160,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
                     type="time"
                     value={h.open_time}
                     onChange={(e) => setHour(h.day_of_week, { open_time: e.target.value })}
+                    aria-label={t('admin.openTime', { day: t(`placeDetail.days.${h.day_of_week}`) })}
                     className="h-9 w-32"
                   />
                   <span className="text-muted-foreground">–</span>
@@ -164,6 +168,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
                     type="time"
                     value={h.close_time}
                     onChange={(e) => setHour(h.day_of_week, { close_time: e.target.value })}
+                    aria-label={t('admin.closeTime', { day: t(`placeDetail.days.${h.day_of_week}`) })}
                     className="h-9 w-32"
                   />
                 </div>
@@ -171,7 +176,7 @@ export function PlaceDetailsFields({ value, onChange }: PlaceDetailsFieldsProps)
             </div>
           ))}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">A closing time earlier than the opening time means it closes after midnight.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t('admin.overnightHint')}</p>
       </div>
     </div>
   )

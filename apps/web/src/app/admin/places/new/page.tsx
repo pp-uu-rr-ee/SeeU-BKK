@@ -9,6 +9,7 @@ import { AdminMapPicker } from '@/components/map/admin-map-picker'
 import { MapPin, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslation } from '@/contexts/language-context'
 import {
   PlaceDetailsFields,
   emptyPlaceDetails,
@@ -54,6 +55,7 @@ export default function AdminNewPlacePage() {
   const [slugTouched, setSlugTouched] = useState(false)
   const [showMap, setShowMap] = useState(false)
   const [details, setDetails] = useState<PlaceDetailsValue>(emptyPlaceDetails())
+  const { t } = useTranslation()
 
   const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
 
@@ -122,11 +124,11 @@ export default function AdminNewPlacePage() {
       const contentType = res.headers.get('content-type') || ''
       const j = contentType.includes('application/json')
         ? await res.json()
-        : { success: false, error: (await res.text()) || 'Unexpected response from server' }
+        : { success: false, error: (await res.text()) || t('admin.unexpectedResponse') }
         
-      if (!res.ok || !j.success) throw new Error(j.error || 'Insert failed')
+      if (!res.ok || !j.success) throw new Error(j.error || t('admin.insertFailed'))
       
-      if (j.warning) alert('Warning: ' + j.warning)
+      if (j.warning) alert(t('admin.warning', { message: j.warning }))
       setResult(j)
       // reset form
       setForm({ name: '', is_published: true })
@@ -134,7 +136,7 @@ export default function AdminNewPlacePage() {
       setSlugTouched(false)
       setDetails(emptyPlaceDetails())
     } catch (e: any) {
-      setError(e?.message || 'Insert error')
+      setError(e?.message || t('admin.insertFailed'))
     } finally {
       setBusy(false)
     }
@@ -144,17 +146,17 @@ export default function AdminNewPlacePage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 md:py-14">
       <Link href="/admin/places" className="mb-6 inline-flex items-center gap-2 rounded-full py-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        Back to places
+        {t('admin.backToPlaces')}
       </Link>
-      <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">New place</h1>
-      <p className="mt-2 text-muted-foreground">Add a place to the catalog. Fields marked * are required.</p>
+      <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">{t('admin.newTitle')}</h1>
+      <p className="mt-2 text-muted-foreground">{t('admin.newSubtitle')}</p>
       <div className="mt-8 space-y-6 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
 
       <div className="grid gap-4">
         {/* Name & Slug */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="mb-1.5 block">Name *</Label>
+            <Label className="mb-1.5 block">{t('admin.fieldName')} *</Label>
             <Input
               value={form.name || ''}
               onChange={(e) => update('name', e.target.value)}
@@ -163,7 +165,7 @@ export default function AdminNewPlacePage() {
             />
           </div>
           <div>
-            <Label className="mb-1.5 block">Slug (auto)</Label>
+            <Label className="mb-1.5 block">{t('admin.fieldSlug')}</Label>
             <Input
               value={slugTouched ? (form.slug || '') : autoSlug}
               onChange={(e) => {
@@ -173,13 +175,13 @@ export default function AdminNewPlacePage() {
               placeholder="wat-pho"
               className="h-11 rounded-xl"
             />
-            <p className="text-xs text-muted-foreground mt-1">* แก้ได้; เว้นว่างจะใช้ auto-slug</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('admin.slugHint')}</p>
           </div>
         </div>
 
         {/* Area */}
         <div>
-          <Label className="mb-1.5 block">Area</Label>
+          <Label className="mb-1.5 block">{t('admin.fieldArea')}</Label>
           <Input
             value={form.area || ''}
             onChange={(e) => update('area', e.target.value)}
@@ -190,19 +192,19 @@ export default function AdminNewPlacePage() {
 
         {/* Description */}
         <div>
-          <Label className="mb-1.5 block">Description (EN)</Label>
+          <Label className="mb-1.5 block">{t('admin.fieldDescriptionEn')}</Label>
           <Textarea
             value={form.description || ''}
             onChange={(e) => update('description', e.target.value)}
             rows={5}
-            placeholder="Write a short description"
+            placeholder={t('admin.descriptionPlaceholder')}
             className="text-black border-border dark:border-border"
           />
         </div>
 
         {/* Thai translations */}
         <div>
-          <Label className="mb-1.5 block">ชื่อภาษาไทย (name_th)</Label>
+          <Label className="mb-1.5 block">{t('admin.fieldNameTh')}</Label>
           <Input
             value={form.name_th || ''}
             onChange={(e) => update('name_th', e.target.value)}
@@ -211,12 +213,12 @@ export default function AdminNewPlacePage() {
           />
         </div>
         <div>
-          <Label className="mb-1.5 block">คำอธิบายภาษาไทย (description_th)</Label>
+          <Label className="mb-1.5 block">{t('admin.fieldDescriptionTh')}</Label>
           <Textarea
             value={form.description_th || ''}
             onChange={(e) => update('description_th', e.target.value)}
             rows={5}
-            placeholder="คำอธิบายภาษาไทย"
+            placeholder={t('admin.descriptionThPlaceholder')}
             className="text-black border-border dark:border-border"
           />
         </div>
@@ -224,7 +226,7 @@ export default function AdminNewPlacePage() {
         {/* Lat/Lng with Map Picker */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <Label className="font-semibold">Location Coordinates *</Label>
+            <Label className="font-semibold">{t('admin.fieldCoordinates')} *</Label>
             <Button
               type="button"
               variant="outline"
@@ -233,7 +235,7 @@ export default function AdminNewPlacePage() {
               className="text-primary border-primary hover:bg-teal-soft"
             >
               <MapPin className="h-4 w-4 mr-2" />
-              {showMap ? 'Hide Map' : 'Show Map Picker'}
+              {showMap ? t('admin.hideMap') : t('admin.showMap')}
             </Button>
           </div>
 
@@ -252,7 +254,7 @@ export default function AdminNewPlacePage() {
           {/* Manual Input Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="mb-1.5 block">Latitude *</Label>
+              <Label className="mb-1.5 block">{t('admin.fieldLat')} *</Label>
               <Input
                 type="number"
                 step="any"
@@ -261,10 +263,10 @@ export default function AdminNewPlacePage() {
                 placeholder="13.746"
                 className="h-11 rounded-xl"
               />
-              {!latValid && <p className="text-xs text-destructive mt-1">ต้องอยู่ระหว่าง -90 ถึง 90</p>}
+              {!latValid && <p className="text-xs text-destructive mt-1">{t('admin.latRange')}</p>}
             </div>
             <div>
-              <Label className="mb-1.5 block">Longitude *</Label>
+              <Label className="mb-1.5 block">{t('admin.fieldLng')} *</Label>
               <Input
                 type="number"
                 step="any"
@@ -273,21 +275,21 @@ export default function AdminNewPlacePage() {
                 placeholder="100.535"
                 className="h-11 rounded-xl"
               />
-              {!lngValid && <p className="text-xs text-destructive mt-1">ต้องอยู่ระหว่าง -180 ถึง 180</p>}
+              {!lngValid && <p className="text-xs text-destructive mt-1">{t('admin.lngRange')}</p>}
             </div>
           </div>
           
           {form.lat && form.lng && latValid && lngValid && (
-            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+            <p className="text-xs text-primary mt-2 flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              Location set: {Number(form.lat).toFixed(6)}, {Number(form.lng).toFixed(6)}
+              {t('admin.locationSet', { lat: Number(form.lat).toFixed(6), lng: Number(form.lng).toFixed(6) })}
             </p>
           )}
         </div>
 
         {/* Address */}
         {/* <div>
-          <Label className="mb-1.5 block">Address</Label>
+          <Label className="mb-1.5 block">{t('admin.fieldAddress')}</Label>
           <Input
             value={form.address || ''}
             onChange={(e) => update('address', e.target.value)}
@@ -299,7 +301,7 @@ export default function AdminNewPlacePage() {
         {/* Price & Image */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="mb-1.5 block">Price (THB)</Label>
+            <Label className="mb-1.5 block">{t('admin.fieldPrice')}</Label>
             <Input
               type="number"
               step="1"
@@ -309,10 +311,10 @@ export default function AdminNewPlacePage() {
               placeholder="200"
               className="h-11 rounded-xl"
             />
-            {!priceValid && <p className="text-xs text-destructive mt-1">ต้องเป็นจำนวนเต็ม ≥ 0 หรือเว้นว่าง</p>}
+            {!priceValid && <p className="text-xs text-destructive mt-1">{t('admin.priceInvalid')}</p>}
           </div>
           <div>
-            <Label className="mb-1.5 block">Image URL</Label>
+            <Label className="mb-1.5 block">{t('admin.fieldImageUrl')}</Label>
             <Input
               value={form.image_url || ''}
               onChange={(e) => update('image_url', e.target.value)}
@@ -324,7 +326,7 @@ export default function AdminNewPlacePage() {
 
         {/* Tags */}
         <div>
-          <Label className="mb-1.5 block">Tags (comma separated)</Label>
+          <Label className="mb-1.5 block">{t('admin.fieldTags')}</Label>
           <Input
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
@@ -335,16 +337,16 @@ export default function AdminNewPlacePage() {
         
         {/* Visit details & opening hours */}
         <div className="pt-4 border-t border-border">
-          <h2 className="text-lg font-semibold mb-3">Visit details</h2>
+          <h2 className="text-lg font-semibold mb-3">{t('admin.visitDetails')}</h2>
           <PlaceDetailsFields value={details} onChange={setDetails} />
         </div>
 
         {/* Actions */}
         <div className="flex gap-3 items-center">
           <Button onClick={handleSubmit} disabled={!canSubmit} className='h-12 rounded-full px-7 text-base'>
-            Add place
+            {t('admin.addPlace')}
           </Button>
-          {busy && <div className="text-sm text-muted-foreground">Working...</div>}
+          {busy && <div className="text-sm text-muted-foreground">{t('admin.working')}</div>}
         </div>
 
         {error && <div className="text-sm text-destructive">{error}</div>}

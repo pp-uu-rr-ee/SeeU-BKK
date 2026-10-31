@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslation } from '@/contexts/language-context'
 
 interface Place {
   id: string
@@ -41,6 +42,7 @@ export default function AdminPlacesPage() {
   const [pagination, setPagination] = useState<PaginationInfo>({ limit: 20, offset: 0, count: 0, total: 0 })
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
   const router = useRouter()
+  const { t } = useTranslation()
 
   const fetchPlaces = async (searchTerm = '', page = 1) => {
     try {
@@ -73,23 +75,23 @@ export default function AdminPlacesPage() {
       const contentType = res.headers.get('content-type') || ''
       const data = contentType.includes('application/json')
         ? await res.json()
-        : { success: false, error: (await res.text()) || 'Unexpected response from server' }
+        : { success: false, error: (await res.text()) || t('admin.unexpectedResponse') }
       
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch places')
+        throw new Error(data.error || t('admin.loadFailed'))
       }
       
       setPlaces(data.data || [])
       setPagination(data.pagination || { limit, offset, count: 0, total: 0 })
     } catch (e: any) {
-      setError(e?.message || 'Failed to load places')
+      setError(e?.message || t('admin.loadFailed'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+    if (!confirm(t('admin.confirmDelete', { name }))) {
       return
     }
     
@@ -110,17 +112,17 @@ export default function AdminPlacesPage() {
       const contentType = res.headers.get('content-type') || ''
       const data = contentType.includes('application/json')
         ? await res.json()
-        : { success: false, error: (await res.text()) || 'Unexpected response from server' }
+        : { success: false, error: (await res.text()) || t('admin.unexpectedResponse') }
       
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete place')
+        throw new Error(data.error || t('admin.deleteFailed'))
       }
       
       // Refresh the list
       fetchPlaces(search, currentPage)
-      alert(`Place "${name}" has been deleted successfully.`)
+      alert(t('admin.deleted', { name }))
     } catch (e: any) {
-      alert(e?.message || 'Failed to delete place')
+      alert(e?.message || t('admin.deleteFailed'))
     } finally {
       setDeleteLoading(null)
     }
@@ -150,15 +152,15 @@ export default function AdminPlacesPage() {
         <div>
           <p className="mb-3 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-primary">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-saffron" />
-            Admin
+            {t('admin.eyebrow')}
           </p>
-          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">Places</h1>
-          <p className="mt-2 text-muted-foreground">{pagination.total} places in the catalog</p>
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-foreground">{t('admin.placesTitle')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('admin.placesCount', { count: String(pagination.total) })}</p>
         </div>
         <Button asChild className="h-11 rounded-full px-5">
           <Link href="/admin/places/new">
             <Plus className="h-4 w-4" aria-hidden />
-            Add place
+            {t('admin.addPlace')}
           </Link>
         </Button>
       </header>
@@ -173,26 +175,26 @@ export default function AdminPlacesPage() {
         className="mb-6 flex gap-3"
       >
         <div className="relative flex-1">
-          <label htmlFor="admin-search" className="sr-only">Search places</label>
+          <label htmlFor="admin-search" className="sr-only">{t('admin.searchLabel')}</label>
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             id="admin-search"
             type="search"
-            placeholder="Search by name or description (English or Thai)"
+            placeholder={t('admin.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-12 rounded-full bg-card pl-11 text-base"
           />
         </div>
         <Button type="submit" variant="secondary" disabled={loading} className="h-12 rounded-full px-6">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : 'Search'}
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : t('admin.search')}
         </Button>
       </form>
 
       {missingEmbeddings > 0 && (
         <p className="mb-6 rounded-2xl border border-saffron/40 bg-accent/60 px-5 py-3 text-sm text-accent-foreground">
-          {missingEmbeddings} place(s) on this page have no embedding, so AI search can&apos;t find them yet.
-          Run <code className="rounded bg-card px-1.5 py-0.5 text-xs">bun run db:embed</code> in <code className="rounded bg-card px-1.5 py-0.5 text-xs">apps/server</code>.
+          {t('admin.missingEmbeddings', { count: String(missingEmbeddings) })}{' '}
+          {t('admin.runCommand')} <code className="rounded bg-card px-1.5 py-0.5 text-xs">bun run db:embed</code> {t('admin.runIn')} <code className="rounded bg-card px-1.5 py-0.5 text-xs">apps/server</code>.
         </p>
       )}
 
@@ -200,7 +202,7 @@ export default function AdminPlacesPage() {
         <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
           <p className="text-destructive">{error}</p>
           <Button onClick={() => fetchPlaces(search, currentPage)} variant="outline" className="h-10 rounded-full border-destructive/30 text-destructive">
-            Try again
+            {t('common.retry')}
           </Button>
         </div>
       )}
@@ -209,14 +211,14 @@ export default function AdminPlacesPage() {
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
-            <caption className="sr-only">Places</caption>
+            <caption className="sr-only">{t('admin.placesTitle')}</caption>
             <thead className="border-b border-border bg-muted text-xs uppercase tracking-[0.12em] text-muted-foreground">
               <tr>
-                <th scope="col" className="px-5 py-3 font-medium">Place</th>
-                <th scope="col" className="px-5 py-3 font-medium">Tags</th>
-                <th scope="col" className="px-5 py-3 font-medium">Price</th>
-                <th scope="col" className="px-5 py-3 font-medium">Status</th>
-                <th scope="col" className="px-5 py-3 text-right font-medium">Actions</th>
+                <th scope="col" className="px-5 py-3 font-medium">{t('admin.colPlace')}</th>
+                <th scope="col" className="px-5 py-3 font-medium">{t('admin.colTags')}</th>
+                <th scope="col" className="px-5 py-3 font-medium">{t('admin.colPrice')}</th>
+                <th scope="col" className="px-5 py-3 font-medium">{t('admin.colStatus')}</th>
+                <th scope="col" className="px-5 py-3 text-right font-medium">{t('admin.colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -253,7 +255,7 @@ export default function AdminPlacesPage() {
                           {place.tags.length > 3 && <span className="text-xs text-muted-foreground">+{place.tags.length - 3}</span>}
                         </div>
                       </td>
-                      <td className="px-5 py-3 tabular-nums text-foreground">{place.price > 0 ? `฿${place.price}` : 'Free'}</td>
+                      <td className="px-5 py-3 tabular-nums text-foreground">{place.price > 0 ? `฿${place.price}` : t('admin.free')}</td>
                       <td className="px-5 py-3">
                         <div className="flex flex-wrap gap-1.5">
                           <span
@@ -262,16 +264,16 @@ export default function AdminPlacesPage() {
                               place.is_published === false ? 'bg-secondary text-muted-foreground' : 'bg-teal-soft text-primary'
                             )}
                           >
-                            {place.is_published === false ? 'Draft' : 'Published'}
+                            {place.is_published === false ? t('admin.draft') : t('admin.published')}
                           </span>
                           {!place.has_embedding && (
-                            <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">No embedding</span>
+                            <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">{t('admin.noEmbedding')}</span>
                           )}
                         </div>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex justify-end gap-1">
-                          <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-full" aria-label={`View ${place.name}`}>
+                          <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-full" aria-label={t('admin.viewPlace', { name: place.name })}>
                             <Link href={`/places/${place.slug || ''}`} target="_blank">
                               <ExternalLink className="h-4 w-4" />
                             </Link>
@@ -281,7 +283,7 @@ export default function AdminPlacesPage() {
                             size="icon"
                             onClick={() => router.push(`/admin/places/${place.id}/edit`)}
                             className="h-10 w-10 rounded-full"
-                            aria-label={`Edit ${place.name}`}
+                            aria-label={t('admin.editPlace', { name: place.name })}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -291,7 +293,7 @@ export default function AdminPlacesPage() {
                             onClick={() => handleDelete(place.id, place.name)}
                             disabled={deleteLoading === place.id}
                             className="h-10 w-10 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            aria-label={`Delete ${place.name}`}
+                            aria-label={t('admin.deletePlace', { name: place.name })}
                           >
                             {deleteLoading === place.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                           </Button>
@@ -305,14 +307,14 @@ export default function AdminPlacesPage() {
 
         {places.length === 0 && !loading && (
           <div className="px-6 py-12 text-center">
-            <p className="text-muted-foreground">{search ? 'No places match your search.' : 'No places yet.'}</p>
+            <p className="text-muted-foreground">{search ? t('admin.noMatch') : t('admin.noPlaces')}</p>
             {search && (
               <Button
                 variant="secondary"
                 className="mt-4 h-10 rounded-full"
                 onClick={() => { setSearch(''); fetchPlaces('', 1); setCurrentPage(1) }}
               >
-                Clear search
+                {t('admin.clearSearch')}
               </Button>
             )}
           </div>
@@ -321,9 +323,9 @@ export default function AdminPlacesPage() {
 
       {/* Pagination */}
       {pagination.total > pagination.limit && (
-        <nav aria-label="Pagination" className="mt-6 flex items-center justify-between">
+        <nav aria-label={t('admin.pagination')} className="mt-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {pagination.offset + 1}–{pagination.offset + pagination.count} of {pagination.total}
+            {t('admin.pageRange', { from: String(pagination.offset + 1), to: String(pagination.offset + pagination.count), total: String(pagination.total) })}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -332,7 +334,7 @@ export default function AdminPlacesPage() {
               className="h-10 w-10 rounded-full"
               disabled={currentPage <= 1 || loading}
               onClick={() => handlePageChange(currentPage - 1)}
-              aria-label="Previous page"
+              aria-label={t('admin.prevPage')}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -343,7 +345,7 @@ export default function AdminPlacesPage() {
               className="h-10 w-10 rounded-full"
               disabled={pagination.offset + pagination.count >= pagination.total || loading}
               onClick={() => handlePageChange(currentPage + 1)}
-              aria-label="Next page"
+              aria-label={t('admin.nextPage')}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -14,6 +14,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "@/contexts/language-context";
 import type { TripPlaceCandidate } from "@/lib/trip-stop-utils";
 
 interface AddTripStopDialogProps {
@@ -29,6 +30,7 @@ export function AddTripStopDialog({
 	onAddPlace,
 	serverUrl = "http://localhost:3000",
 }: AddTripStopDialogProps) {
+	const { t } = useTranslation();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [places, setPlaces] = useState<TripPlaceCandidate[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
@@ -50,12 +52,12 @@ export function AddTripStopDialog({
 			try {
 				const response = await fetch(`${serverUrl}/api/places?limit=200`);
 				if (!response.ok) {
-					throw new Error("Failed to load places");
+					throw new Error(t("trips.loadPlacesFailed"));
 				}
 
 				const data = await response.json();
 				if (!data.success || !Array.isArray(data.data)) {
-					throw new Error(data.error || "Failed to load places");
+					throw new Error(data.error || t("trips.loadPlacesFailed"));
 				}
 
 				setPlaces(
@@ -72,7 +74,7 @@ export function AddTripStopDialog({
 			} catch (error) {
 				console.error("Error loading places:", error);
 				toast.error(
-					error instanceof Error ? error.message : "Failed to load places"
+					error instanceof Error ? error.message : t("trips.loadPlacesFailed")
 				);
 			} finally {
 				setIsLoading(false);
@@ -105,7 +107,7 @@ export function AddTripStopDialog({
 
 	const handleSubmit = () => {
 		if (!selectedPlace) {
-			toast.error("Select a place first");
+			toast.error(t("trips.selectPlaceFirst"));
 			return;
 		}
 
@@ -119,9 +121,9 @@ export function AddTripStopDialog({
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent className="max-w-2xl gap-0 p-0 bg-card text-foreground shadow-2xl border border-border">
 				<DialogHeader className="border-b border-border px-6 py-4">
-					<DialogTitle>Add place to trip</DialogTitle>
+					<DialogTitle>{t("trips.addStopTitle")}</DialogTitle>
 					<DialogDescription>
-						Search existing places and append one to the selected trip.
+						{t("trips.addStopDescription")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -131,7 +133,7 @@ export function AddTripStopDialog({
 						<Input
 							value={searchQuery}
 							onChange={(event) => setSearchQuery(event.target.value)}
-							placeholder="Search by place name or category"
+							placeholder={t("trips.addStopSearchPlaceholder")}
 							className="pl-9"
 						/>
 					</div>
@@ -140,11 +142,11 @@ export function AddTripStopDialog({
 						{isLoading ? (
 							<div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Loading places...
+								{t("trips.loadingPlaces")}
 							</div>
 						) : filteredPlaces.length === 0 ? (
 							<div className="py-12 text-center text-sm text-muted-foreground">
-								No places matched your search.
+								{t("trips.noPlacesMatched")}
 							</div>
 						) : (
 							filteredPlaces.map((place) => {
@@ -200,10 +202,10 @@ export function AddTripStopDialog({
 
 				<DialogFooter className="border-t px-6 py-4">
 					<Button type="button" variant="outline" onClick={onClose}>
-						Cancel
+						{t("trips.cancel")}
 					</Button>
 					<Button type="button" onClick={handleSubmit} disabled={!selectedPlace}>
-						Add stop
+						{t("trips.addStop")}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

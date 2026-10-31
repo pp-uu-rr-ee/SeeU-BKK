@@ -7,6 +7,7 @@ import { Input } from './input'
 import { Label } from './label'
 import { X, Loader2, Camera, User } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from '@/contexts/language-context'
 
 interface ImageUploadProps {
   currentImageUrl?: string
@@ -29,6 +30,7 @@ export function ImageUpload({
   className = ''
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
+  const { t } = useTranslation()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
@@ -50,13 +52,13 @@ export function ImageUpload({
     // Check file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
-      return 'Please select a valid image file (JPEG, PNG, or WebP)'
+      return t('imageUpload.invalidType')
     }
 
     // Check file size (5MB limit)
     const maxSize = 5 * 1024 * 1024 // 5MB in bytes
     if (file.size > maxSize) {
-      return 'Image size must be less than 5MB'
+      return t('imageUpload.tooLarge')
     }
 
     return null
@@ -76,7 +78,7 @@ export function ImageUpload({
 
       // Check if Supabase client is properly initialized
       if (!supabase) {
-        toast.error('Cannot Upload Right Now')
+        toast.error(t('imageUpload.unavailable'))
         return
       }
 
@@ -94,13 +96,13 @@ export function ImageUpload({
         })
 
       if (error) {
-        toast.error(`Upload failed: ${error.message}`)
+        toast.error(t('imageUpload.failedWith', { message: error.message }))
         setPreviewUrl(null)
         return
       }
 
       if (!data || !data.path) {
-        toast.error('Upload failed: No file path returned')
+        toast.error(t('imageUpload.noPath'))
         return
       }
 
@@ -111,13 +113,13 @@ export function ImageUpload({
 
       if (!publicUrl) {
         console.error('No public URL generated')
-        toast.error('Upload failed: Could not generate URL')
+        toast.error(t('imageUpload.noUrl'))
         return
       }
 
       onImageUpload(publicUrl)
       setPreviewUrl(null)
-      toast.success('Photo uploaded — save your profile to keep it')
+      toast.success(t('imageUpload.uploaded'))
 
     } catch (error: any) {
       console.error('Upload error details:', {
@@ -125,12 +127,12 @@ export function ImageUpload({
         error: error,
         stack: error.stack
       })
-      toast.error(`Upload failed: ${error.message || 'Unknown error'}`)
+      toast.error(t('imageUpload.failedWith', { message: error.message || t('imageUpload.unknownError') }))
       setPreviewUrl(null)
     } finally {
       setUploading(false)
     }
-  }, [supabase, onImageUpload])
+  }, [supabase, onImageUpload, t])
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -165,7 +167,7 @@ export function ImageUpload({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <Label className="sr-only">Profile picture</Label>
+      <Label className="sr-only">{t('imageUpload.label')}</Label>
 
       <div className={stacked ? 'flex flex-col items-center gap-4 text-center' : 'flex items-center gap-4'}>
         {/* Avatar Display */}
@@ -174,7 +176,7 @@ export function ImageUpload({
             {displayUrl ? (
               <img
                 src={displayUrl}
-                alt="Profile"
+                alt={t('imageUpload.alt')}
                 className="w-full h-full object-cover rounded-full"
               />
             ) : (
@@ -200,7 +202,7 @@ export function ImageUpload({
             className="h-10 rounded-full px-4"
           >
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-            {uploading ? 'Uploading…' : 'Change photo'}
+            {uploading ? t('imageUpload.uploading') : t('imageUpload.change')}
           </Button>
 
           {displayUrl && (
@@ -212,7 +214,7 @@ export function ImageUpload({
               className="h-10 rounded-full px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <X className="h-4 w-4" />
-              Remove
+              {t('imageUpload.remove')}
             </Button>
           )}
         </div>
@@ -229,7 +231,7 @@ export function ImageUpload({
       />
 
       <p className={`text-xs text-muted-foreground ${stacked ? 'text-center' : ''}`}>
-        JPEG, PNG or WebP · up to 5MB · square works best
+        {t('imageUpload.hint')}
       </p>
     </div>
   )
