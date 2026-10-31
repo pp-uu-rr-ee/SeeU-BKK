@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { authMiddleware } from '../middleware/auth'
 import { supabase, supabaseAuth } from '../lib/supabase'
 import { LongTermMemory } from '../agent/memory/longterm'
+import { avatarStoragePath, replacedAvatarPath } from '../lib/storage-paths'
 
 const auth = new Hono()
 
@@ -103,6 +104,17 @@ auth.put('/profile', authMiddleware, zValidator('json', updateProfileSchema), as
   const profileData = c.req.valid('json')
 
   try {
+    // Remember the current avatar so a replaced file can be removed after the save succeeds
+    let previousAvatarUrl: string | null = null
+    if ('avatar_url' in profileData) {
+      const { data: current } = await supabase
+        .from('user_profiles')
+        .select('avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      previousAvatarUrl = current?.avatar_url ?? null
+    }
+
     // Update or insert user profile
     const { data, error } = await supabase
       .from('user_profiles')
@@ -125,6 +137,23 @@ auth.put('/profile', authMiddleware, zValidator('json', updateProfileSchema), as
       
       console.error('Database error in /profile endpoint:', error)
       return c.json({ error: 'Failed to update profile' }, 500)
+    }
+
+    // Delete the replaced avatar from storage; a failure here must not fail the save
+    if ('avatar_url' in profileData && avatarStoragePath(previousAvatarUrl) && previousAvatarUrl !== data.avatar_url) {
+      // Another profile may point at the same file; only delete when no one else uses it
+      const { count, error: refError } = await supabase
+        .from('user_profiles')
+        .select('user_id', { count: 'exact', head: true })
+        .eq('avatar_url', previousAvatarUrl)
+        .neq('user_id', user.id)
+      const previousPath = refError ? null : replacedAvatarPath(previousAvatarUrl, data.avatar_url, (count ?? 0) > 0)
+      if (previousPath) {
+        const { error: removeError } = await supabase.storage.from('user-uploads').remove([previousPath])
+        if (removeError) {
+          console.error('Failed to remove replaced avatar:', previousPath, removeError)
+        }
+      }
     }
 
     return c.json({ profile: data })
