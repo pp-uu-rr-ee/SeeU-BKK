@@ -12,7 +12,8 @@
 		"db:studio": "drizzle-kit studio",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:embed": "bun run src/scripts/backfill-embeddings.ts"
+		"db:embed": "bun run src/scripts/backfill-embeddings.ts",
+		"db:images": "bun run src/scripts/migrate-place-images.ts"
 	},
 	"dependencies": {
 		"@hono/standard-validator": "^0.1.5",
