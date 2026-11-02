@@ -12,6 +12,8 @@ export interface AddMessageOptions {
 	role: "user" | "assistant" | "system" | "tool";
 	content: string;
 	name?: string;
+	/** Structured reply data (e.g. { ui }) kept beside the plain-text content */
+	metadata?: Record<string, unknown> | null;
 }
 
 /**
@@ -99,6 +101,7 @@ export class SessionMemory {
 				role: options.role,
 				content: options.content,
 				name: options.name || null,
+				metadata: options.metadata ?? null,
 			})
 			.select()
 			.single();
@@ -112,6 +115,7 @@ export class SessionMemory {
 			sessionId: data.session_id,
 			role: data.role,
 			content: data.content,
+			metadata: data.metadata ?? null,
 			createdAt: new Date(data.created_at),
 		};
 	}
@@ -148,6 +152,7 @@ export class SessionMemory {
 			sessionId: msg.session_id,
 			role: msg.role,
 			content: msg.content,
+			metadata: msg.metadata ?? null,
 			createdAt: new Date(msg.created_at),
 		}));
 	}

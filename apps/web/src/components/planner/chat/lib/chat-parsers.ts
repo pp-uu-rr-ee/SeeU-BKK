@@ -1,3 +1,4 @@
+import { translate, type Locale } from "@/lib/i18n";
 import type { AssistantTurn, ParsedItinerary, ParsedPlace } from "../types";
 
 export function looksLikeMarkdown(text: string): boolean {
@@ -119,21 +120,23 @@ export function parseItineraryFromText(text: string): ParsedItinerary | null {
 	return { title, stops, total_distance_km, total_minutes };
 }
 
-export function getFollowUpChips(turn: AssistantTurn, hasItinerary: boolean): string[] {
+const THAI_SCRIPT = /[\u0E00-\u0E7F]/;
+
+/** Chips follow the reply's language (a Thai answer gets Thai chips), else the UI locale. */
+export function getFollowUpChips(turn: AssistantTurn, hasItinerary: boolean, uiLocale: Locale): string[] {
+	const locale: Locale = THAI_SCRIPT.test(turn.text) ? "th" : uiLocale;
+	const chip = (key: string, vars?: Record<string, string>) => translate(locale, `chat.followUps.${key}`, vars);
+
 	if (turn.tripDraft || hasItinerary) {
-		return [
-			"Tell me about the first stop",
-			"Find food along the route",
-			"How long will this take?",
-		];
+		return [chip("firstStop"), chip("foodAlongRoute"), chip("howLong")];
 	}
 	if (turn.suggestions.length > 0) {
 		const first = turn.suggestions[0]?.name;
 		return [
-			"Plan a route through these",
-			first ? `Find food near ${first}` : "Find nearby food",
-			"Which is best for families?",
+			chip("routeThrough"),
+			first ? chip("foodNear", { name: first }) : chip("foodNearby"),
+			chip("bestForFamilies"),
 		];
 	}
-	return ["Tell me more", "Show me something similar", "Plan a day trip"];
+	return [chip("tellMore"), chip("similar"), chip("dayTrip")];
 }

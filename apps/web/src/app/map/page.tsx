@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { TripListColumn } from "@/components/planner/TripListColumn";
 import { ItineraryColumn } from "@/components/planner/ItineraryColumn";
@@ -15,10 +15,10 @@ import { NewTripDialog } from "@/components/trips/new-trip-dialog";
 import { EditTripDialog } from "@/components/trips/edit-trip-dialog";
 import { AddTripStopDialog } from "@/components/trips/add-trip-stop-dialog";
 import type { Trip, TripStop } from "@/types/trip";
-import type { TripDraft, TripDraftStop } from "@/components/planner/chat/types";
+import type { ChatPanelProps, TripDraft, TripDraftStop } from "@/components/planner/chat/types";
 import { buildTripDraftSavePayload } from "@/components/planner/chat/lib/trip-draft";
 import { nameToSlug } from "@/lib/slug-utils";
-import { appendPlaceToTrip, toStopCategory, type TripPlaceCandidate } from "@/lib/trip-stop-utils";
+import { appendPlaceToTrip, mergeFetchedTrips, removeStop, restoreStop, toStopCategory, type TripPlaceCandidate } from "@/lib/trip-stop-utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -38,6 +38,7 @@ import {
   Plus,
   MessageSquare,
   Map as MapIcon,
+  List,
 } from "lucide-react";
 
 interface PlaceItem extends TripPlaceCandidate {
@@ -88,6 +89,30 @@ export default function TripPlannerPage() {
   const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000";
 
   const [trips, setTrips] = useState<Trip[]>([]);
+  // Saved trips edited here (add/remove/reorder stops) but not saved to the server yet
+  const [unsavedTripIds, setUnsavedTripIds] = useState<Set<string>>(new Set());
+  const unsavedTripIdsRef = useRef(unsavedTripIds);
+  unsavedTripIdsRef.current = unsavedTripIds;
+  const setTripUnsaved = useCallback((tripId: string, unsaved: boolean) => {
+    setUnsavedTripIds((prev) => {
+      if (prev.has(tripId) === unsaved) return prev;
+      const next = new Set(prev);
+      if (unsaved) next.add(tripId);
+      else next.delete(tripId);
+      return next;
+    });
+  }, []);
+
+  // Warn before leaving the page with unsaved trip edits
+  useEffect(() => {
+    if (unsavedTripIds.size === 0) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [unsavedTripIds]);
   const [isTripsLoading, setIsTripsLoading] = useState(false);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<
@@ -109,7 +134,8 @@ export default function TripPlannerPage() {
   const [chatPrefill, setChatPrefill] = useState<string | undefined>(undefined);
   const [pendingPlaceSlug, setPendingPlaceSlug] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
-  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(true);
+  // Mobile: start at peek height so the map (the page's main feature) is visible on arrival
+  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
   const [isNewTripDialogOpen, setIsNewTripDialogOpen] = useState(false);
   const [isAddStopDialogOpen, setIsAddStopDialogOpen] = useState(false);
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
@@ -117,6 +143,18 @@ export default function TripPlannerPage() {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
   const [routeTravelMin, setRouteTravelMin] = useState<number | null>(null);
+  // Space the floating search bar + category chips cover at the top of the map
+  const [searchOverlayEl, setSearchOverlayEl] = useState<HTMLDivElement | null>(null);
+  const [mapTopInset, setMapTopInset] = useState(0);
+
+  useEffect(() => {
+    if (!searchOverlayEl) return;
+    const measure = () => setMapTopInset(searchOverlayEl.offsetTop + searchOverlayEl.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(searchOverlayEl);
+    return () => observer.disconnect();
+  }, [searchOverlayEl]);
 
   // Left panel tab state
   const [leftPanelTab, setLeftPanelTab] = useState<'trips' | 'history'>('trips');
@@ -126,9 +164,26 @@ export default function TripPlannerPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isSessionsLoading, setIsSessionsLoading] = useState(false);
   const [chatSessionMessages, setChatSessionMessages] = useState<
-    Array<{ role: string; content: string }> | null
+    ChatPanelProps["sessionMessages"]
   >(null);
   const hasActiveSearch = searchQuery.trim() || selectedCategory !== 'all';
+  // Results list collapses to a pill once a place is picked, so the map and popup stay visible
+  const [isResultsListOpen, setIsResultsListOpen] = useState(true);
+  useEffect(() => {
+    setIsResultsListOpen(true);
+    // A new search takes over the camera from the previously opened place
+    if (searchQuery.trim() || selectedCategory !== 'all') setSelectedPlace(null);
+  }, [searchQuery, selectedCategory]);
+
+  // Frame every search/category result on the map (not just the ones already in view)
+  const resultsBounds = useMemo((): [[number, number], [number, number]] | null => {
+    if (!hasActiveSearch) return null;
+    const located = searchResults.filter((place) => typeof place.lat === 'number' && typeof place.lng === 'number');
+    if (located.length === 0) return null;
+    const lngs = located.map((place) => place.lng!);
+    const lats = located.map((place) => place.lat!);
+    return [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]];
+  }, [hasActiveSearch, searchResults]);
 
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null;
   const draftToTrip = useCallback((tripDraft: TripDraft): Trip => ({
@@ -209,7 +264,8 @@ export default function TripPlannerPage() {
           source: 'saved',
         }));
 
-        setTrips(serverTrips);
+        // Keep local versions of trips with unsaved edits (e.g. refetch after creating a trip)
+        setTrips((prev) => mergeFetchedTrips(serverTrips, prev, unsavedTripIdsRef.current));
         if (serverTrips.length > 0 && !selectedTripId) {
           setSelectedTripId(serverTrips[0].id);
         }
@@ -418,7 +474,7 @@ export default function TripPlannerPage() {
         }
 
         if (result.status === "duplicate") {
-          toast.info(`${place.name} is already in this trip`);
+          toast.info(t("itinerary.alreadyInTrip", { name: place.name }));
           continue;
         }
 
@@ -432,11 +488,22 @@ export default function TripPlannerPage() {
         );
 
         updatedTrips = result.trips;
+        if (selectedTripId) setTripUnsaved(selectedTripId, true);
       }
 
       return updatedTrips;
     });
-  }, [selectedTripId, t]);
+  }, [selectedTripId, t, setTripUnsaved]);
+
+  // Popup shortcut to add the opened place to the saved trip shown in the itinerary panel
+  const popupAddToTrip = useMemo(() => {
+    if (activeTripDraft || leftPanelTab !== 'trips' || !selectedTrip) return null;
+    return {
+      label: t("map.popup.addToTrip", { trip: selectedTrip.name }),
+      onAdd: (place: { id: string; name: string; slug: string; lat: number; lng: number; tags: string[]; description?: string; address?: string }) =>
+        handleAddPlaceToTrip(place),
+    };
+  }, [activeTripDraft, leftPanelTab, selectedTrip, t, handleAddPlaceToTrip]);
 
   const handleNewTrip = () => {
     setIsNewTripDialogOpen(true);
@@ -455,23 +522,39 @@ export default function TripPlannerPage() {
 
   const handleDeleteStop = useCallback((tripId: string, stopId: string) => {
     if (tripId === "draft" && activeTripDraft) {
+      const index = activeTripDraft.stops.findIndex((s) => s.id === stopId);
+      const removed = activeTripDraft.stops[index];
+      if (!removed) return;
       setActiveTripDraft({
         ...activeTripDraft,
         stops: activeTripDraft.stops.filter((s) => s.id !== stopId),
       });
-    } else {
-      setTrips((prev) =>
-        prev.map((t) => {
-          if (t.id !== tripId) return t;
-          return {
-            ...t,
-            stops: t.stops.filter((s) => s.id !== stopId),
-          };
-        })
-      );
+      toast.success(t("itinerary.stopRemoved", { name: removed.name }), {
+        action: {
+          label: t("itinerary.undo"),
+          onClick: () =>
+            setActiveTripDraft((draft) => {
+              if (!draft || draft.stops.some((s) => s.id === removed.id)) return draft;
+              const stops = [...draft.stops];
+              stops.splice(Math.min(index, stops.length), 0, removed);
+              return { ...draft, stops };
+            }),
+        },
+      });
+      return;
     }
-    toast.success("Stop removed from itinerary");
-  }, [activeTripDraft]);
+
+    const { trips: nextTrips, removed } = removeStop(trips, tripId, stopId);
+    if (!removed) return;
+    setTrips(nextTrips);
+    setTripUnsaved(tripId, true);
+    toast.success(t("itinerary.stopRemoved", { name: removed.stop.name }), {
+      action: {
+        label: t("itinerary.undo"),
+        onClick: () => setTrips((prev) => restoreStop(prev, tripId, removed.stop, removed.index)),
+      },
+    });
+  }, [activeTripDraft, trips, t, setTripUnsaved]);
 
   const handleSelectStop = useCallback((stop: TripStop) => {
     const mapPlace = {
@@ -503,6 +586,7 @@ export default function TripPlannerPage() {
       }
     }
     setTrips((prev) => prev.filter((t) => t.id !== tripId));
+    setTripUnsaved(tripId, false);
     if (tripId === selectedTripId) {
       const remaining = trips.filter((t) => t.id !== tripId);
       setSelectedTripId(remaining[0]?.id || null);
@@ -561,6 +645,7 @@ export default function TripPlannerPage() {
         return { ...t, stops: reordered, totalDurationMin: newDuration };
       })
     );
+    setTripUnsaved(tripId, true);
   };
 
   const handleSaveTripToServer = useCallback(async (tripId: string, orderedStops: TripStop[]) => {
@@ -609,6 +694,7 @@ export default function TripPlannerPage() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error ?? `Error ${res.status}`);
       toast.success(isDraftSave ? "Trip draft saved!" : "Trip saved!");
+      if (!isDraftSave) setTripUnsaved(tripId, false);
       if (isDraftSave) {
         setActiveTripDraft(null);
         if (data.data?.id) {
@@ -619,22 +705,13 @@ export default function TripPlannerPage() {
     } catch (e: any) {
       toast.error(e.message ?? "Failed to save trip");
     }
-  }, [session?.access_token, serverUrl, trips, fetchSavedTrips, activeTripDraft, displayedTrip]);
+  }, [session?.access_token, serverUrl, trips, fetchSavedTrips, activeTripDraft, displayedTrip, setTripUnsaved]);
 
   const handleClearSearch = () => {
     setSearchQuery("");
     setSelectedCategory("all");
     setSearchResults([]);
   };
-
-  // If user unfocuses selected trip in Trips tab, reset filters so all pins are shown
-  useEffect(() => {
-    if (leftPanelTab === 'trips' && !selectedTripId) {
-      setSearchQuery("");
-      setSelectedCategory("all");
-      setSearchResults([]);
-    }
-  }, [leftPanelTab, selectedTripId]);
 
   // Chat session handlers
   const handleSelectSession = useCallback(async (sessionId: string) => {
@@ -738,8 +815,10 @@ export default function TripPlannerPage() {
   const transformTripStopsForMap = (trip: Trip | null): any[] => {
     if (!trip || !trip.stops) return [];
     return trip.stops
-      .filter((stop) => stop.lat && stop.lng)
-      .map((stop) => ({
+      .map((stop, index) => ({ stop, sequence: index + 1 }))
+      .filter(({ stop }) => stop.lat && stop.lng)
+      .map(({ stop, sequence }) => ({
+        sequence,
         id: stop.id,
         name: stop.name,
         description: [t(`stopCategory.${stop.category}`), stop.address].filter(Boolean).join(" - "),
@@ -805,10 +884,18 @@ export default function TripPlannerPage() {
       return tripDraftStopsForMap;
     }
 
-    // In Trips tab: if a trip is selected, focus only that trip's pins.
+    // In Trips tab: a selected trip focuses the map on its numbered stops, plus any
+    // active search/category results so the user can find places to add.
     // If no trip is selected (unfocused), show all pins.
     if (leftPanelTab === 'trips' && selectedTrip) {
-      return transformTripStopsForMap(selectedTrip);
+      const stopPlaceIds = new Set(selectedTrip.stops.map((stop) => stop.placeId));
+      const results = hasActiveSearch
+        ? searchResults.filter((place) => !stopPlaceIds.has(place.id))
+        : [];
+      return [
+        ...transformPlacesForMap(results),
+        ...transformTripStopsForMap(selectedTrip),
+      ];
     }
 
     const placesToShow = hasActiveSearch ? searchResults : initialPlaces;
@@ -867,6 +954,9 @@ export default function TripPlannerPage() {
           initialZoom={12}
           previewItinerary={enrichedTripDraft}
           tripRoute={tripRoute}
+          topInset={mapTopInset}
+          fitBounds={resultsBounds}
+          addToTrip={popupAddToTrip}
           onRouteInfo={({ distanceKm, durationMin }) => {
             setRouteDistanceKm(distanceKm);
             setRouteTravelMin(durationMin);
@@ -876,6 +966,7 @@ export default function TripPlannerPage() {
 
       {/* Perplexity-style Search Bar */}
       <motion.div
+        ref={setSearchOverlayEl}
         className="absolute top-4 left-4 right-4 z-20 md:left-[400px] md:right-[400px] md:mx-auto md:w-[600px]"
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -938,24 +1029,55 @@ export default function TripPlannerPage() {
 
         {/* Search Results Dropdown */}
         <AnimatePresence>
-          {searchResults.length > 0 && hasActiveSearch && (
+          {searchResults.length > 0 && hasActiveSearch && !isResultsListOpen && (
             <motion.div
+              key="results-pill"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-[calc(100%+0.75rem)] left-0"
+            >
+              <Button
+                variant="secondary"
+                onClick={() => setIsResultsListOpen(true)}
+                className="h-11 rounded-full bg-card/95 px-4 shadow-xl backdrop-blur-md"
+                aria-expanded={false}
+              >
+                <List className="h-4 w-4" aria-hidden />
+                {t("map.results.showList", { count: String(searchResults.length) })}
+              </Button>
+            </motion.div>
+          )}
+          {searchResults.length > 0 && hasActiveSearch && isResultsListOpen && (
+            <motion.div
+              key="results-list"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-[calc(100%+0.75rem)] left-0 right-0 mt-0 overflow-hidden rounded-2xl bg-card/95 shadow-xl backdrop-blur-md max-h-[min(48vh,420px)] overflow-y-auto md:max-h-[420px]"
             >
               <div className="p-3 sm:p-4">
-                <div className="px-1 py-2 text-sm text-muted-foreground flex items-center justify-between gap-3">
-                  <span>Found {searchResults.length} places</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearSearch}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Clear
-                  </Button>
+                <div className="px-1 py-1 text-sm text-muted-foreground flex items-center justify-between gap-3">
+                  <span role="status">{t("map.results.found", { count: String(searchResults.length) })}</span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsResultsListOpen(false)}
+                      className="h-11 rounded-full text-muted-foreground hover:text-foreground"
+                      aria-expanded={true}
+                    >
+                      {t("map.results.hideList")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearSearch}
+                      className="h-11 rounded-full text-muted-foreground hover:text-foreground"
+                    >
+                      {t("map.results.clear")}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Search results adapt from single column on mobile to grid on desktop */}
@@ -980,6 +1102,7 @@ export default function TripPlannerPage() {
                           const mapPlace = transformPlacesForMap([place])[0];
                           if (mapPlace) {
                             setSelectedPlace(mapPlace);
+                            setIsResultsListOpen(false);
                           }
                         }}
                       />
@@ -991,12 +1114,11 @@ export default function TripPlannerPage() {
                           e.stopPropagation();
                           handleAddPlaceToTrip(place);
                         }}
-                        className="absolute top-2 right-2 h-9 min-w-9 px-2 sm:h-7 sm:w-7 sm:min-w-7 sm:p-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-card/95 hover:bg-white shadow-md"
-                        title="Add to Trip"
-                        aria-label={`Add ${place.name} to trip`}
+                        className="absolute top-2 right-2 h-11 w-11 rounded-full p-0 bg-card/95 hover:bg-white shadow-md"
+                        title={t("map.results.addToTrip")}
+                        aria-label={t("map.results.addPlaceToTrip", { name: place.name })}
                       >
-                        <Plus className="h-4 w-4 text-primary" />
-                        <span className="sr-only sm:not-sr-only sm:hidden">Add</span>
+                        <Plus className="h-4 w-4 text-primary" aria-hidden />
                       </Button>
                     </motion.div>
                   ))}
@@ -1006,7 +1128,7 @@ export default function TripPlannerPage() {
                 {searchResults.length > 6 && (
                   <div className="mt-3 text-center">
                     <span className="text-sm text-muted-foreground">
-                      +{searchResults.length - 6} more results
+                      {t("map.results.moreOnMap", { count: String(searchResults.length - 6) })}
                     </span>
                   </div>
                 )}
@@ -1099,6 +1221,7 @@ export default function TripPlannerPage() {
             totalDurationMin={(stopsSuggestedDuration || 0) + (routeTravelMin || 0)}
             totalDistanceKm={routeDistanceKm ?? displayedTrip?.totalDistanceKm ?? 0}
             mode={displayedTrip?.source === "draft" ? "draft" : "saved"}
+            hasUnsavedChanges={!!displayedTrip && unsavedTripIds.has(displayedTrip.id)}
             warnings={displayedTrip?.warnings ?? []}
           />
         </CollapsiblePanel>
@@ -1172,6 +1295,7 @@ export default function TripPlannerPage() {
                   totalDurationMin={(stopsSuggestedDuration || 0) + (routeTravelMin || 0)}
                   totalDistanceKm={routeDistanceKm ?? displayedTrip?.totalDistanceKm ?? 0}
                   mode={displayedTrip?.source === "draft" ? "draft" : "saved"}
+            hasUnsavedChanges={!!displayedTrip && unsavedTripIds.has(displayedTrip.id)}
                   warnings={displayedTrip?.warnings ?? []}
                 />
               </div>
@@ -1205,6 +1329,7 @@ export default function TripPlannerPage() {
         sessionMessages={chatSessionMessages}
         contextPlaces={chatContextPlaces}
         initialPrompt={chatPrefill}
+        hideLauncherOnMobile={isBottomSheetExpanded}
       />
 
       {/* New Trip Dialog */}

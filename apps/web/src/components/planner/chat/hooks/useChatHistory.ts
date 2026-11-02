@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { AssistantTurn, PendingTurn, TripDraft, Turn } from "../types";
 import { uid } from "../constants";
+import { sessionMessagesToTurns, type StoredSessionMessage } from "../lib/session-turns";
 
 interface UseChatHistoryParams {
 	onPlacesFound?: (places: AssistantTurn["suggestions"]) => void;
@@ -18,7 +19,7 @@ interface UseChatHistoryResult {
 	appendUserTurn: (text: string) => void;
 	commitPending: (pending: PendingTurn, latency: number) => void;
 	clearConversation: () => void;
-	loadSession: (rawMessages: Array<{ role: string; content: string }>) => void;
+	loadSession: (rawMessages: StoredSessionMessage[]) => void;
 }
 
 export function useChatHistory({
@@ -75,33 +76,8 @@ export function useChatHistory({
 		setIsItinerarySaved(false);
 	}, []);
 
-	const loadSession = useCallback((rawMessages: Array<{ role: string; content: string }>) => {
-		const converted: Turn[] = rawMessages
-			.filter((m) => m.role === "user" || m.role === "assistant")
-			.map((m) => {
-				if (m.role === "user") {
-					return { role: "user" as const, text: m.content, id: uid() };
-				}
-				let parsedText = m.content;
-				let parsedTripDraft: AssistantTurn["tripDraft"] = null;
-				try {
-					const parsed = JSON.parse(m.content) as { summary?: string; tripDraft?: AssistantTurn["tripDraft"] };
-					parsedText = parsed.summary || parsedText;
-					parsedTripDraft = parsed.tripDraft ?? null;
-				} catch {
-					// Keep raw assistant text when session content is plain text.
-				}
-				return {
-					role: "assistant" as const,
-					id: uid(),
-					text: parsedText,
-					workflowSteps: [],
-					latency: undefined,
-					suggestions: [],
-					tripDraft: parsedTripDraft,
-					errors: [],
-				} satisfies AssistantTurn;
-			});
+	const loadSession = useCallback((rawMessages: StoredSessionMessage[]) => {
+		const converted = sessionMessagesToTurns(rawMessages);
 		setTurns(converted);
 		setPendingTurn(null);
 		setIsItinerarySaved(false);

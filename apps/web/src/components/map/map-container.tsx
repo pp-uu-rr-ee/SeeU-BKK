@@ -24,6 +24,8 @@ interface Place {
   price: number;
   image_url: string;
   slug: string;
+  /** 1-based stop number when the place is a stop of the selected trip */
+  sequence?: number;
 }
 
 interface ItineraryStop {
@@ -46,6 +48,12 @@ interface MapContainerProps {
   show3D?: boolean;
   tripRoute?: [number, number][]; // Array of [lng, lat] coordinates for the route
   onRouteInfo?: (info: { distanceKm: number; durationMin: number; routeGeoJSON?: GeoJSON.FeatureCollection }) => void;
+  /** Height (px from the map's top edge) covered by floating UI such as the search bar; popups are kept below it */
+  topInset?: number;
+  /** [[west, south], [east, north]] to frame, e.g. the current search results; re-frames when the box changes */
+  fitBounds?: [[number, number], [number, number]] | null;
+  /** Popup action for adding a (non-stop) place to the open trip */
+  addToTrip?: { label: string; onAdd: (place: Place) => void } | null;
 }
 
 // Feature type for Supercluster
@@ -162,15 +170,16 @@ const ClusterContent: React.FC<{
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        backgroundColor: color,
-        border: '3px solid white',
+        // Outlined (not filled) so a cluster count never reads like a filled trip-stop number
+        backgroundColor: 'white',
+        border: `3px solid ${color}`,
         borderRadius: '50%',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: `${fontSize}px`,
-        color: 'white',
+        color,
         fontWeight: 'bold',
         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
         transition: 'transform 0.15s ease-in-out',
@@ -201,6 +210,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
   show3D = false,
   tripRoute = [],
   onRouteInfo,
+  topInset = 0,
+  fitBounds = null,
+  addToTrip = null,
 }) => {
   // Popups render in a separate React root, so pass the token down explicitly
   const { session } = useAuth();
@@ -214,6 +226,10 @@ const MapContainer: React.FC<MapContainerProps> = ({
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
   const clusterMarkersRef = useRef<Map<number, mapboxgl.Marker>>(new Map());
   const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const topInsetRef = useRef(topInset);
+  topInsetRef.current = topInset;
+  const addToTripRef = useRef(addToTrip);
+  addToTripRef.current = addToTrip;
   const popupRootRef = useRef<Root | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const superclusterRef = useRef<Supercluster | null>(null);
@@ -287,17 +303,24 @@ const MapContainer: React.FC<MapContainerProps> = ({
     if (!superclusterRef.current || !currentBounds) return [];
 
     const features = placesToFeatures(places);
-    superclusterRef.current.load(features);
 
     if (previewItinerary) {
       // Disable clustering when previewing an itinerary so sequence numbers render individually
+      superclusterRef.current.load(features);
       return features as SuperclusterFeature[];
     }
 
-    return superclusterRef.current.getClusters(
-      currentBounds,
-      Math.floor(currentZoom)
-    ) as SuperclusterFeature[];
+    // Trip stops always render individually with their number; only other places cluster
+    const stopFeatures = features.filter((feature) => feature.properties.sequence !== undefined);
+    superclusterRef.current.load(features.filter((feature) => feature.properties.sequence === undefined));
+
+    return [
+      ...(superclusterRef.current.getClusters(
+        currentBounds,
+        Math.floor(currentZoom)
+      ) as SuperclusterFeature[]),
+      ...stopFeatures,
+    ];
   }, [places, currentBounds, currentZoom, placesToFeatures, previewItinerary]);
 
   // Emit currently visible (unclustered) places to parent for UI sync
@@ -453,15 +476,12 @@ const MapContainer: React.FC<MapContainerProps> = ({
   const updateBounds = useCallback(() => {
     if (!map.current) return;
 
-    const bounds = map.current.getBounds();
-    if (bounds) {
-      setCurrentBounds([
-        bounds.getWest(),
-        bounds.getSouth(),
-        bounds.getEast(),
-        bounds.getNorth(),
-      ]);
-    }
+    // Use the whole canvas: getBounds() excludes camera padding, which fitBounds/flyTo
+    // leave behind, and pins under the padded strip would never render
+    const container = map.current.getContainer();
+    const southWest = map.current.unproject([0, container.clientHeight]);
+    const northEast = map.current.unproject([container.clientWidth, 0]);
+    setCurrentBounds([southWest.lng, southWest.lat, northEast.lng, northEast.lat]);
   }, []);
 
   // Add 3D building layer
@@ -864,6 +884,18 @@ const MapContainer: React.FC<MapContainerProps> = ({
               window.open(url, '_blank');
             }
           }}
+          addToTrip={
+            addToTripRef.current && place.sequence === undefined
+              ? {
+                  label: addToTripRef.current.label,
+                  onAdd: () => {
+                    addToTripRef.current?.onAdd(place);
+                    closePopup();
+                    onPlaceDeselectRef.current();
+                  },
+                }
+              : null
+          }
           onClose={() => {
             closePopup();
             onPlaceDeselectRef.current();
@@ -887,6 +919,25 @@ const MapContainer: React.FC<MapContainerProps> = ({
         .setLngLat([place.lng, place.lat])
         .setDOMContent(popupContainer)
         .addTo(map.current);
+
+      // The popup sits above its marker; once the camera settles, pan just enough
+      // that its top (photo + close button) clears the floating search bar
+      const popup = popupRef.current;
+      const keepPopupClearOfOverlay = () => {
+        const mapInstance = map.current;
+        const popupEl = popup?.getElement();
+        if (!mapInstance || !popupEl || popupRef.current !== popup) return;
+        const mapTop = mapInstance.getContainer().getBoundingClientRect().top;
+        const popupTop = popupEl.getBoundingClientRect().top - mapTop;
+        const overlap = topInsetRef.current + 8 - popupTop;
+        if (overlap > 0) mapInstance.panBy([0, -overlap], { duration: 300 });
+      };
+      if (map.current.isMoving()) {
+        map.current.once('moveend', keepPopupClearOfOverlay);
+      } else {
+        // Let the popup's React root render so its height is known
+        setTimeout(keepPopupClearOfOverlay, 60);
+      }
 
       // 'close' only fires on programmatic remove() (no close button / close-on-click),
       // e.g. when this popup is replaced; user-initiated closes deselect explicitly,
@@ -1030,9 +1081,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
         let marker = markersRef.current.get(markerId);
         let root = markerRootsRef.current.get(markerId);
 
-        let sequenceNumber: number | undefined;
-        let isSequence = false;
-        if (previewItinerary && previewItinerary.stops) {
+        let sequenceNumber: number | undefined = place.sequence;
+        let isSequence = place.sequence !== undefined;
+        if (!isSequence && previewItinerary && previewItinerary.stops) {
           const stops = previewItinerary.stops as any[];
           const index = stops.findIndex((s: any) => s.slug === place.slug || s.name === place.name);
           if (index !== -1) {
@@ -1285,9 +1336,29 @@ const MapContainer: React.FC<MapContainerProps> = ({
       .addTo(map.current);
   }, [userLocation, mapLoaded]);
 
+  // Frame requested bounds (search results), clear of the search bar and, on phones,
+  // the trip sheet's peek; a focused place keeps the camera
+  const fitBoundsKey = fitBounds ? fitBounds.flat().join(',') : '';
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !fitBounds || selectedPlaceRef.current) return;
+    const isPhone = map.current.getContainer().clientWidth < 768;
+    map.current.fitBounds(fitBounds, {
+      padding: { top: topInsetRef.current + 32, bottom: isPhone ? 160 : 48, left: 48, right: 72 },
+      maxZoom: 16,
+      duration: 800,
+    });
+    // fitBounds is compared by value through fitBoundsKey
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitBoundsKey, mapLoaded]);
+
   // Fly to selected place with enhanced animation
   useEffect(() => {
-    if (!map.current || !mapLoaded || !selectedPlace) return;
+    if (!map.current || !mapLoaded) return;
+    if (!selectedPlace) {
+      // Deselected from outside (e.g. a new search): drop its popup too
+      closePopup();
+      return;
+    }
 
     // Enhanced flyTo with smooth easing and optional 3D pitch
     map.current.flyTo({
@@ -1302,7 +1373,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
     });
 
     showPlacePopup(selectedPlace);
-  }, [selectedPlace, mapLoaded, showPlacePopup, is3DEnabled]);
+  }, [selectedPlace, mapLoaded, showPlacePopup, is3DEnabled, closePopup]);
 
   // Auto-fit bounds for itinerary preview
   useEffect(() => {
@@ -1420,6 +1491,8 @@ const MapContainer: React.FC<MapContainerProps> = ({
       <style jsx global>{`
         .mapbox-popup-custom {
           max-width: none !important;
+          /* Above the map control stack (z-10): the open place is the focus */
+          z-index: 15;
         }
         .mapbox-popup-custom .mapboxgl-popup-content {
           padding: 0;

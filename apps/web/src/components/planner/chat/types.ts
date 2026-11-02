@@ -143,8 +143,10 @@ export interface ChatPanelProps {
 	sessionId?: string | null;
 	authToken?: string;
 	onSessionCreated?: (id: string | null) => void;
-	sessionMessages?: Array<{ role: string; content: string }> | null;
+	sessionMessages?: Array<{ role: string; content: string; metadata?: { ui?: UiResponsePayload } | null }> | null;
 	contextPlaces?: Array<{ id: string; name: string; slug?: string; tags?: string[] }>;
 	/** Text to prefill in the input (e.g. arriving from a place page); not sent automatically */
 	initialPrompt?: string;
+	/** Hide the launcher on phones (e.g. while the trip sheet is expanded and would be covered) */
+	hideLauncherOnMobile?: boolean;
 }

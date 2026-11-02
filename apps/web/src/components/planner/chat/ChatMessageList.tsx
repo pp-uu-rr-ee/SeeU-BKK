@@ -251,7 +251,7 @@ function AssistantMessage({
 	isItinerarySaved?: boolean;
 	onFollowUp?: (text: string) => void;
 }) {
-	const { t } = useTranslation();
+	const { t, locale } = useTranslation();
 	const [copied, setCopied] = useState(false);
 	const [itineraryDismissed, setItineraryDismissed] = useState(false);
 	const [showAllParsed, setShowAllParsed] = useState(false);
@@ -287,7 +287,7 @@ function AssistantMessage({
 		[],
 	);
 
-	const followUps = useMemo(() => getFollowUpChips(turn, parsedItinerary !== null), [turn, parsedItinerary]);
+	const followUps = useMemo(() => getFollowUpChips(turn, parsedItinerary !== null, locale), [turn, parsedItinerary, locale]);
 
 	const displayText = turn.ui?.summary || (introText !== null ? introText : turn.text);
 	const uiActions = turn.ui?.actions ?? [];

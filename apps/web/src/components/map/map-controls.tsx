@@ -71,14 +71,15 @@ export const MapControls: React.FC<MapControlsProps> = ({
   const styleInfo = getStyleInfo();
 
   return (
+    // Starts below the search bar + category chips (z-20) so zoom stays clickable
     <motion.div 
-      className="absolute top-4 right-4 z-10 flex flex-col gap-2"
+      className="absolute top-36 right-4 z-10 flex flex-col gap-2 md:top-32"
       initial={{ x: 50, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.3 }}
     >
       {/* Zoom Controls */}
-      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
+      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg py-0 gap-0`}>
         <CardContent className="p-1 sm:p-1.5">
           <div className="flex flex-col gap-0.5">
             <Button
@@ -115,7 +116,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
       </Card>
 
       {/* Style Toggle (Dark/Light/Satellite) */}
-      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
+      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg py-0 gap-0`}>
         <CardContent className="p-1 sm:p-1.5">
           <Button
             variant="ghost"
@@ -138,7 +139,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
 
       {/* 3D Toggle */}
       {onToggle3D && (
-        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
+        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg py-0 gap-0`}>
           <CardContent className="p-1 sm:p-1.5">
             <Button
               variant="ghost"
@@ -163,7 +164,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
 
       {/* Traffic Toggle */}
       {onToggleTraffic && (
-        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
+        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg py-0 gap-0`}>
           <CardContent className="p-1 sm:p-1.5">
             <Button
               variant="ghost"
@@ -188,7 +189,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
 
       {/* User Location */}
       {hasUserLocation && (
-        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
+        <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg py-0 gap-0`}>
           <CardContent className="p-1 sm:p-1.5">
             <Button
               variant="ghost"
@@ -209,7 +210,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
       )}
 
       {/* Fullscreen Toggle */}
-      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg`}>
+      <Card className={`${isDarkMode ? 'bg-card/95 border-border' : 'bg-card/95 border-0'} backdrop-blur-md shadow-lg py-0 gap-0`}>
         <CardContent className="p-1 sm:p-1.5">
           <Button
             variant="ghost"

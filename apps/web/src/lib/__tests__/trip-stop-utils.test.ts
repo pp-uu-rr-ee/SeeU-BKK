@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { appendPlaceToTrip, toStopCategory } from "../trip-stop-utils";
+import { appendPlaceToTrip, mergeFetchedTrips, removeStop, restoreStop, toStopCategory } from "../trip-stop-utils";
 import type { Trip } from "@/types/trip";
 
 const baseTrip: Trip = {
@@ -102,5 +102,54 @@ describe("toStopCategory", () => {
 		expect(toStopCategory(["riverside"])).toBe("place");
 		expect(toStopCategory([])).toBe("place");
 		expect(toStopCategory(undefined)).toBe("place");
+	});
+});
+
+describe("removeStop / restoreStop", () => {
+	const trip: Trip = {
+		...baseTrip,
+		stops: [
+			{ ...baseTrip.stops[0]!, id: "a" },
+			{ ...baseTrip.stops[0]!, id: "b", name: "Wat Pho" },
+			{ ...baseTrip.stops[0]!, id: "c", name: "Wat Suthat" },
+		],
+	};
+
+	test("removes a stop and remembers where it was", () => {
+		const result = removeStop([trip], "trip-1", "b");
+		expect(result.trips[0]?.stops.map((s) => s.id)).toEqual(["a", "c"]);
+		expect(result.removed).toEqual({ stop: trip.stops[1], index: 1 });
+	});
+
+	test("returns no removal for an unknown stop", () => {
+		const result = removeStop([trip], "trip-1", "zzz");
+		expect(result.removed).toBeNull();
+		expect(result.trips).toEqual([trip]);
+	});
+
+	test("undo puts the stop back at its original position", () => {
+		const { trips, removed } = removeStop([trip], "trip-1", "b");
+		const restored = restoreStop(trips, "trip-1", removed!.stop, removed!.index);
+		expect(restored[0]?.stops.map((s) => s.id)).toEqual(["a", "b", "c"]);
+	});
+});
+
+describe("mergeFetchedTrips", () => {
+	test("keeps local unsaved versions and takes the server copy for the rest", () => {
+		const local: Trip[] = [
+			{ ...baseTrip, id: "t1", name: "Local edit" },
+			{ ...baseTrip, id: "t2", name: "Old" },
+		];
+		const server: Trip[] = [
+			{ ...baseTrip, id: "t3", name: "Brand new" },
+			{ ...baseTrip, id: "t1", name: "Server copy" },
+			{ ...baseTrip, id: "t2", name: "Fresh" },
+		];
+		const merged = mergeFetchedTrips(server, local, new Set(["t1"]));
+		expect(merged.map((t) => [t.id, t.name])).toEqual([
+			["t3", "Brand new"],
+			["t1", "Local edit"],
+			["t2", "Fresh"],
+		]);
 	});
 });

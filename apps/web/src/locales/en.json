@@ -101,6 +101,25 @@
       "hideTraffic": "Hide traffic",
       "myLocation": "Go to my location",
       "fullscreen": "Toggle full screen"
+    },
+    "sheet": {
+      "collapse": "Collapse trip panel",
+      "expand": "Expand trip panel",
+      "defaultTitle": "Trip details",
+      "collapseHint": "Swipe down or tap to collapse",
+      "expandHint": "Tap to open your trips and itinerary"
+    },
+    "results": {
+      "found": "Found {count} places",
+      "showList": "{count} places · Show list",
+      "hideList": "Hide list",
+      "clear": "Clear",
+      "moreOnMap": "+{count} more on the map",
+      "addToTrip": "Add to trip",
+      "addPlaceToTrip": "Add {name} to trip"
+    },
+    "popup": {
+      "addToTrip": "Add to {trip}"
     }
   },
   "errors": {
@@ -660,6 +679,25 @@
     ],
     "errors": {
       "quotaExceeded": "The trip assistant has reached its usage limit for now. Please try again in a little while."
+    },
+    "followUps": {
+      "firstStop": "Tell me about the first stop",
+      "foodAlongRoute": "Find food along the route",
+      "howLong": "How long will this take?",
+      "routeThrough": "Plan a route through these",
+      "foodNear": "Find food near {name}",
+      "foodNearby": "Find nearby food",
+      "bestForFamilies": "Which is best for families?",
+      "tellMore": "Tell me more",
+      "similar": "Show me something similar",
+      "dayTrip": "Plan a day trip"
     }
+  },
+  "itinerary": {
+    "stopRemoved": "Removed {name}",
+    "undo": "Undo",
+    "alreadyInTrip": "{name} is already in this trip",
+    "unsaved": "Unsaved changes",
+    "saved": "Saved"
   }
 }

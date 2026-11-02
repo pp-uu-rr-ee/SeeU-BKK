@@ -16,6 +16,7 @@ export interface SessionMessage {
 	sessionId: string;
 	role: "user" | "assistant" | "system" | "tool";
 	content: string;
+	metadata?: Record<string, unknown> | null;
 	createdAt: Date;
 }
 
@@ -68,7 +69,8 @@ export class MemoryManager {
 	 */
 	async addMessage(
 		role: "user" | "assistant" | "system" | "tool",
-		content: string
+		content: string,
+		metadata?: Record<string, unknown> | null
 	): Promise<void> {
 		if (!this.sessionId) {
 			await this.getOrCreateSession();
@@ -79,6 +81,7 @@ export class MemoryManager {
 			sessionId: this.sessionId!,
 			role,
 			content,
+			metadata,
 		});
 	}
 

@@ -39,6 +39,8 @@ interface Props {
   totalDistanceKm?: number | null;
   mode?: "saved" | "draft";
   warnings?: string[];
+  /** Saved trip has local edits (stops added/removed/reordered) not yet saved */
+  hasUnsavedChanges?: boolean;
 }
 
 const categoryColors: Record<StopCategory, string> = {
@@ -71,6 +73,7 @@ export function ItineraryColumn({
   totalDistanceKm = null,
   mode = "saved",
   warnings = [],
+  hasUnsavedChanges = false,
 }: Props) {
   const { t } = useTranslation();
   const [orderedStops, setOrderedStops] = useState<TripStop[]>(
@@ -167,6 +170,12 @@ export function ItineraryColumn({
           {mode === "draft" && (
             <p className="text-xs text-accent-foreground mt-1">AI Draft preview</p>
           )}
+          {mode === "saved" && hasUnsavedChanges && (
+            <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-accent-foreground" role="status">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-saffron" />
+              {t("itinerary.unsaved")}
+            </p>
+          )}
         </div>
         <div className="flex gap-2 shrink-0">
           {onEditTrip && (
@@ -185,6 +194,7 @@ export function ItineraryColumn({
             size="sm"
             className="max-md:h-11"
             onClick={handleSaveTrip}
+            disabled={mode === "saved" && !hasUnsavedChanges}
             aria-label="Save trip changes"
           >
             <Save className="w-4 h-4 mr-1" />

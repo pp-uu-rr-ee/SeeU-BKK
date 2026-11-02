@@ -108,3 +108,48 @@ export function appendPlaceToTrip({
 		addedStop,
 	};
 }
+
+export interface RemovedStop {
+	stop: TripStop;
+	index: number;
+}
+
+/** Removes a stop and remembers its position so the removal can be undone. */
+export function removeStop(
+	trips: Trip[],
+	tripId: string,
+	stopId: string
+): { trips: Trip[]; removed: RemovedStop | null } {
+	const trip = trips.find((item) => item.id === tripId);
+	const index = trip ? trip.stops.findIndex((stop) => stop.id === stopId) : -1;
+	if (!trip || index === -1) {
+		return { trips, removed: null };
+	}
+
+	return {
+		trips: trips.map((item) =>
+			item.id === tripId ? { ...item, stops: item.stops.filter((stop) => stop.id !== stopId) } : item
+		),
+		removed: { stop: trip.stops[index]!, index },
+	};
+}
+
+/** Puts a removed stop back at its original position (clamped to the current list). */
+export function restoreStop(trips: Trip[], tripId: string, stop: TripStop, index: number): Trip[] {
+	return trips.map((trip) => {
+		if (trip.id !== tripId || trip.stops.some((item) => item.id === stop.id)) {
+			return trip;
+		}
+		const stops = [...trip.stops];
+		stops.splice(Math.min(index, stops.length), 0, stop);
+		return { ...trip, stops };
+	});
+}
+
+/** A refetch must not wipe trips the user edited but has not saved yet. */
+export function mergeFetchedTrips(serverTrips: Trip[], localTrips: Trip[], unsavedTripIds: Set<string>): Trip[] {
+	const local = new Map(localTrips.map((trip) => [trip.id, trip] as const));
+	return serverTrips.map((trip) =>
+		unsavedTripIds.has(trip.id) && local.has(trip.id) ? local.get(trip.id)! : trip
+	);
+}

@@ -28,6 +28,7 @@ export function ChatPanel({
 	sessionMessages,
 	contextPlaces,
 	initialPrompt,
+	hideLauncherOnMobile = false,
 }: ChatPanelProps) {
 	const { t } = useTranslation();
 	const quickSuggestions = [0, 1, 2, 3].map((i) => t(`chat.suggestions.${i}`));
@@ -117,7 +118,11 @@ export function ChatPanel({
 			>
 				<Button
 					onClick={() => setIsOpen(true)}
-					className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-xl z-50"
+					// Phones: above the trip sheet's peek; md+: bottom-right of the map, clear of the itinerary column
+					className={cn(
+						"fixed bottom-[136px] right-4 rounded-full w-14 h-14 shadow-xl z-50 md:bottom-6 md:right-[424px]",
+						hideLauncherOnMobile && "max-md:hidden",
+					)}
 					size="icon"
 				>
 					<MessageSquare className="h-6 w-6" />
@@ -136,10 +141,11 @@ export function ChatPanel({
 		>
 			<Card
 				className={cn(
-					"fixed bottom-4 right-4 sm:bottom-6 sm:right-6 shadow-2xl z-50 overflow-hidden flex flex-col",
+					// md+: docked over the map column so the itinerary panel stays visible
+					"fixed bottom-4 right-4 md:bottom-6 md:right-[416px] shadow-2xl z-50 overflow-hidden flex flex-col",
 					isMinimized
 						? "w-80 h-14"
-						: "w-[95vw] max-w-[440px] h-[65vh] sm:w-[440px] sm:h-[680px]",
+						: "w-[95vw] max-w-[440px] h-[65vh] md:w-[440px] md:max-w-[calc(100vw-432px)] md:h-[680px] md:max-h-[calc(100vh-112px)]",
 				)}
 			>
 				<CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b bg-card shrink-0">

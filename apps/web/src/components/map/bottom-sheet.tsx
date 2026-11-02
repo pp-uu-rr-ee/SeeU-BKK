@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
+import { useTranslation } from "@/contexts/language-context";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function BottomSheet({
   isDraggable = true,
   onOpenChange,
 }: BottomSheetProps) {
+  const { t } = useTranslation();
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
@@ -65,8 +67,12 @@ export function BottomSheet({
     setDragOffset(0);
   };
 
+  // The header toggles both ways, matching the "tap to collapse" hint
   const handlePeekClick = () => {
-    if (!isOpen) {
+    if (isOpen) {
+      onClose();
+      onOpenChange?.(false);
+    } else {
       onOpenChange?.(true);
     }
   };
@@ -113,14 +119,11 @@ export function BottomSheet({
             role="button"
             tabIndex={0}
             aria-expanded={isOpen}
-            aria-label={isOpen ? "Collapse trip panel" : "Expand trip panel"}
+            aria-label={isOpen ? t("map.sheet.collapse") : t("map.sheet.expand")}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                onOpenChange?.(!isOpen);
-                if (isOpen) {
-                  onClose();
-                }
+                handlePeekClick();
               }
             }}
           >
@@ -128,16 +131,17 @@ export function BottomSheet({
             <div className="flex items-center justify-between w-full text-sm">
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">
-                  {title || "Trip details"}
+                  {title || t("map.sheet.defaultTitle")}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {isOpen ? "Swipe down or tap to collapse" : "Tap to reopen your trip and itinerary"}
+                  {isOpen ? t("map.sheet.collapseHint") : t("map.sheet.expandHint")}
                 </p>
               </div>
               <ChevronUp
+                aria-hidden
                 className={cn(
                   "h-5 w-5 text-muted-foreground transition-transform duration-200",
-                  !isOpen && "rotate-180"
+                  isOpen && "rotate-180"
                 )}
               />
             </div>

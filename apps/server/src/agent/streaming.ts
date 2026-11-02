@@ -6,6 +6,7 @@ import { SessionMemory } from "./memory/session";
 import { type CandidatePlace, type TripDraft, type UiResponsePayload } from "./state";
 import { parseAssistantPayload, parseToolPlacesPayload } from "./payload-parsing";
 import { buildUiPayload } from "./ui-payload";
+import { buildAssistantRecord } from "./assistant-record";
 
 export interface SSEEvent {
 	event: "start" | "stage" | "agent" | "tools" | "context" | "suggestions" | "itinerary" | "ui" | "message" | "error" | "done";
@@ -36,21 +37,15 @@ async function hydrateConversationMessages(
 async function persistConversationResult(options: {
 	memory: MemoryManager;
 	messages: Array<{ role: string; content: string }>;
-	latestUiPayload: UiResponsePayload | null;
-	lastAssistantMessage: string | null;
+	record: ReturnType<typeof buildAssistantRecord>;
 }): Promise<void> {
 	const userMessage = options.messages[options.messages.length - 1];
 	if (userMessage) {
 		await options.memory.addMessage("user", userMessage.content);
 	}
 
-	if (options.latestUiPayload) {
-		await options.memory.addMessage("assistant", JSON.stringify(options.latestUiPayload));
-		return;
-	}
-
-	if (options.lastAssistantMessage) {
-		await options.memory.addMessage("assistant", options.lastAssistantMessage);
+	if (options.record) {
+		await options.memory.addMessage("assistant", options.record.content, options.record.metadata);
 	}
 }
 
@@ -255,8 +250,15 @@ export async function* streamAgentExecution(
 					await persistConversationResult({
 						memory,
 						messages,
-						latestUiPayload,
-						lastAssistantMessage,
+						record: buildAssistantRecord({
+							sessionId: memory.getSessionId() || undefined,
+							latestUiPayload,
+							lastAssistantMessage,
+							latestAssistantSummary,
+							latestTripDraft,
+							suggestedPlaces,
+							latestWarnings,
+						}),
 					});
 					break;
 			}

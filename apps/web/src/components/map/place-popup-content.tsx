@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Heart, Share2, X, Camera } from 'lucide-react';
+import { MapPin, Navigation, Heart, Share2, X, Camera, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Locale } from '@/contexts/language-context';
 
@@ -27,6 +27,8 @@ interface PlacePopupContentProps {
   onViewDetails: () => void;
   onGetDirections: () => void;
   onClose: () => void;
+  /** Shown while a saved trip is open and the place is not one of its stops */
+  addToTrip?: { label: string; onAdd: () => void } | null;
   userLocation?: [number, number] | null;
   authToken?: string;
   /** Passed in because the popup is rendered through createRoot, outside the language provider */
@@ -41,6 +43,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
   onViewDetails,
   onGetDirections,
   onClose,
+  addToTrip,
   userLocation,
   authToken,
   t,
@@ -250,12 +253,22 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             </div>
           )}
 
+          {addToTrip && (
+            <Button
+              onClick={addToTrip.onAdd}
+              variant="secondary"
+              className="mb-2 h-11 w-full rounded-full font-medium"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              <span className="truncate">{addToTrip.label}</span>
+            </Button>
+          )}
+
           {/* Action buttons */}
           <div className="flex gap-2">
             <Button
               onClick={onViewDetails}
-              className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium"
-              size="sm"
+              className="h-11 flex-1 bg-primary hover:bg-primary/90 text-white font-medium"
             >
               {t('mapPopup.viewDetails')}
             </Button>
@@ -264,7 +277,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
               onClick={onGetDirections}
               variant="outline"
               size="icon"
-              className="flex-shrink-0"
+              className="h-11 w-11 flex-shrink-0"
               title={t('mapPopup.directions')}
               aria-label={t('mapPopup.directions')}
             >
@@ -275,7 +288,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
               onClick={handleShare}
               variant="outline"
               size="icon"
-              className="flex-shrink-0"
+              className="h-11 w-11 flex-shrink-0"
               title={t('mapPopup.share')}
               aria-label={t('mapPopup.share')}
               disabled={isSharing}

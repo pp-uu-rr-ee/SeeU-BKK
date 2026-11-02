@@ -46,6 +46,7 @@ sessions.get('/:id/messages', authMiddleware, async (c) => {
         id: m.id,
         role: m.role,
         content: m.content,
+        metadata: m.metadata ?? null,
         createdAt: m.createdAt,
       })),
     })

@@ -101,6 +101,25 @@
       "hideTraffic": "ซ่อนสภาพจราจร",
       "myLocation": "ไปยังตำแหน่งของฉัน",
       "fullscreen": "สลับโหมดเต็มจอ"
+    },
+    "sheet": {
+      "collapse": "ย่อแผงทริป",
+      "expand": "ขยายแผงทริป",
+      "defaultTitle": "รายละเอียดทริป",
+      "collapseHint": "ปัดลงหรือแตะเพื่อย่อ",
+      "expandHint": "แตะเพื่อเปิดทริปและแผนการเดินทาง"
+    },
+    "results": {
+      "found": "พบ {count} สถานที่",
+      "showList": "{count} สถานที่ · ดูรายการ",
+      "hideList": "ซ่อนรายการ",
+      "clear": "ล้าง",
+      "moreOnMap": "อีก {count} แห่งบนแผนที่",
+      "addToTrip": "เพิ่มลงทริป",
+      "addPlaceToTrip": "เพิ่ม {name} ลงทริป"
+    },
+    "popup": {
+      "addToTrip": "เพิ่มลง {trip}"
     }
   },
   "errors": {
@@ -660,6 +679,25 @@
     ],
     "errors": {
       "quotaExceeded": "ผู้ช่วยวางแผนทริปถูกใช้งานจนเต็มโควตาแล้วในตอนนี้ กรุณาลองใหม่อีกครั้งในภายหลัง"
+    },
+    "followUps": {
+      "firstStop": "เล่าเรื่องจุดแรกให้ฟังหน่อย",
+      "foodAlongRoute": "หาของกินตามเส้นทาง",
+      "howLong": "ทริปนี้ใช้เวลานานแค่ไหน?",
+      "routeThrough": "วางเส้นทางผ่านที่เหล่านี้",
+      "foodNear": "หาของกินใกล้ {name}",
+      "foodNearby": "หาของกินแถวนี้",
+      "bestForFamilies": "ที่ไหนเหมาะกับครอบครัวที่สุด?",
+      "tellMore": "เล่าเพิ่มอีก",
+      "similar": "แนะนำที่คล้ายกัน",
+      "dayTrip": "วางแผนทริปหนึ่งวัน"
     }
+  },
+  "itinerary": {
+    "stopRemoved": "ลบ {name} แล้ว",
+    "undo": "เลิกทำ",
+    "alreadyInTrip": "{name} อยู่ในทริปนี้แล้ว",
+    "unsaved": "ยังไม่ได้บันทึก",
+    "saved": "บันทึกแล้ว"
   }
 }
