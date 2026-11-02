@@ -921,7 +921,7 @@ export default function TripPlannerPage() {
                 variant={isSelected ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center gap-2 whitespace-nowrap rounded-full transition-all ${isSelected
+                className={`flex items-center gap-2 whitespace-nowrap rounded-full transition-all max-md:h-11 ${isSelected
                   ? 'bg-primary hover:bg-primary/90 text-white shadow-md'
                   : 'bg-card/95 backdrop-blur-md hover:bg-secondary border-0 shadow-md'
                   }`}
@@ -1113,7 +1113,7 @@ export default function TripPlannerPage() {
           <div className="flex gap-1 mb-4 p-1 bg-secondary rounded-lg">
             <button
               onClick={() => setLeftPanelTab('trips')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'trips'
+              className={`flex-1 flex items-center justify-center gap-2 min-h-11 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'trips'
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -1126,7 +1126,7 @@ export default function TripPlannerPage() {
                 setLeftPanelTab('history');
                 fetchChatSessions();
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'history'
+              className={`flex-1 flex items-center justify-center gap-2 min-h-11 py-2 px-3 rounded-md text-sm font-medium transition-colors ${leftPanelTab === 'history'
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
                 }`}

@@ -105,9 +105,12 @@ export function ChatPanel({
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialPrompt]);
 
+	// Distinct keys stop React reusing the launcher's motion.div for the panel;
+	// otherwise opening mid-animation (deep link) leaves the panel stuck at a partial scale
 	if (!isOpen) {
 		return (
 			<motion.div
+				key="chat-launcher"
 				initial={{ scale: 0, opacity: 0 }}
 				animate={{ scale: 1, opacity: 1 }}
 				transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -125,6 +128,7 @@ export function ChatPanel({
 
 	return (
 		<motion.div
+			key="chat-panel"
 			initial={{ y: 100, opacity: 0 }}
 			animate={{ y: 0, opacity: 1 }}
 			exit={{ y: 100, opacity: 0 }}

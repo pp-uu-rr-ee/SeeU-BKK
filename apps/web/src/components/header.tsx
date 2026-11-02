@@ -43,7 +43,7 @@ export default function Header() {
 				{/* Wordmark */}
 				<Link
 					href="/"
-					className="flex items-baseline gap-1.5 rounded-md font-display text-xl font-semibold tracking-tight text-foreground"
+					className="flex items-baseline gap-1.5 rounded-md max-md:py-2 font-display text-xl font-semibold tracking-tight text-foreground"
 				>
 					SeeU
 					<span className="text-primary">Bangkok</span>

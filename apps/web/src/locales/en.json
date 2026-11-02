@@ -72,7 +72,20 @@
   },
   "map": {
     "searchPlaceholder": "Search places, temples, restaurants...",
-    "askAboutPlace": "Tell me about {name} — what's worth seeing there and what's nearby?"
+    "askAboutPlace": "Tell me about {name} — what's worth seeing there and what's nearby?",
+    "controls": {
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "styleDark": "Dark map (tap for light)",
+      "styleLight": "Light map (tap for satellite)",
+      "styleSatellite": "Satellite map (tap for dark)",
+      "enable3d": "Show 3D buildings",
+      "disable3d": "Hide 3D buildings",
+      "showTraffic": "Show traffic",
+      "hideTraffic": "Hide traffic",
+      "myLocation": "Go to my location",
+      "fullscreen": "Toggle full screen"
+    }
   },
   "errors": {
     "selectTrip": "Please select a trip first",

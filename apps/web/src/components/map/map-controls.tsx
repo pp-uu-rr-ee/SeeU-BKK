@@ -15,6 +15,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useTranslation } from '@/contexts/language-context';
 
 interface MapControlsProps {
   onStyleChange: (style: 'dark' | 'light' | 'satellite') => void;
@@ -41,6 +42,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
   is3DEnabled = false,
   isTrafficEnabled = false,
 }) => {
+  const { t } = useTranslation();
   const isDarkMode = currentStyle === 'dark';
   
   // Cycle through styles: dark -> light -> satellite -> dark
@@ -58,11 +60,11 @@ export const MapControls: React.FC<MapControlsProps> = ({
   const getStyleInfo = () => {
     switch (currentStyle) {
       case 'dark':
-        return { icon: <Moon className="h-4 w-4" />, title: 'Dark Mode (click for Light)' };
+        return { icon: <Moon className="h-4 w-4" />, title: t('map.controls.styleDark') };
       case 'light':
-        return { icon: <Sun className="h-4 w-4" />, title: 'Light Mode (click for Satellite)' };
+        return { icon: <Sun className="h-4 w-4" />, title: t('map.controls.styleLight') };
       case 'satellite':
-        return { icon: <Layers className="h-4 w-4" />, title: 'Satellite (click for Dark)' };
+        return { icon: <Layers className="h-4 w-4" />, title: t('map.controls.styleSatellite') };
     }
   };
 
@@ -83,12 +85,13 @@ export const MapControls: React.FC<MapControlsProps> = ({
               variant="ghost"
               size="sm"
               onClick={onZoomIn}
-              className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+              className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'text-foreground hover:bg-secondary hover:text-foreground' 
                   : 'hover:bg-teal-soft hover:text-primary'
               }`}
-              title="Zoom In"
+              title={t('map.controls.zoomIn')}
+              aria-label={t('map.controls.zoomIn')}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -97,12 +100,13 @@ export const MapControls: React.FC<MapControlsProps> = ({
               variant="ghost"
               size="sm"
               onClick={onZoomOut}
-              className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+              className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'text-foreground hover:bg-secondary hover:text-foreground' 
                   : 'hover:bg-teal-soft hover:text-primary'
               }`}
-              title="Zoom Out"
+              title={t('map.controls.zoomOut')}
+              aria-label={t('map.controls.zoomOut')}
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -117,7 +121,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleStyleToggle}
-            className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+            className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
               currentStyle === 'satellite'
                 ? 'bg-teal-soft text-primary hover:bg-teal-soft'
                 : isDarkMode
@@ -125,6 +129,7 @@ export const MapControls: React.FC<MapControlsProps> = ({
                   : 'hover:bg-teal-soft hover:text-primary'
             }`}
             title={styleInfo.title}
+            aria-label={styleInfo.title}
           >
             {styleInfo.icon}
           </Button>
@@ -139,14 +144,16 @@ export const MapControls: React.FC<MapControlsProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggle3D}
-              className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+              className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 is3DEnabled 
                   ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
                   : isDarkMode
                     ? 'text-foreground hover:bg-purple-900/50 hover:text-purple-400'
                     : 'hover:bg-purple-50 hover:text-purple-600'
               }`}
-              title={is3DEnabled ? 'Disable 3D Buildings' : 'Enable 3D Buildings'}
+              title={t(is3DEnabled ? 'map.controls.disable3d' : 'map.controls.enable3d')}
+              aria-label={t(is3DEnabled ? 'map.controls.disable3d' : 'map.controls.enable3d')}
+              aria-pressed={is3DEnabled}
             >
               <Box className="h-4 w-4" />
             </Button>
@@ -162,14 +169,16 @@ export const MapControls: React.FC<MapControlsProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleTraffic}
-              className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+              className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isTrafficEnabled 
                   ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' 
                   : isDarkMode
                     ? 'text-foreground hover:bg-orange-900/50 hover:text-orange-400'
                     : 'hover:bg-orange-50 hover:text-orange-600'
               }`}
-              title={isTrafficEnabled ? 'Hide Traffic' : 'Show Traffic'}
+              title={t(isTrafficEnabled ? 'map.controls.hideTraffic' : 'map.controls.showTraffic')}
+              aria-label={t(isTrafficEnabled ? 'map.controls.hideTraffic' : 'map.controls.showTraffic')}
+              aria-pressed={isTrafficEnabled}
             >
               <Car className="h-4 w-4" />
             </Button>
@@ -185,12 +194,13 @@ export const MapControls: React.FC<MapControlsProps> = ({
               variant="ghost"
               size="sm"
               onClick={onFlyToUserLocation}
-              className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+              className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
                 isDarkMode 
                   ? 'text-foreground hover:bg-secondary hover:text-foreground' 
                   : 'hover:bg-teal-soft hover:text-primary'
               }`}
-              title="Go to My Location"
+              title={t('map.controls.myLocation')}
+              aria-label={t('map.controls.myLocation')}
             >
               <Navigation className="h-4 w-4" />
             </Button>
@@ -211,12 +221,13 @@ export const MapControls: React.FC<MapControlsProps> = ({
                 document.documentElement.requestFullscreen();
               }
             }}
-            className={`h-9 w-9 p-0 touch-manipulation rounded-lg transition-colors ${
+            className={`h-11 w-11 md:h-9 md:w-9 p-0 touch-manipulation rounded-lg transition-colors ${
               isDarkMode 
                 ? 'text-foreground hover:bg-secondary hover:text-foreground' 
                 : 'hover:bg-teal-soft hover:text-primary'
             }`}
-            title="Toggle Fullscreen"
+            title={t('map.controls.fullscreen')}
+            aria-label={t('map.controls.fullscreen')}
           >
             <Maximize className="h-4 w-4" />
           </Button>

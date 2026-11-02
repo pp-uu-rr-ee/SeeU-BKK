@@ -118,7 +118,7 @@ export function TripListColumn({
     >
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-semibold text-foreground">My Trips</h2>
-        <Button size="sm" onClick={onNewTripClick} aria-label="Create new trip">
+        <Button size="sm" className="max-md:h-11" onClick={onNewTripClick} aria-label="Create new trip">
           + New Trip
         </Button>
       </div>
@@ -130,7 +130,7 @@ export function TripListColumn({
         />
         <Input
           placeholder="Search trips..."
-          className="pl-9"
+          className="pl-9 max-md:h-11"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           aria-label="Search trips"
@@ -207,7 +207,7 @@ export function TripListColumn({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 shrink-0"
+                                  className="h-8 w-8 max-md:h-11 max-md:w-11 shrink-0"
                                   aria-label={`Actions for ${trip.name}`}
                                   onClick={(e) => e.stopPropagation()}
                                 >

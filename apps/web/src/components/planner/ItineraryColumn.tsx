@@ -162,6 +162,7 @@ export function ItineraryColumn({
             <Button
               variant="outline"
               size="sm"
+              className="max-md:h-11"
               onClick={() => onEditTrip(trip.id)}
               aria-label="Edit trip details"
             >
@@ -171,6 +172,7 @@ export function ItineraryColumn({
           )}
           <Button
             size="sm"
+            className="max-md:h-11"
             onClick={handleSaveTrip}
             aria-label="Save trip changes"
           >
@@ -232,7 +234,7 @@ export function ItineraryColumn({
                           {index + 1}
                         </span>
                         <button
-                          className="cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring rounded"
+                          className="cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring rounded max-md:flex max-md:h-11 max-md:w-11 max-md:items-center max-md:justify-center"
                           aria-label={`Reorder stop: ${stop.name}`}
                           tabIndex={0}
                         >
@@ -281,7 +283,7 @@ export function ItineraryColumn({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="w-7 h-7 shrink-0 text-muted-foreground hover:text-destructive"
+                        className="w-7 h-7 max-md:h-11 max-md:w-11 shrink-0 text-muted-foreground hover:text-destructive"
                         aria-label={`Delete stop: ${stop.name}`}
                         onClick={() => onDeleteStop?.(trip.id, stop.id)}
                       >
@@ -299,7 +301,7 @@ export function ItineraryColumn({
       {/* Add stop button */}
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full max-md:h-11"
         onClick={() => onAddStop?.(trip.id)}
         disabled={!onAddStop || mode !== "saved"}
         aria-label="Add new stop to itinerary"

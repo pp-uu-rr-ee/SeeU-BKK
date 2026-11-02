@@ -227,6 +227,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
   const onPlaceSelectRef = useRef(onPlaceSelect);
   const onVisiblePlacesChangeRef = useRef(onVisiblePlacesChange);
   const userLocationRef = useRef(userLocation);
+  const selectedPlaceRef = useRef(selectedPlace);
 
   // Keep refs in sync with props
   useEffect(() => {
@@ -244,6 +245,10 @@ const MapContainer: React.FC<MapContainerProps> = ({
   useEffect(() => {
     userLocationRef.current = userLocation;
   }, [userLocation]);
+
+  useEffect(() => {
+    selectedPlaceRef.current = selectedPlace;
+  }, [selectedPlace]);
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -384,20 +389,8 @@ const MapContainer: React.FC<MapContainerProps> = ({
       mapInstance.on('click', handleClick);
       mapInstance.on('error', handleError);
 
-      // Navigation controls
-      mapInstance.addControl(
-        new mapboxgl.NavigationControl({ visualizePitch: true }),
-        'top-right'
-      );
-
-      // Geolocate control
-      const geolocateControl = new mapboxgl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showUserHeading: true,
-      });
-
-      mapInstance.addControl(geolocateControl, 'top-right');
+      // Zoom and "my location" come from <MapControls>; Mapbox's own navigation/geolocate
+      // controls sat underneath them in the same corner and duplicated them
 
       // Scale control
       mapInstance.addControl(
@@ -699,8 +692,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
             },
           });
 
-          // Fit bounds to show entire route with padding
-          if (routeCoordinates.length > 0) {
+          // Fit bounds to show entire route with padding, unless a place is focused
+          // (the directions request resolves late and would undo /map?place=<slug>)
+          if (routeCoordinates.length > 0 && !selectedPlaceRef.current) {
             const bounds = routeCoordinates.reduce(
               (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
               new mapboxgl.LngLatBounds(
@@ -765,8 +759,8 @@ const MapContainer: React.FC<MapContainerProps> = ({
         },
       });
 
-      // Fit bounds
-      if (tripRoute.length > 0) {
+      // Fit bounds, unless a place is focused
+      if (tripRoute.length > 0 && !selectedPlaceRef.current) {
         const bounds = tripRoute.reduce(
           (bounds, coord) => bounds.extend(coord),
           new mapboxgl.LngLatBounds(tripRoute[0], tripRoute[0])
@@ -847,6 +841,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
       if (!map.current) return;
 
       closePopup();
+      const userLocation = userLocationRef.current;
 
       // Create popup container
       const popupContainer = document.createElement('div');
@@ -871,7 +866,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
           }}
           onClose={() => {
             closePopup();
-            onPlaceDeselect();
+            onPlaceDeselectRef.current();
           }}
           userLocation={userLocation}
           authToken={authToken}
@@ -893,6 +888,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
         .setDOMContent(popupContainer)
         .addTo(map.current);
 
+      // 'close' only fires on programmatic remove() (no close button / close-on-click),
+      // e.g. when this popup is replaced; user-initiated closes deselect explicitly,
+      // so deselecting here would clear a place that was just selected
       popupRef.current.on('close', () => {
         if (popupRootRef.current) {
           const root = popupRootRef.current;
@@ -900,10 +898,12 @@ const MapContainer: React.FC<MapContainerProps> = ({
           // Defer unmount to avoid React 18 synchronous unmount warning
           queueMicrotask(() => root.unmount());
         }
-        onPlaceDeselectRef.current();
       });
     },
-    [closePopup, onPlaceDeselect, userLocation, authToken, locale]
+    // Callbacks and userLocation are read from refs: the parent passes new identities on
+    // every render, and the fly-to effect depends on this callback, so unstable deps re-ran
+    // flyTo + popup on each map move (an endless loop on /map?place=<slug>)
+    [closePopup, authToken, locale]
   );
 
   // Get marker color based on tags
