@@ -7,6 +7,7 @@ import { AuthButton } from "./auth/auth-button";
 import LanguageToggle from "./language-toggle";
 import { useTranslation } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
+import { isAdmin } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 export default function Header() {
@@ -28,7 +29,7 @@ export default function Header() {
 			{ to: "/saved-trips", label: t("nav.savedTrips") },
 		];
 
-		if (user?.role === "admin" || user?.user_metadata?.role === "admin") {
+		if (isAdmin(user)) {
 			baseLinks.push({ to: "/admin/places", label: t("nav.admin") });
 		}
 

@@ -1,9 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from './src/lib/supabase/middleware'
+import { isAdmin } from './src/lib/roles'
 
 export async function middleware(request: NextRequest) {
-  // Protect all /admin routes — must be authenticated + role === 'admin'
+  // Protect all /admin routes — must be authenticated + app_metadata.role === 'admin'
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,12 +29,12 @@ export async function middleware(request: NextRequest) {
 
     if (!user) {
       // Not logged in → redirect to login page
-      const loginUrl = new URL('/login', request.url)
+      const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(loginUrl)
     }
 
-    if (user.role !== 'admin') {
+    if (!isAdmin(user)) {
       // Logged in but not admin → redirect to home with error indicator
       const homeUrl = new URL('/', request.url)
       homeUrl.searchParams.set('error', 'unauthorized')

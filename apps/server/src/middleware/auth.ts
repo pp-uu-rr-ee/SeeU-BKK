@@ -1,6 +1,7 @@
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { supabaseAuth } from '../lib/supabase'
+import { hasRole } from './roles'
 
 export interface AuthenticatedRequest {
   user: {
@@ -8,6 +9,7 @@ export interface AuthenticatedRequest {
     email: string
     role?: string
     user_metadata?: any
+    app_metadata?: any
   }
 }
 
@@ -39,6 +41,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
       email: user.email!,
       role: user.role,
       user_metadata: user.user_metadata,
+      app_metadata: user.app_metadata,
     })
 
     await next()
@@ -65,6 +68,7 @@ export const optionalAuthMiddleware = createMiddleware(async (c, next) => {
           email: user.email!,
           role: user.role,
           user_metadata: user.user_metadata,
+          app_metadata: user.app_metadata,
         })
       }
     } catch (error) {
@@ -86,7 +90,7 @@ export const optionalAuthMiddleware = createMiddleware(async (c, next) => {
 export const roleGuard = (requiredRole: string) =>
   createMiddleware(async (c, next) => {
     const user = c.get('user')
-    if (!user || (user.role !== requiredRole && user.user_metadata?.role !== requiredRole)) {
+    if (!hasRole(user, requiredRole)) {
       throw new HTTPException(403, {
         message: `Forbidden: requires role '${requiredRole}'`,
       })

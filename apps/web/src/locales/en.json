@@ -544,7 +544,11 @@
     "hoursClosed": "Closed",
     "openTime": "Opening time for {day}",
     "closeTime": "Closing time for {day}",
-    "overnightHint": "A closing time earlier than the opening time means it closes after midnight."
+    "overnightHint": "A closing time earlier than the opening time means it closes after midnight.",
+    "uploadImage": "Upload photo",
+    "uploadImageHint": "JPEG, PNG or WebP · up to 5MB · or paste an image URL above",
+    "imageUploaded": "Photo uploaded — save the place to keep it",
+    "imagePreview": "Place photo preview"
   },
   "trips": {
     "createTitle": "Create New Trip",

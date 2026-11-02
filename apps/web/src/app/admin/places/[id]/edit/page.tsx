@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { PlaceImageUpload } from '@/components/admin/place-image-upload'
 import { useTranslation } from '@/contexts/language-context'
 import {
   PlaceDetailsFields,
@@ -365,6 +366,7 @@ export default function AdminEditPlacePage() {
                     onChange={(e) => update('image_url', e.target.value)} 
                     placeholder="https://..." 
                   />
+                  <PlaceImageUpload value={form.image_url || ''} onChange={(url) => update('image_url', url)} />
                 </div>
               </div>
               <div>

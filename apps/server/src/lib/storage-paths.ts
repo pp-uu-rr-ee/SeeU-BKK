@@ -25,3 +25,30 @@ export function replacedAvatarPath(
   if (stillReferenced || previousUrl === savedUrl) return null
   return avatarStoragePath(previousUrl)
 }
+
+const PLACE_IMAGES_PREFIX = '/storage/v1/object/public/place-images/'
+
+/**
+ * Object path inside the `place-images` bucket for a place image URL we host
+ * (e.g. `places/uploads/abc.webp`), or null for external or empty URLs.
+ */
+export function placeImageStoragePath(url: string | null | undefined): string | null {
+  if (!url) return null
+  const start = url.indexOf(PLACE_IMAGES_PREFIX)
+  if (start === -1) return null
+  const path = url.slice(start + PLACE_IMAGES_PREFIX.length).split(/[?#]/)[0]
+  return path ? path : null
+}
+
+/**
+ * Place image object to delete after an admin replaces it, or null when nothing may be deleted:
+ * the image is unchanged, external, or another place still points at the same file.
+ */
+export function replacedPlaceImagePath(
+  previousUrl: string | null | undefined,
+  savedUrl: string | null | undefined,
+  stillReferenced: boolean
+): string | null {
+  if (stillReferenced || previousUrl === savedUrl) return null
+  return placeImageStoragePath(previousUrl)
+}

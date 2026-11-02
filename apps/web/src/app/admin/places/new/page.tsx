@@ -9,6 +9,7 @@ import { AdminMapPicker } from '@/components/map/admin-map-picker'
 import { MapPin, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { PlaceImageUpload } from '@/components/admin/place-image-upload'
 import { useTranslation } from '@/contexts/language-context'
 import {
   PlaceDetailsFields,
@@ -321,6 +322,7 @@ export default function AdminNewPlacePage() {
               placeholder="https://..."
               className="h-11 rounded-xl"
             />
+            <PlaceImageUpload value={form.image_url || ''} onChange={(url) => update('image_url', url)} />
           </div>
         </div>
 

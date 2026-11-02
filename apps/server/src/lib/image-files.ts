@@ -17,3 +17,11 @@ export function imageExtensionFor(contentType: string | null): 'jpg' | 'png' | '
 export function placeImagePath(slug: string, ext: string): string {
   return `places/${slug}.${ext}`
 }
+
+/** Upload limit for admin place photos (same as profile photos) */
+export const MAX_PLACE_IMAGE_BYTES = 5 * 1024 * 1024
+
+/** Unique object path for an admin-uploaded place image; a new name per upload avoids stale CDN caches */
+export function uploadedPlaceImagePath(ext: string, id: string = crypto.randomUUID()): string {
+  return `places/uploads/${id}.${ext}`
+}

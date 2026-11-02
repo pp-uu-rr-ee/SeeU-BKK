@@ -6,6 +6,10 @@ import { openaiEmbed } from '../lib/openai'
 import { nameToSlug } from '../lib/slug-utils'
 import { PLACE_COLUMNS, buildPlaceEmbeddingText, placeSearchFilter } from '../lib/place-data'
 import { authMiddleware, roleGuard } from '../middleware/auth'
+import { MAX_PLACE_IMAGE_BYTES, imageExtensionFor, uploadedPlaceImagePath } from '../lib/image-files'
+import { replacedPlaceImagePath } from '../lib/storage-paths'
+
+const PLACE_IMAGES_BUCKET = 'place-images'
 
 const admin = new Hono()
 
@@ -373,12 +377,61 @@ admin.put('/places/:id', zValidator('json', updatePlaceSchema), async (c) => {
 
     if (error) throw error
     if (body.opening_hours) await saveOpeningHours(id, body.opening_hours)
+
+    // Free the old photo from our bucket when it was replaced and no other place uses it
+    if (body.image_url !== undefined && existingPlace.image_url !== data.image_url) {
+      const { count, error: refError } = await supabase
+        .from('bangkok_unseen')
+        .select('id', { count: 'exact', head: true })
+        .eq('image_url', existingPlace.image_url)
+        .neq('id', id)
+      if (!refError) {
+        const oldPath = replacedPlaceImagePath(existingPlace.image_url, data.image_url, (count ?? 0) > 0)
+        if (oldPath) {
+          const { error: removeError } = await supabase.storage.from(PLACE_IMAGES_BUCKET).remove([oldPath])
+          if (removeError) console.error('Failed to remove replaced place image:', removeError.message)
+        }
+      }
+    }
     
     const responseBody: any = { success: true, data }
     if (embeddingError) responseBody.warning = embeddingError
     return c.json(responseBody)
   } catch (e: any) {
     return c.json({ success: false, error: e?.message || 'Update failed' }, 500)
+  }
+})
+
+// POST /admin/places/image - Upload a place photo to our storage; returns its public URL for image_url
+// The server uploads with the service role: the bucket has no client write policy.
+admin.post('/places/image', async (c) => {
+  try {
+    const body = await c.req.parseBody()
+    const file = body['file']
+    if (!(file instanceof File)) {
+      return c.json({ success: false, message: 'No image file provided' }, 400)
+    }
+    const ext = imageExtensionFor(file.type)
+    if (!ext || ext === 'gif') {
+      return c.json({ success: false, message: 'Only JPEG, PNG or WebP images are allowed' }, 400)
+    }
+    if (file.size > MAX_PLACE_IMAGE_BYTES) {
+      return c.json({ success: false, message: 'Image must be 5MB or smaller' }, 400)
+    }
+
+    const path = uploadedPlaceImagePath(ext)
+    const { error } = await supabase.storage.from(PLACE_IMAGES_BUCKET).upload(path, await file.arrayBuffer(), {
+      contentType: file.type,
+      // Every upload gets a new name, so the file never changes and can be cached for a year
+      cacheControl: '31536000',
+      upsert: false,
+    })
+    if (error) throw error
+
+    const url = supabase.storage.from(PLACE_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl
+    return c.json({ success: true, data: { url } })
+  } catch (e: any) {
+    return c.json({ success: false, error: e?.message || 'Upload failed' }, 500)
   }
 })
 

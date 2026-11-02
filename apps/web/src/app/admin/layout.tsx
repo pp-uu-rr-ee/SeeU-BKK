@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isAdmin } from '@/lib/roles'
 
 /**
  * Admin Layout — Server Component guard (Defense in Depth Layer 2).
@@ -18,11 +19,11 @@ export default async function AdminLayout({
 
   // Not authenticated → send to login
   if (!user) {
-    redirect('/login')
+    redirect('/auth/login')
   }
 
   // Authenticated but not admin → send to home
-  if (user.role !== 'admin' && user.user_metadata?.role !== 'admin') {
+  if (!isAdmin(user)) {
     redirect('/?error=unauthorized')
   }
 
