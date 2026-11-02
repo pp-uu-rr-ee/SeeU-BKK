@@ -7,6 +7,7 @@ import {
 	searchQueryFromConversation,
 	stripJsonFences,
 	stripPlaceRefs,
+	tripContextForPrompt,
 } from "../fast-research";
 import type { CandidatePlace } from "../state";
 
@@ -88,5 +89,29 @@ describe("searchQueryFromConversation", () => {
 	test("uses the only user message as is, and empty when there is none", () => {
 		expect(searchQueryFromConversation([{ role: "user", content: " Wat Pho " }])).toBe("Wat Pho");
 		expect(searchQueryFromConversation([{ role: "assistant", content: "hi" }])).toBe("");
+	});
+});
+
+describe("tripContextForPrompt", () => {
+	test("summarises the current trip so follow-ups like 'how long will this take?' can be answered", () => {
+		const text = tripContextForPrompt({
+			title: "Museum half day",
+			total_minutes: 196,
+			total_distance_km: 4.1,
+			stops: [
+				{ name: "Museum Siam", suggested_time_min: 60, distance_from_prev_km: 0, travel_time_from_prev_min: 0 },
+				{ name: "Coin Museum", suggested_time_min: 45, distance_from_prev_km: 2.3, travel_time_from_prev_min: 12 },
+			],
+		} as never);
+		expect(text).toContain("Museum half day");
+		expect(text).toContain("196 min");
+		expect(text).toContain("4.1 km");
+		expect(text).toContain("1. Museum Siam (60 min)");
+		expect(text).toContain("2. Coin Museum (45 min, 2.3 km / 12 min from previous)");
+	});
+
+	test("is empty without a trip", () => {
+		expect(tripContextForPrompt(undefined)).toBe("");
+		expect(tripContextForPrompt(null)).toBe("");
 	});
 });

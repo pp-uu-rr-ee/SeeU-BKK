@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { search_places, nearby_places, isWithinRattanakosin } from "@/lib/tools";
 import { extractPlanningConstraints } from "./domain/planning";
 import { retrieveDocuments } from "./tools/retrieval";
-import type { CandidatePlace } from "./state";
+import type { CandidatePlace, TripDraft } from "./state";
 
 const CANDIDATE_LIMIT = 10;
 const CANDIDATE_COLUMNS = "id, name, slug, description, tags, lat, lng, price, image_url, address";
@@ -159,4 +159,21 @@ export function resolvePlaceRefs(refs: string[], candidates: CandidatePlace[]): 
 		}),
 		candidates
 	);
+}
+
+/** The trip being discussed, as prompt text. The selection call only sees the conversation,
+ * so without this a follow-up like "how long will this take?" has nothing to refer to. */
+export function tripContextForPrompt(draft: TripDraft | null | undefined): string {
+	if (!draft) return "";
+	const stops = draft.stops.map((stop, index) => {
+		const leg = index > 0 && stop.distance_from_prev_km
+			? `, ${stop.distance_from_prev_km} km / ${stop.travel_time_from_prev_min} min from previous`
+			: "";
+		return `${index + 1}. ${stop.name} (${stop.suggested_time_min} min${leg})`;
+	});
+	return [
+		`CURRENT TRIP: "${draft.title}", ${draft.total_minutes} min in total, ${draft.total_distance_km} km.`,
+		...stops,
+		"Answer questions about this trip from these details.",
+	].join("\n");
 }

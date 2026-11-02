@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { appendPlaceToTrip } from "../trip-stop-utils";
+import { appendPlaceToTrip, toStopCategory } from "../trip-stop-utils";
 import type { Trip } from "@/types/trip";
 
 const baseTrip: Trip = {
@@ -15,8 +15,8 @@ const baseTrip: Trip = {
 			id: "stop-1",
 			placeId: "place-1",
 			name: "Wat Arun",
-			address: "wat-arun",
-			category: "Temple",
+			address: "Bangkok, Thailand",
+			category: "temple",
 			suggestedDurationMin: 60,
 			lat: 13.7437,
 			lng: 100.4889,
@@ -71,7 +71,8 @@ describe("appendPlaceToTrip", () => {
 				slug: "grand-palace",
 				lat: 13.75,
 				lng: 100.49,
-				tags: ["Shopping"],
+				tags: ["museum", "history"],
+				address: "Bangkok, Thailand",
 				description: "Historic site",
 			},
 		});
@@ -81,10 +82,25 @@ describe("appendPlaceToTrip", () => {
 		expect(result.trips[0]?.stops).toHaveLength(2);
 		expect(result.trips[0]?.stops[1]).toMatchObject({
 			name: "Grand Palace",
-			address: "grand-palace",
-			category: "Shopping",
+			address: "Bangkok, Thailand",
+			category: "museum",
 			notes: "Historic site",
 		});
 		expect(result.trips[0]?.totalDurationMin).toBe(120);
+	});
+});
+
+describe("toStopCategory", () => {
+	test("uses the first tag that is a known category, case-insensitively", () => {
+		expect(toStopCategory(["Temple", "history"])).toBe("temple");
+		expect(toStopCategory(["community"])).toBe("community");
+		expect(toStopCategory(["riverside", "museum"])).toBe("museum");
+	});
+
+	test("maps aliases and falls back to a neutral place category", () => {
+		expect(toStopCategory(["mall"])).toBe("shopping");
+		expect(toStopCategory(["riverside"])).toBe("place");
+		expect(toStopCategory([])).toBe("place");
+		expect(toStopCategory(undefined)).toBe("place");
 	});
 });

@@ -18,7 +18,7 @@ import type { Trip, TripStop } from "@/types/trip";
 import type { TripDraft, TripDraftStop } from "@/components/planner/chat/types";
 import { buildTripDraftSavePayload } from "@/components/planner/chat/lib/trip-draft";
 import { nameToSlug } from "@/lib/slug-utils";
-import { appendPlaceToTrip, type TripPlaceCandidate } from "@/lib/trip-stop-utils";
+import { appendPlaceToTrip, toStopCategory, type TripPlaceCandidate } from "@/lib/trip-stop-utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -141,18 +141,21 @@ export default function TripPlannerPage() {
     notes: tripDraft.summary,
     source: "draft",
     warnings: tripDraft.warnings,
-    stops: tripDraft.stops.map((stop) => ({
-      id: stop.id,
-      placeId: stop.place_id,
-      name: stop.name,
-      address: stop.slug,
-      category: ((tripDraft.places.find((place) => place.id === stop.place_id)?.tags?.[0] || "Viewpoint") as TripStop["category"]),
-      suggestedDurationMin: stop.suggested_time_min,
-      lat: stop.lat || 0,
-      lng: stop.lng || 0,
-      notes: stop.notes,
-      distanceFromPrevKm: stop.distance_from_prev_km,
-    })),
+    stops: tripDraft.stops.map((stop) => {
+      const place = tripDraft.places.find((item) => item.id === stop.place_id);
+      return {
+        id: stop.id,
+        placeId: stop.place_id,
+        name: stop.name,
+        address: place?.address?.trim() || "",
+        category: toStopCategory(place?.tags),
+        suggestedDurationMin: stop.suggested_time_min,
+        lat: stop.lat || 0,
+        lng: stop.lng || 0,
+        notes: stop.notes,
+        distanceFromPrevKm: stop.distance_from_prev_km,
+      };
+    }),
   }), []);
   const displayedTrip = useMemo(
     () => (activeTripDraft ? draftToTrip(activeTripDraft) : selectedTrip),
@@ -190,8 +193,8 @@ export default function TripPlannerPage() {
             id: stop.id,
             placeId: stop.place_id || stop.place?.id,
             name: stop.place?.name || 'Unknown Stop',
-            address: stop.place?.name || 'Address unknown',
-            category: stop.place?.tags?.[0] || 'Viewpoint',
+            address: stop.place?.address?.trim() || '',
+            category: toStopCategory(stop.place?.tags),
             suggestedDurationMin: stop.suggested_time_min || 60,
             lat: stop.place?.lat || 0,
             lng: stop.place?.lng || 0,
@@ -474,7 +477,7 @@ export default function TripPlannerPage() {
     const mapPlace = {
       id: stop.id,
       name: stop.name,
-      description: `${stop.category} - ${stop.address}`,
+      description: [t(`stopCategory.${stop.category}`), stop.address].filter(Boolean).join(" - "),
       tags: [stop.category],
       lat: stop.lat,
       lng: stop.lng,
@@ -484,7 +487,7 @@ export default function TripPlannerPage() {
       slug: stop.placeId || '',
     };
     setSelectedPlace(mapPlace);
-  }, []);
+  }, [t]);
 
   const handleDeleteTrip = async (tripId: string) => {
     if (!confirm("Are you sure you want to delete this trip?")) return;
@@ -739,7 +742,7 @@ export default function TripPlannerPage() {
       .map((stop) => ({
         id: stop.id,
         name: stop.name,
-        description: `${stop.category} - ${stop.address}`,
+        description: [t(`stopCategory.${stop.category}`), stop.address].filter(Boolean).join(" - "),
         tags: [stop.category],
         lat: stop.lat,
         lng: stop.lng,

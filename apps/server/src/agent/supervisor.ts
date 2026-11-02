@@ -29,6 +29,7 @@ import {
 	searchQueryFromConversation,
 	stripJsonFences,
 	stripPlaceRefs,
+	tripContextForPrompt,
 } from "./fast-research";
 import type {
 	CandidatePlace,
@@ -360,6 +361,7 @@ async function researchWithSingleCall(state: typeof WorkflowStateAnnotation.Stat
 	}
 
 	const schema = placeSelectionSchema(candidates.length);
+	const tripContext = tripContextForPrompt(state.planning?.draft || parseLatestTripDraft(state.messages));
 	let selection: z.infer<typeof schema>;
 	try {
 		selection = await state.llm
@@ -367,10 +369,10 @@ async function researchWithSingleCall(state: typeof WorkflowStateAnnotation.Stat
 			.invoke([
 				{
 					role: "system",
-					content: `${SELECTION_PROMPT}\n\nCANDIDATE PLACES:\n${JSON.stringify(candidatesForPrompt(candidates))}`,
+					content: `${SELECTION_PROMPT}${tripContext ? `\n\n${tripContext}` : ""}\n\nCANDIDATE PLACES:\n${JSON.stringify(candidatesForPrompt(candidates))}`,
 				},
 				// Conversation only: the runtime_context system message (orchestration JSON) made the
-				// model skip picking places
+				// model skip picking places; the current trip goes in the prompt above instead
 				...state.messages
 					.filter((m) => m.role === "user" || m.role === "assistant")
 					.map((m) => ({ role: m.role, content: messageText(m.content) })),

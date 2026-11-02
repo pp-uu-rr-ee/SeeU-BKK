@@ -194,7 +194,7 @@ async function fetchMapboxMatrix(coords: LatLng[]): Promise<{ distances: number[
   }
 }
 
-async function fetchMapboxDirectionsRoute(coords: LatLng[], mode: TravelMode = 'car'): Promise<DirectionsRouteData | null> {
+export async function fetchMapboxDirectionsRoute(coords: LatLng[], mode: TravelMode = 'car'): Promise<DirectionsRouteData | null> {
   const token = process.env.MAPBOX_ACCESS_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
   if (!token || coords.length < 2 || coords.length > 25) return null
 
@@ -387,7 +387,7 @@ export function haversineKm(a: LatLng, b: LatLng): number {
   return R * c
 }
 
-function round1(n: number) { return Math.round(n * 10) / 10 }
+export function round1(n: number) { return Math.round(n * 10) / 10 }
 
 export interface PlanItineraryParams {
   place_slugs: string[]

@@ -8,6 +8,7 @@ export interface PlaceItem {
 	price?: number;
 	image_url?: string;
 	description?: string;
+	address?: string;
 }
 
 export interface PlanningConstraints {

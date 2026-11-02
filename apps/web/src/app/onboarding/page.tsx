@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useAuth, type OnboardingPreferences } from '@/contexts/auth-context'
 import { useTranslation } from '@/contexts/language-context'
 import { cn } from '@/lib/utils'
+import { EMPTY_ONBOARDING_PREFERENCES, toOnboardingPreferences } from '@/lib/onboarding-preferences'
 
 // Stored ids/values stay stable; labels come from locales (onboarding.*)
 const vibeCards = [
@@ -63,23 +64,31 @@ function Chip({
 export default function OnboardingPage() {
   const router = useRouter()
   const { t } = useTranslation()
-  const { user, loading: authLoading, saveOnboarding } = useAuth()
+  const { user, session, loading: authLoading, saveOnboarding, getOnboardingStatus } = useAuth()
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
-  const [selections, setSelections] = useState<OnboardingPreferences>({
-    vibes: [],
-    travelStyle: '',
-    pace: 50,
-    transit: [],
-    culinary: [],
-    boundaries: [],
-  })
+  const [selections, setSelections] = useState<OnboardingPreferences>(EMPTY_ONBOARDING_PREFERENCES)
+  const [prefsLoaded, setPrefsLoaded] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace('/auth/login')
     }
   }, [authLoading, user, router])
+
+  // Prefill saved answers so "Edit Survey" edits instead of starting over
+  useEffect(() => {
+    if (!session?.access_token || prefsLoaded) return
+    let cancelled = false
+    getOnboardingStatus().then(({ preferences }) => {
+      if (cancelled) return
+      if (preferences) setSelections(toOnboardingPreferences(preferences))
+      setPrefsLoaded(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [session?.access_token, prefsLoaded])
 
   const toggleArrayItem = (key: 'vibes' | 'transit' | 'culinary' | 'boundaries', value: string) => {
     setSelections((prev) => ({
@@ -102,7 +111,7 @@ export default function OnboardingPage() {
     router.push('/')
   }
 
-  if (authLoading || !user) {
+  if (authLoading || !user || !prefsLoaded) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center text-muted-foreground" role="status">
         <Loader2 className="mr-3 h-5 w-5 animate-spin text-primary" aria-hidden />

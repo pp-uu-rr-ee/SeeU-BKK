@@ -4,6 +4,8 @@ import { zValidator } from '@hono/zod-validator';
 import { authMiddleware } from '../middleware/auth';
 import { supabase } from '../lib/supabase';
 import { slugToName } from '../lib/slug-utils';
+import { computeTripTotals } from '../lib/trip-totals';
+import { isShareToken, toPublicTrip } from '../lib/trip-share';
 
 const itineraries = new Hono();
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -131,6 +133,34 @@ async function resolveStop(
 	};
 }
 
+type ResolvedStop = Awaited<ReturnType<typeof resolveStop>>;
+
+// Totals are always derived from the stored places so every client
+// (create/edit dialogs, map, chat) saves the same distance and duration.
+async function withTripTotals(stops: ResolvedStop[]) {
+	const placeIds = Array.from(new Set(stops.map((stop) => stop.place_id)));
+	const { data: places, error } = await supabase
+		.from('bangkok_unseen')
+		.select('id, lat, lng')
+		.in('id', placeIds);
+	if (error) throw error;
+
+	const coords = new Map((places || []).map((place) => [place.id, place]));
+	const totals = await computeTripTotals(
+		stops.map((stop) => ({
+			lat: coords.get(stop.place_id)?.lat,
+			lng: coords.get(stop.place_id)?.lng,
+			suggested_time_min: stop.suggested_time_min,
+		}))
+	);
+
+	return {
+		stops: stops.map((stop, index) => ({ ...stop, distance_from_prev_km: totals.legs_km[index] ?? 0 })),
+		total_minutes: totals.total_minutes,
+		total_distance_km: totals.total_distance_km,
+	};
+}
+
 itineraries.get('/', authMiddleware, async (c) => {
 	const user = c.get('user');
 	try {
@@ -153,7 +183,7 @@ itineraries.get('/', authMiddleware, async (c) => {
 
 		const placeIds = Array.from(new Set((stops || []).map((stop) => stop.place_id).filter(Boolean)));
 		const { data: places, error: placeErr } = placeIds.length
-			? await supabase.from('bangkok_unseen').select('id, name, lat, lng, tags, image_url').in('id', placeIds)
+			? await supabase.from('bangkok_unseen').select('id, name, lat, lng, tags, image_url, address').in('id', placeIds)
 			: { data: [], error: null as any };
 		if (placeErr) throw placeErr;
 
@@ -177,6 +207,7 @@ itineraries.get('/', authMiddleware, async (c) => {
 					lng: place.lng,
 					tags: Array.isArray(place.tags) ? place.tags : [],
 					image_url: place.image_url || '',
+					address: place.address || '',
 				},
 			});
 		}
@@ -193,6 +224,67 @@ itineraries.get('/', authMiddleware, async (c) => {
 	}
 });
 
+async function loadTripStops(itineraryId: string) {
+	const { data: stops, error: stopErr } = await supabase
+		.from('itinerary_stops')
+		.select('id, itinerary_id, position, suggested_time_min, distance_from_prev_km, notes, place_id')
+		.eq('itinerary_id', itineraryId)
+		.order('position', { ascending: true });
+	if (stopErr) throw stopErr;
+
+	const placeIds = Array.from(new Set((stops || []).map((stop) => stop.place_id).filter(Boolean)));
+	const { data: places, error: placeErr } = placeIds.length
+		? await supabase.from('bangkok_unseen').select('id, name, lat, lng, tags, image_url, address').in('id', placeIds)
+		: { data: [], error: null as any };
+	if (placeErr) throw placeErr;
+
+	const placeMap = new Map((places || []).map((place) => [place.id, place]));
+	return (stops || []).map((stop) => {
+		const place = (placeMap.get(stop.place_id as any) as any) || {};
+		return {
+			id: stop.id,
+			position: stop.position,
+			suggested_time_min: stop.suggested_time_min,
+			distance_from_prev_km: stop.distance_from_prev_km,
+			notes: stop.notes || '',
+			place_id: stop.place_id,
+			place: {
+				id: place.id,
+				name: place.name,
+				lat: place.lat,
+				lng: place.lng,
+				tags: Array.isArray(place.tags) ? place.tags : [],
+				image_url: place.image_url || '',
+				address: place.address || '',
+			},
+		};
+	});
+}
+
+// Public: anyone with the link can view a trip while its owner keeps sharing on
+itineraries.get('/shared/:token', async (c) => {
+	const token = c.req.param('token');
+	if (!isShareToken(token)) {
+		return c.json({ success: false, error: 'Shared trip not found' }, 404);
+	}
+
+	try {
+		const { data: trip, error } = await supabase
+			.from('itineraries')
+			.select('id, title, total_minutes, total_distance_km, created_at')
+			.eq('share_token', token)
+			.maybeSingle();
+		if (error) throw error;
+		if (!trip) {
+			return c.json({ success: false, error: 'Shared trip not found' }, 404);
+		}
+
+		return c.json({ success: true, data: toPublicTrip(trip, await loadTripStops(trip.id)) });
+	} catch (e: any) {
+		return c.json({ success: false, error: e?.message || 'Failed to get shared trip' }, 500);
+	}
+});
+
 itineraries.get('/:id', authMiddleware, async (c) => {
 	const user = c.get('user');
 	const itineraryId = c.req.param('id');
@@ -200,7 +292,7 @@ itineraries.get('/:id', authMiddleware, async (c) => {
 	try {
 		const { data: trip, error: tripErr } = await supabase
 			.from('itineraries')
-			.select('id, title, total_minutes, total_distance_km, created_at, user_id, context')
+			.select('id, title, total_minutes, total_distance_km, created_at, user_id, context, share_token')
 			.eq('id', itineraryId)
 			.single();
 
@@ -211,40 +303,6 @@ itineraries.get('/:id', authMiddleware, async (c) => {
 			return c.json({ success: false, error: 'Unauthorized' }, 403);
 		}
 
-		const { data: stops, error: stopErr } = await supabase
-			.from('itinerary_stops')
-			.select('id, itinerary_id, position, suggested_time_min, distance_from_prev_km, notes, place_id')
-			.eq('itinerary_id', itineraryId)
-			.order('position', { ascending: true });
-		if (stopErr) throw stopErr;
-
-		const placeIds = Array.from(new Set((stops || []).map((stop) => stop.place_id).filter(Boolean)));
-		const { data: places, error: placeErr } = placeIds.length
-			? await supabase.from('bangkok_unseen').select('id, name, lat, lng, tags, image_url').in('id', placeIds)
-			: { data: [], error: null as any };
-		if (placeErr) throw placeErr;
-
-		const placeMap = new Map((places || []).map((place) => [place.id, place]));
-		const mappedStops = (stops || []).map((stop) => {
-			const place = (placeMap.get(stop.place_id as any) as any) || {};
-			return {
-				id: stop.id,
-				position: stop.position,
-				suggested_time_min: stop.suggested_time_min,
-				distance_from_prev_km: stop.distance_from_prev_km,
-				notes: stop.notes || '',
-				place_id: stop.place_id,
-				place: {
-					id: place.id,
-					name: place.name,
-					lat: place.lat,
-					lng: place.lng,
-					tags: Array.isArray(place.tags) ? place.tags : [],
-					image_url: place.image_url || '',
-				},
-			};
-		});
-
 		return c.json({
 			success: true,
 			data: {
@@ -254,7 +312,8 @@ itineraries.get('/:id', authMiddleware, async (c) => {
 				total_distance_km: trip.total_distance_km,
 				created_at: trip.created_at,
 				context: trip.context,
-				stops: mappedStops,
+				share_token: trip.share_token ?? null,
+				stops: await loadTripStops(itineraryId),
 			},
 		});
 	} catch (e: any) {
@@ -262,16 +321,83 @@ itineraries.get('/:id', authMiddleware, async (c) => {
 	}
 });
 
-itineraries.post('/', authMiddleware, zValidator('json', createSchema), async (c) => {
+// Owner turns sharing on; reuses the existing token so earlier links keep working
+itineraries.post('/:id/share', authMiddleware, async (c) => {
 	const user = c.get('user');
-	const { title, stops, total_minutes, total_distance_km, context } = c.req.valid('json');
+	const itineraryId = c.req.param('id');
 
 	try {
-		const resolved: Array<Awaited<ReturnType<typeof resolveStop>>> = [];
+		const { data: trip, error } = await supabase
+			.from('itineraries')
+			.select('user_id, share_token')
+			.eq('id', itineraryId)
+			.maybeSingle();
+		if (error) throw error;
+		if (!trip) {
+			return c.json({ success: false, error: 'Itinerary not found' }, 404);
+		}
+		if (trip.user_id !== user.id) {
+			return c.json({ success: false, error: 'Unauthorized' }, 403);
+		}
+		if (trip.share_token) {
+			return c.json({ success: true, data: { share_token: trip.share_token } });
+		}
+
+		const shareToken = crypto.randomUUID();
+		const { error: updateErr } = await supabase
+			.from('itineraries')
+			.update({ share_token: shareToken })
+			.eq('id', itineraryId);
+		if (updateErr) throw updateErr;
+
+		return c.json({ success: true, data: { share_token: shareToken } });
+	} catch (e: any) {
+		return c.json({ success: false, error: e?.message || 'Failed to share itinerary' }, 500);
+	}
+});
+
+// Owner stops sharing; the old link returns 404 immediately
+itineraries.delete('/:id/share', authMiddleware, async (c) => {
+	const user = c.get('user');
+	const itineraryId = c.req.param('id');
+
+	try {
+		const { data: trip, error } = await supabase
+			.from('itineraries')
+			.select('user_id')
+			.eq('id', itineraryId)
+			.maybeSingle();
+		if (error) throw error;
+		if (!trip) {
+			return c.json({ success: false, error: 'Itinerary not found' }, 404);
+		}
+		if (trip.user_id !== user.id) {
+			return c.json({ success: false, error: 'Unauthorized' }, 403);
+		}
+
+		const { error: updateErr } = await supabase
+			.from('itineraries')
+			.update({ share_token: null })
+			.eq('id', itineraryId);
+		if (updateErr) throw updateErr;
+
+		return c.json({ success: true, data: { share_token: null } });
+	} catch (e: any) {
+		return c.json({ success: false, error: e?.message || 'Failed to stop sharing itinerary' }, 500);
+	}
+});
+
+itineraries.post('/', authMiddleware, zValidator('json', createSchema), async (c) => {
+	const user = c.get('user');
+	const { title, stops, context } = c.req.valid('json');
+
+	try {
+		const resolved: ResolvedStop[] = [];
 		let pos = 1;
 		for (const stop of stops) {
 			resolved.push(await resolveStop(stop, pos++));
 		}
+		const { stops: stopRows, total_minutes, total_distance_km } = await withTripTotals(resolved);
 
 		const { data: trip, error: insErr } = await supabase
 			.from('itineraries')
@@ -286,7 +412,7 @@ itineraries.post('/', authMiddleware, zValidator('json', createSchema), async (c
 			.single();
 		if (insErr) throw insErr;
 
-		const payload = resolved.map((stop) => ({ ...stop, itinerary_id: trip.id }));
+		const payload = stopRows.map((stop) => ({ ...stop, itinerary_id: trip.id }));
 		const { error: stopErr } = await supabase.from('itinerary_stops').insert(payload);
 		if (stopErr) throw stopErr;
 
@@ -299,7 +425,7 @@ itineraries.post('/', authMiddleware, zValidator('json', createSchema), async (c
 itineraries.put('/:id', authMiddleware, zValidator('json', createSchema), async (c) => {
 	const user = c.get('user');
 	const itineraryId = c.req.param('id');
-	const { title, stops, total_minutes, total_distance_km, context } = c.req.valid('json');
+	const { title, stops, context } = c.req.valid('json');
 
 	try {
 		const { data: existing, error: checkErr } = await supabase
@@ -314,11 +440,12 @@ itineraries.put('/:id', authMiddleware, zValidator('json', createSchema), async 
 			return c.json({ success: false, error: 'Unauthorized' }, 403);
 		}
 
-		const resolved: Array<Awaited<ReturnType<typeof resolveStop>>> = [];
+		const resolved: ResolvedStop[] = [];
 		let pos = 1;
 		for (const stop of stops) {
 			resolved.push(await resolveStop(stop, pos++));
 		}
+		const { stops: stopRows, total_minutes, total_distance_km } = await withTripTotals(resolved);
 
 		const { error: updateErr } = await supabase
 			.from('itineraries')
@@ -332,7 +459,7 @@ itineraries.put('/:id', authMiddleware, zValidator('json', createSchema), async 
 			.eq('itinerary_id', itineraryId);
 		if (delErr) throw delErr;
 
-		const payload = resolved.map((stop) => ({ ...stop, itinerary_id: itineraryId }));
+		const payload = stopRows.map((stop) => ({ ...stop, itinerary_id: itineraryId }));
 		const { error: stopErr } = await supabase.from('itinerary_stops').insert(payload);
 		if (stopErr) throw stopErr;
 

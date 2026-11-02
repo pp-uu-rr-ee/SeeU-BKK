@@ -1,5 +1,6 @@
 import { invokeSupervisor, streamSupervisor } from "./supervisor";
 import { toClientErrorMessage } from "./client-errors";
+import { withSessionHistory } from "./conversation-history";
 import { MemoryManager } from "./memory";
 import { SessionMemory } from "./memory/session";
 import { type CandidatePlace, type TripDraft, type UiResponsePayload } from "./state";
@@ -24,12 +25,12 @@ async function hydrateConversationMessages(
 	messages: Array<{ role: string; content: string }>,
 	sessionId?: string
 ): Promise<Array<{ role: string; content: string }>> {
-	if (!sessionId || messages.length !== 1) {
+	if (!sessionId) {
 		return messages;
 	}
 
 	const history = await memory.getConversationHistory(20);
-	return history.length > 0 ? [...history, ...messages] : messages;
+	return withSessionHistory(messages, history);
 }
 
 async function persistConversationResult(options: {

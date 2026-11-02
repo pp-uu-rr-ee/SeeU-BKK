@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trash2, GripVertical, Save, Clock, Edit } from "lucide-react";
-import type { Trip, TripStop } from "@/types/trip";
+import type { StopCategory, Trip, TripStop } from "@/types/trip";
+import { useTranslation } from "@/contexts/language-context";
 import { cn } from "@/lib/utils";
 
 import {
@@ -40,12 +41,21 @@ interface Props {
   warnings?: string[];
 }
 
-const categoryColors: Record<TripStop["category"], string> = {
-  Cafe: "bg-accent text-accent-foreground border-saffron/40",
-  Restaurant: "bg-orange-100 text-orange-800 border-orange-200",
-  Temple: "bg-teal-soft text-primary border-primary/30",
-  Shopping: "bg-pink-100 text-pink-800 border-pink-200",
-  Viewpoint: "bg-teal-100 text-teal-800 border-teal-200",
+const categoryColors: Record<StopCategory, string> = {
+  temple: "bg-teal-soft text-primary border-primary/30",
+  history: "bg-teal-soft text-primary border-primary/30",
+  landmark: "bg-teal-soft text-primary border-primary/30",
+  museum: "bg-teal-100 text-teal-800 border-teal-200",
+  art: "bg-teal-100 text-teal-800 border-teal-200",
+  community: "bg-accent text-accent-foreground border-saffron/40",
+  park: "bg-green-100 text-green-800 border-green-200",
+  cafe: "bg-accent text-accent-foreground border-saffron/40",
+  food: "bg-orange-100 text-orange-800 border-orange-200",
+  restaurant: "bg-orange-100 text-orange-800 border-orange-200",
+  market: "bg-orange-100 text-orange-800 border-orange-200",
+  shopping: "bg-pink-100 text-pink-800 border-pink-200",
+  nightlife: "bg-pink-100 text-pink-800 border-pink-200",
+  place: "bg-secondary text-secondary-foreground border-border",
 };
 
 export function ItineraryColumn({
@@ -62,6 +72,7 @@ export function ItineraryColumn({
   mode = "saved",
   warnings = [],
 }: Props) {
+  const { t } = useTranslation();
   const [orderedStops, setOrderedStops] = useState<TripStop[]>(
     trip?.stops ?? []
   );
@@ -254,20 +265,20 @@ export function ItineraryColumn({
                           <span
                             className={cn(
                               "text-xs font-medium px-2 py-0.5 rounded-full border shrink-0",
-                              categoryColors[stop.category]
+                              categoryColors[stop.category] ?? categoryColors.place
                             )}
-                            role="badge"
-                            aria-label={`Category: ${stop.category}`}
                           >
-                            {stop.category}
+                            {t(`stopCategory.${stop.category}`)}
                           </span>
                         </div>
-                        <p
-                          className="text-xs text-muted-foreground mt-1 line-clamp-1"
-                          title={stop.address}
-                        >
-                          {stop.address}
-                        </p>
+                        {stop.address && (
+                          <p
+                            className="text-xs text-muted-foreground mt-1 line-clamp-1"
+                            title={stop.address}
+                          >
+                            {stop.address}
+                          </p>
+                        )}
                         <div className="flex items-center gap-1 mt-2">
                           <Clock
                             className="w-3 h-3 text-muted-foreground"

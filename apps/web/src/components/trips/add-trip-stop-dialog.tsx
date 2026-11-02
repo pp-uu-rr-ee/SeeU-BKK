@@ -68,6 +68,7 @@ export function AddTripStopDialog({
 						lat: place.lat,
 						lng: place.lng,
 						tags: Array.isArray(place.tags) ? place.tags : [],
+						address: place.address || "",
 						description: place.description || "",
 					}))
 				);

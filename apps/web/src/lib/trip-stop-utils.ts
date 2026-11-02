@@ -1,4 +1,4 @@
-import type { Trip, TripStop } from "@/types/trip";
+import { STOP_CATEGORIES, type StopCategory, type Trip, type TripStop } from "@/types/trip";
 
 export interface TripPlaceCandidate {
 	id: string;
@@ -7,6 +7,7 @@ export interface TripPlaceCandidate {
 	lat?: number;
 	lng?: number;
 	tags?: string[];
+	address?: string | null;
 	description?: string;
 }
 
@@ -24,31 +25,23 @@ export type AppendPlaceToTripResult =
 			addedStop: TripStop;
 	  };
 
-function mapPlaceCategory(tag?: string): TripStop["category"] {
-	switch (tag?.toLowerCase()) {
-		case "temple":
-			return "Temple";
-		case "cafe":
-			return "Cafe";
-		case "restaurant":
-			return "Restaurant";
-		case "shopping":
-			return "Shopping";
-		default:
-			return "Viewpoint";
+const CATEGORY_ALIASES: Record<string, StopCategory> = {
+	mall: "shopping",
+};
+
+/** First place tag that is a known stop category; "place" when none match. */
+export function toStopCategory(tags?: string[] | null): StopCategory {
+	for (const tag of tags ?? []) {
+		const key = tag.trim().toLowerCase();
+		if ((STOP_CATEGORIES as readonly string[]).includes(key)) return key as StopCategory;
+		if (CATEGORY_ALIASES[key]) return CATEGORY_ALIASES[key];
 	}
+	return "place";
 }
 
 function isDuplicateStop(stop: TripStop, place: TripPlaceCandidate): boolean {
 	if (stop.placeId && place.id && stop.placeId === place.id) {
 		return true;
-	}
-
-	if (place.slug) {
-		const stopAddress = stop.address.trim().toLowerCase();
-		if (stopAddress.length > 0 && stopAddress === place.slug.trim().toLowerCase()) {
-			return true;
-		}
 	}
 
 	return stop.name.trim().toLowerCase() === place.name.trim().toLowerCase();
@@ -84,8 +77,8 @@ export function appendPlaceToTrip({
 		id: `stop-${Date.now()}`,
 		placeId: place.id,
 		name: place.name,
-		address: place.slug || "Address not available",
-		category: mapPlaceCategory(place.tags?.[0]),
+		address: place.address?.trim() || "",
+		category: toStopCategory(place.tags),
 		suggestedDurationMin: 60,
 		lat: place.lat,
 		lng: place.lng,

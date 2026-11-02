@@ -52,7 +52,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
   getProfile: () => Promise<{ profile: UserProfile | null; error: any | null }>
   updateProfile: (updates: ProfileUpdates) => Promise<{ profile: UserProfile | null; error: any | null }>
-  getOnboardingStatus: () => Promise<{ completed: boolean; skipped: boolean; error: string | null }>
+  getOnboardingStatus: () => Promise<{ completed: boolean; skipped: boolean; preferences: unknown; error: string | null }>
   saveOnboarding: (payload: OnboardingPreferences, options?: { skipped?: boolean }) => Promise<{ completed: boolean; error: string | null }>
   refreshProfile: () => Promise<void>
 }
@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getOnboardingStatus = async () => {
     if (!session?.access_token) {
-      return { completed: false, skipped: false, error: 'No session' }
+      return { completed: false, skipped: false, preferences: null, error: 'No session' }
     }
 
     try {
@@ -207,17 +207,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const errorData = await response.json()
-        return { completed: false, skipped: false, error: errorData.error || 'Failed to fetch onboarding status' }
+        return { completed: false, skipped: false, preferences: null, error: errorData.error || 'Failed to fetch onboarding status' }
       }
 
       const data = await response.json()
       return {
         completed: Boolean(data?.onboarding?.completed),
         skipped: Boolean(data?.onboarding?.skipped_at),
+        preferences: data?.onboarding?.preferences ?? null,
         error: null,
       }
     } catch (error) {
-      return { completed: false, skipped: false, error: 'Network error' }
+      return { completed: false, skipped: false, preferences: null, error: 'Network error' }
     }
   }
 

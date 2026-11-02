@@ -20,6 +20,22 @@
     "nightlife": "Nightlife",
     "attractions": "Attractions"
   },
+  "stopCategory": {
+    "temple": "Temple",
+    "community": "Community",
+    "museum": "Museum",
+    "park": "Park",
+    "history": "Historic site",
+    "market": "Market",
+    "food": "Food",
+    "art": "Art",
+    "landmark": "Landmark",
+    "nightlife": "Nightlife",
+    "shopping": "Shopping",
+    "cafe": "Cafe",
+    "restaurant": "Restaurant",
+    "place": "Place"
+  },
   "auth": {
     "login": "Login",
     "logout": "Logout",
@@ -156,7 +172,8 @@
     "stops": "stops",
     "min": "min",
     "km": "km",
-    "noCreationDate": "No creation date"
+    "noCreationDate": "No creation date",
+    "cancel": "Cancel"
   },
   "places": {
     "loading": "Finding places around Bangkok...",
@@ -286,7 +303,21 @@
     "stopN": "Stop {n}",
     "noNotes": "No notes for this stop yet.",
     "minutesShort": "{n} min",
-    "fromPrev": "+{km} km from previous"
+    "fromPrev": "+{km} km from previous",
+    "shared": "Shared",
+    "shareTitle": "Share this trip",
+    "shareConfirmDesc": "Anyone with the link will be able to see this trip, including your stop notes. You can stop sharing at any time.",
+    "shareActiveDesc": "Anyone with this link can view the trip and your stop notes. Stop sharing to turn the link off.",
+    "createShareLink": "Create link",
+    "shareLinkLabel": "Share link",
+    "copyLink": "Copy",
+    "copyFailed": "Could not copy the link. Select it and copy manually.",
+    "stopSharing": "Stop sharing",
+    "sharingStopped": "Link turned off",
+    "shareFailed": "Could not update sharing. Please try again.",
+    "sharedEyebrow": "Shared trip",
+    "sharedNotFound": "This trip link is no longer available.",
+    "planYourOwn": "Plan your own trip"
   },
   "placeDetail": {
     "back": "Go Back",
