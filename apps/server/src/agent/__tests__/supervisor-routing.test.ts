@@ -71,6 +71,51 @@ describe("supervisor intent classification", () => {
 			})
 		).toBe("itinerary");
 	});
+
+	test("classifies Thai trip planning requests as itinerary", () => {
+		for (const content of [
+			"ช่วยจัดทริปครึ่งวันแถวพิพิธภัณฑ์ให้หน่อย",
+			"วางแผนเที่ยววัดโพธิ์กับวัดพระแก้ว",
+			"อยากได้เส้นทางเดินเที่ยวเกาะรัตนโกสินทร์",
+			"เที่ยวทั้งวันแถวสนามหลวงไปที่ไหนดี",
+			"ขอโปรแกรมเที่ยว 1 วัน",
+		]) {
+			expect(classifySupervisorIntent({ messages: [{ role: "user", content }] })).toBe("itinerary");
+		}
+	});
+
+	test("keeps Thai place questions informational", () => {
+		for (const content of ["แนะนำที่เที่ยวใกล้วัดโพธิ์หน่อย", "วัดพระแก้วเปิดกี่โมง", "สวัสดี"]) {
+			expect(classifySupervisorIntent({ messages: [{ role: "user", content }] })).toBe("informational");
+		}
+	});
+
+	test("treats Thai draft revision as itinerary", () => {
+		expect(
+			classifySupervisorIntent({
+				messages: [{ role: "user", content: "ช่วยปรับให้สั้นลงหน่อย" }],
+				currentTripDraft: draft,
+			})
+		).toBe("itinerary");
+	});
+});
+
+describe("Thai critic requests", () => {
+	test("escalates to critic when a Thai message asks to check the trip", () => {
+		expect(
+			isCriticRequested({ messages: [{ role: "user", content: "ช่วยตรวจทริปนี้ให้หน่อย" }] })
+		).toBe(true);
+		expect(
+			isCriticRequested({ messages: [{ role: "user", content: "ช่วยเช็คหน่อย" }], currentTripDraft: draft })
+		).toBe(true);
+		expect(isCriticRequested({ messages: [{ role: "user", content: "ช่วยเช็คหน่อย" }] })).toBe(false);
+	});
+
+	test("does not mistake place names for edit requests (แก้ inside วัดพระแก้ว)", () => {
+		expect(
+			isCriticRequested({ messages: [{ role: "user", content: "วัดพระแก้วเปิดกี่โมง" }], currentTripDraft: draft })
+		).toBe(false);
+	});
 });
 
 describe("supervisor routing policy", () => {

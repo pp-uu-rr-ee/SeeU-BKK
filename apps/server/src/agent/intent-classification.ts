@@ -9,11 +9,16 @@ const ITINERARY_HINTS = [
 	/\bbuild\b/i,
 	/\bday\s*trip\b/i,
 	/\bhalf[ -]?day\b/i,
+	// Thai has no word boundaries, so these match as substrings
+	/ทริป|ทัวร์|วางแผน|แผนเที่ยว|แผนการเดินทาง|เส้นทาง|โปรแกรมเที่ยว|ตารางเที่ยว|จุดแวะ/,
+	/ครึ่งวัน|เต็มวัน|ทั้งวัน|(?:หนึ่ง|\d+)\s*วัน/,
 ];
 
 const REVISION_HINTS = [
 	/\b(validate|validation|review|critic|critique|check)\b/i,
 	/\b(revise|revision|improve|improvement|adjust|change|update|fix|refine)\b/i,
+	// แก้ but not แก้ว (as in วัดพระแก้ว)
+	/ตรวจ|เช็ค|เช็ก|รีวิว|ปรับ|แก้(?!ว)|เปลี่ยน|เพิ่ม|ลด|ตัด|สลับ/,
 ];
 
 function getLatestUserMessage(
@@ -63,5 +68,8 @@ export function isCriticRequested(input: {
 		return false;
 	}
 
-	return Boolean(input.currentTripDraft) || /\bitinerary\b|\broute\b|\bdraft\b/i.test(latestUserMessage);
+	return (
+		Boolean(input.currentTripDraft) ||
+		/\bitinerary\b|\broute\b|\bdraft\b|ทริป|แผนเที่ยว|เส้นทาง/i.test(latestUserMessage)
+	);
 }
