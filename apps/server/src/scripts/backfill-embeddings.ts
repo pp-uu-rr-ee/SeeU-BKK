@@ -4,6 +4,8 @@
  *
  * Usage (from apps/server): bun run db:embed            # only places missing an embedding
  *                           bun run db:embed --all      # recompute every place
+ *
+ * Switching embedding model (e.g. to Gemini) needs --all: vectors from different models can't be compared.
  */
 import 'dotenv/config'
 import { supabase } from '../lib/supabase'
@@ -41,7 +43,7 @@ for (const place of places) {
     console.error(`  ✗ ${place.name}: ${e?.message || e}`)
     // Stop early on quota/auth errors instead of failing every row the same way
     if (e?.status === 429 || e?.status === 401) {
-      console.error('Stopping: OpenAI rejected the request (check credits / API key).')
+      console.error('Stopping: the embedding provider rejected the request (check quota / API key).')
       break
     }
   }

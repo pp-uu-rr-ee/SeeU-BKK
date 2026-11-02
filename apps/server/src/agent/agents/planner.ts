@@ -1,6 +1,7 @@
 // PlannerAgent - Specialized in route optimization and itinerary creation
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
+import type { ChatOpenAI } from "@langchain/openai";
+import { createChatModel } from "@/lib/llm-config";
 import { PLANNER_TOOLS } from "../tools";
 
 // Planner agent configuration
@@ -86,11 +87,7 @@ Remember: You are creating practical, enjoyable trip plans. Balance efficiency w
 // Create the planner agent
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createPlannerAgent(model?: ChatOpenAI): any {
-	const llm = model || new ChatOpenAI({
-		maxRetries: 2,
-		modelName: "gpt-5-nano",
-		temperature: 0,
-	});
+	const llm = model || createChatModel("gpt-5-nano");
 
 	return createReactAgent({
 		llm,

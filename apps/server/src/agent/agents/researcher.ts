@@ -1,10 +1,11 @@
 // ResearcherAgent - Specialized in finding places and gathering information
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
+import type { ChatOpenAI } from "@langchain/openai";
+import { createChatModel } from "@/lib/llm-config";
 import { RESEARCHER_TOOLS } from "../tools";
 
 // Researcher agent configuration
-const RESEARCHER_PROMPT = `You are a Rattanakosin Travel Research Expert. Your role is to find and gather information about places only within the Rattanakosin area of Bangkok.
+export const RESEARCHER_PROMPT = `You are a Rattanakosin Travel Research Expert. Your role is to find and gather information about places only within the Rattanakosin area of Bangkok.
 
 SUPPORTED AREA EXAMPLES:
 - Rattanakosin / Rattanakosin Island / Bangkok Old Town / Phra Nakhon
@@ -72,11 +73,7 @@ Remember: You are gathering information for trip planning. Focus on relevance an
 // Create the researcher agent
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createResearcherAgent(model?: ChatOpenAI): any {
-	const llm = model || new ChatOpenAI({
-		maxRetries: 2,
-		modelName: "gpt-5.4-mini",
-		temperature: 0,
-	});
+	const llm = model || createChatModel("gpt-5.4-mini");
 
 	return createReactAgent({
 		llm,

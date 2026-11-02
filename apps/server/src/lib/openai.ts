@@ -3,16 +3,16 @@
  */
 import OpenAI from 'openai'
 import { wrapOpenAI } from 'langsmith/wrappers/openai'
+import { chatModelName, openAIClientOptions, resolveLlmConfig } from './llm-config'
 
 let rawClient: OpenAI | null = null
 let wrappedClient: ReturnType<typeof wrapOpenAI> | null = null
 
 function getRawOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
+  const options = openAIClientOptions()
+  if (!options.apiKey) throw new Error('LLM_API_KEY / OPENAI_API_KEY is not set')
   if (!rawClient) {
-    const baseURL = process.env.OPENAI_BASE_URL
-    rawClient = new OpenAI({ apiKey, baseURL })
+    rawClient = new OpenAI(options)
   }
   return rawClient
 }
@@ -35,7 +35,7 @@ export interface OpenAIOptions {
 }
 
 export async function openaiGenerateText(input: string, opts: OpenAIOptions = {}): Promise<string> {
-  const model = opts.model || 'gpt-5-mini-2025-08-07'
+  const model = chatModelName(opts.model || 'gpt-5-mini-2025-08-07')
   const client = getWrappedOpenAIClient()
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
@@ -69,13 +69,17 @@ export interface OpenAIEmbedOptions {
 }
 
 export async function openaiEmbed(text: string, opts: OpenAIEmbedOptions = {}): Promise<number[]> {
-  const model = opts.model || process.env.OPENAI_EMBED_MODEL || 'text-embedding-3-small'
+  const config = resolveLlmConfig()
+  const model = opts.model || config.embedModel
   const client = getRawOpenAIClient()
 
   const requestOptions: any = {}
   if (opts.timeout_ms) requestOptions.timeout = opts.timeout_ms
 
-  const resp = await client.embeddings.create({ model, input: text }, requestOptions)
+  const resp = await client.embeddings.create(
+    { model, input: text, ...(config.embedDimensions ? { dimensions: config.embedDimensions } : {}) },
+    requestOptions,
+  )
   const vec = resp?.data?.[0]?.embedding
   if (!vec || !Array.isArray(vec)) {
     throw new Error('OpenAI returned no embedding vector')

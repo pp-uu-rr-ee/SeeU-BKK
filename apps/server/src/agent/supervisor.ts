@@ -1,6 +1,8 @@
 import { StateGraph, START, END, Annotation } from "@langchain/langgraph";
-import { ChatOpenAI } from "@langchain/openai";
-import { createResearcherAgent } from "./agents/researcher";
+import { z } from "zod";
+import type { ChatOpenAI } from "@langchain/openai";
+import { createChatModel } from "@/lib/llm-config";
+import { createResearcherAgent, RESEARCHER_PROMPT } from "./agents/researcher";
 import { createPlannerAgent } from "./agents/planner";
 import { createCriticAgent } from "./agents/critic";
 import { parseLatestTripDraft } from "./payload-parsing";
@@ -18,6 +20,16 @@ import {
 	classifyScopeWithResolution,
 } from "./scope-policy";
 import { validateItineraryImpl } from "./tools/validation";
+import { plan_itinerary } from "./tools/planning";
+import { QUOTA_EXCEEDED, toClientErrorMessage } from "./client-errors";
+import {
+	candidatesForPrompt,
+	gatherCandidates,
+	resolvePlaceRefs,
+	searchQueryFromConversation,
+	stripJsonFences,
+	stripPlaceRefs,
+} from "./fast-research";
 import type {
 	CandidatePlace,
 	CritiqueStageOutput,
@@ -89,7 +101,7 @@ export const WorkflowStateAnnotation = Annotation.Root({
 
 function parseResearchStageOutput(text: string): ResearchStageOutput | null {
 	try {
-		const parsed = JSON.parse(text) as Record<string, unknown>;
+		const parsed = JSON.parse(stripJsonFences(text)) as Record<string, unknown>;
 		return ResearchStageOutputSchema.parse({
 			summary: typeof parsed.summary === "string" ? parsed.summary : "",
 			querySummary: typeof parsed.summary === "string" ? parsed.summary : undefined,
@@ -105,7 +117,7 @@ function parseResearchStageOutput(text: string): ResearchStageOutput | null {
 
 function parsePlanningStageOutput(text: string): PlanningStageOutput | null {
 	try {
-		const parsed = JSON.parse(text) as Record<string, unknown>;
+		const parsed = JSON.parse(stripJsonFences(text)) as Record<string, unknown>;
 		if (!(parsed.tripDraft && typeof parsed.tripDraft === "object")) {
 			return null;
 		}
@@ -135,7 +147,7 @@ function parseCritiqueStageOutput(
 	fallbackHardViolations: string[] = []
 ): CritiqueStageOutput | null {
 	try {
-		const parsed = JSON.parse(text) as Record<string, unknown>;
+		const parsed = JSON.parse(stripJsonFences(text)) as Record<string, unknown>;
 		return CritiqueStageOutputSchema.parse({
 			validation: parsed.validation ?? fallbackValidation,
 			hardViolations: Array.isArray(parsed.hardViolations) ? parsed.hardViolations : fallbackHardViolations,
@@ -292,6 +304,131 @@ async function invokeGraphAgentNode(
 }
 
 // Nodes
+function latestUserText(messages: any[]): string {
+	const message = [...messages].reverse().find((m) => m?.role === "user" && typeof m.content === "string");
+	return message?.content?.trim() ?? "";
+}
+
+function messageText(content: unknown): string {
+	if (typeof content === "string") return content;
+	if (Array.isArray(content)) {
+		return content.map((part) => (typeof part === "string" ? part : (part as { text?: string })?.text ?? "")).join("");
+	}
+	return "";
+}
+
+// Structured output keeps the model to this shape (free-form JSON instructions were ignored).
+// placeIds comes first and is limited to the refs on offer: with the summary first the model
+// often described places in prose and left the list empty.
+function placeSelectionSchema(refCount: number) {
+	const refs = Array.from({ length: refCount }, (_, i) => `P${i + 1}`) as [string, ...string[]];
+	return z.object({
+		placeIds: z
+			.array(z.enum(refs))
+			.describe("refs of the chosen CANDIDATE PLACES, best match first. Empty for greetings, small talk, out-of-scope or impossible requests"),
+		summary: z
+			.string()
+			.describe("Reply to the user in their language: what you picked and why, or a short answer / polite refusal"),
+	});
+}
+
+const SELECTION_PROMPT = `${RESEARCHER_PROMPT.slice(0, RESEARCHER_PROMPT.indexOf("CAPABILITIES:")).trim()}
+
+YOUR TASK:
+- The places below were already searched from the database for this request. Pick the ones that answer the user, best first (usually 3-6), by their "ref" (P1, P2, ...).
+- Whenever your summary recommends or mentions a listed place, its ref must be in placeIds.
+- Refer to places by name in the summary, never by ref.
+- Never mention or recommend places that are not in the list.
+- If the user is not asking about places (greeting, thanks, small talk), reply briefly and pick none.
+- If the request is outside Rattanakosin or impossible here (beach, mountain, snow), say so in the summary and pick none.`;
+
+/**
+ * Research in one model call: the searches run in code first, then the model picks and summarises.
+ * Returns null when the searches find nothing (or the model's reply is unusable), so the
+ * tool-calling researcher can take over.
+ */
+async function researchWithSingleCall(state: typeof WorkflowStateAnnotation.State): Promise<string | null> {
+	const query = searchQueryFromConversation(state.messages);
+	if (!query) return null;
+	const { candidates, toolCalls } = await gatherCandidates(query, state.userLocation ?? undefined);
+	if (candidates.length === 0) return null;
+
+	const collector = state.collector;
+	await collector?.onAgent?.("researcher_agent");
+	for (const call of toolCalls) {
+		await collector?.onTool?.(call.name, call.args);
+	}
+
+	const schema = placeSelectionSchema(candidates.length);
+	let selection: z.infer<typeof schema>;
+	try {
+		selection = await state.llm
+			.withStructuredOutput(schema, { name: "place_selection", method: "jsonSchema" })
+			.invoke([
+				{
+					role: "system",
+					content: `${SELECTION_PROMPT}\n\nCANDIDATE PLACES:\n${JSON.stringify(candidatesForPrompt(candidates))}`,
+				},
+				// Conversation only: the runtime_context system message (orchestration JSON) made the
+				// model skip picking places
+				...state.messages
+					.filter((m) => m.role === "user" || m.role === "assistant")
+					.map((m) => ({ role: m.role, content: messageText(m.content) })),
+			]);
+	} catch (error) {
+		// Quota errors must surface (the agent would hit the same limit); anything else gets the agent
+		if (toClientErrorMessage(String((error as Error)?.message ?? error)) === QUOTA_EXCEEDED) throw error;
+		console.warn("Single-call research failed, using the researcher agent:", error);
+		return null;
+	}
+
+	const content = JSON.stringify({
+		intent: "place_recommendation",
+		summary: stripPlaceRefs(selection.summary),
+		places: resolvePlaceRefs(selection.placeIds, candidates),
+	});
+
+	await collector?.onMessage?.({ role: "assistant", content, agent: "researcher_agent" });
+	return content;
+}
+
+/**
+ * First-pass itinerary straight from plan_itinerary (deterministic routing), with no model call.
+ * Revisions still go through the planner model so it can act on the critic's feedback.
+ */
+async function planWithoutModel(state: typeof WorkflowStateAnnotation.State): Promise<string | null> {
+	if (state.workflow?.stage === "revision") return null;
+	const places = state.research?.candidatePlaces ?? [];
+	if (places.length === 0) return null;
+
+	try {
+		const tripDraft = await plan_itinerary({
+			places,
+			constraints: (state.planning?.constraints ?? {}) as PlanningConstraints,
+			origin: state.userLocation ?? undefined,
+			summary: state.ui?.latestSummary,
+			userQuery: latestUserText(state.messages),
+		});
+		const output = PlanningStageOutputSchema.parse({
+			summary: state.ui?.latestSummary || tripDraft.summary,
+			tripDraft,
+			assumptions: [],
+			droppedPlaces: [],
+		});
+		// Same shape as the planner agent's reply (PlannerAgentOutputSchema is strict)
+		const content = JSON.stringify({ intent: "itinerary", summary: output.summary, tripDraft: output.tripDraft });
+
+		const collector = state.collector;
+		await collector?.onAgent?.("planner_agent");
+		await collector?.onTool?.("plan_itinerary", { places: places.map((p) => p.name) });
+		await collector?.onMessage?.({ role: "assistant", content, agent: "planner_agent" });
+		return content;
+	} catch (error) {
+		console.warn("Direct planning failed, using the planner agent:", error);
+		return null;
+	}
+}
+
 async function scopeCheckNode(state: typeof WorkflowStateAnnotation.State) {
 	const scope = await classifyScopeWithResolution({ messages: state.messages });
 	if (scope.classification !== "in_scope" && scope.classification !== "implicit_in_scope") {
@@ -336,8 +473,10 @@ async function hydrateContextNode(state: typeof WorkflowStateAnnotation.State) {
 async function researchNode(state: typeof WorkflowStateAnnotation.State) {
 	state.collector?.onStage?.("research_started");
 	const startedAt = Date.now();
-	const agent = createResearcherAgent(state.llm);
-	const { assistantMessages, latestAssistantText } = await invokeGraphAgentNode(agent, "researcher_agent", state);
+	const directResearch = await researchWithSingleCall(state);
+	const { assistantMessages, latestAssistantText } = directResearch
+		? { assistantMessages: [{ role: "assistant", content: directResearch, name: "researcher_agent" }], latestAssistantText: directResearch }
+		: await invokeGraphAgentNode(createResearcherAgent(state.llm), "researcher_agent", state);
 	
 	const updates: Partial<typeof WorkflowStateAnnotation.State> = {
 		messages: assistantMessages,
@@ -380,8 +519,10 @@ async function planNode(state: typeof WorkflowStateAnnotation.State) {
 	state.collector?.onStage?.("planning_started");
 	const startedAt = Date.now();
 	const previousDraft = state.planning?.draft;
-	const agent = createPlannerAgent(state.llm);
-	const { assistantMessages, latestAssistantText } = await invokeGraphAgentNode(agent, "planner_agent", state);
+	const directPlan = await planWithoutModel(state);
+	const { assistantMessages, latestAssistantText } = directPlan
+		? { assistantMessages: [{ role: "assistant", content: directPlan, name: "planner_agent" }], latestAssistantText: directPlan }
+		: await invokeGraphAgentNode(createPlannerAgent(state.llm), "planner_agent", state);
 	
 	const updates: Partial<typeof WorkflowStateAnnotation.State> = {
 		messages: assistantMessages,
@@ -589,7 +730,7 @@ export function createTripPlannerSupervisor() {
 		prompt: SUPERVISOR_PROMPT,
 		async invoke(input: { messages: Array<{ role: string; content: string }> }) {
 			const policy = deriveSupervisorRoutingPolicy({ messages: input.messages, currentTripDraft: parseLatestTripDraft(input.messages) });
-			const state = await supervisorGraph.invoke({ messages: input.messages, policy, llm: new ChatOpenAI({ maxRetries: 2, modelName: "gpt-4o-mini", temperature: 0 }) });
+			const state = await supervisorGraph.invoke({ messages: input.messages, policy, llm: createChatModel("gpt-4o-mini") });
 			return { messages: state.messages };
 		},
 	};
@@ -614,7 +755,7 @@ export async function invokeSupervisor(
 		userId: options.userId,
 		userPreferences: options.userPreferences,
 		policy,
-		llm: new ChatOpenAI({ maxRetries: 2, modelName: "gpt-4o-mini", temperature: 0 })
+		llm: createChatModel("gpt-4o-mini")
 	});
 	return normalizeSupervisorInvocationResult({ messages: state.messages });
 }
@@ -646,7 +787,7 @@ export async function* streamSupervisor(
 		userId: options.userId,
 		userPreferences: options.userPreferences,
 		policy,
-		llm: new ChatOpenAI({ maxRetries: 2, modelName: "gpt-4o-mini", temperature: 0 }),
+		llm: createChatModel("gpt-4o-mini"),
 		collector: {
 			onAgent: async (agent: string) => pushEvent({ type: "agent", data: { agent } }),
 			onTool: async (tool: string, args: any) => pushEvent({ type: "tool", data: { tool, args } }),

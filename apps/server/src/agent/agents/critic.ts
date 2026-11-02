@@ -1,6 +1,7 @@
 // CriticAgent - Specialized in validating and improving itineraries
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { ChatOpenAI } from "@langchain/openai";
+import type { ChatOpenAI } from "@langchain/openai";
+import { createChatModel } from "@/lib/llm-config";
 import { CRITIC_TOOLS } from "../tools";
 
 const CRITIC_PROMPT = `You are a Bangkok Trip Quality Assurance Expert. Your role is to validate itineraries and suggest improvements.
@@ -50,11 +51,7 @@ Remember: Your goal is to ensure users get high-quality, feasible trip plans. Be
 // Create the critic agent
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createCriticAgent(model?: ChatOpenAI): any {
-	const llm = model || new ChatOpenAI({
-		maxRetries: 2,
-		modelName: "gpt-5-nano",
-		temperature: 0,
-	});
+	const llm = model || createChatModel("gpt-5-nano");
 
 	return createReactAgent({
 		llm: llm as any,

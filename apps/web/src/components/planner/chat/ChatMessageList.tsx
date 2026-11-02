@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/contexts/language-context";
 import { ActiveWorkflowStatus, WorkflowSummary } from "./AgentWorkflowVisualization";
 import { ItineraryPreview } from "./ItineraryPreview";
 import { PlacesListPreview } from "./PlacesListPreview";
@@ -250,6 +251,7 @@ function AssistantMessage({
 	isItinerarySaved?: boolean;
 	onFollowUp?: (text: string) => void;
 }) {
+	const { t } = useTranslation();
 	const [copied, setCopied] = useState(false);
 	const [itineraryDismissed, setItineraryDismissed] = useState(false);
 	const [showAllParsed, setShowAllParsed] = useState(false);
@@ -304,7 +306,8 @@ function AssistantMessage({
 
 				{turn.errors.map((err, i) => (
 					<div key={i} className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
-						{err}
+						{/* The server sends known failures as codes (see apps/server/src/agent/client-errors.ts) */}
+						{err === "quota_exceeded" ? t("chat.errors.quotaExceeded") : err}
 					</div>
 				))}
 

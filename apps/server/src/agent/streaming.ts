@@ -1,4 +1,5 @@
 import { invokeSupervisor, streamSupervisor } from "./supervisor";
+import { toClientErrorMessage } from "./client-errors";
 import { MemoryManager } from "./memory";
 import { SessionMemory } from "./memory/session";
 import { type CandidatePlace, type TripDraft, type UiResponsePayload } from "./state";
@@ -332,7 +333,7 @@ export async function* streamAgentExecution(
 
 		yield {
 			event: "error",
-			data: streamErrorMessage,
+			data: toClientErrorMessage(streamErrorMessage),
 		};
 		yield {
 			event: "done",

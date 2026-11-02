@@ -622,6 +622,9 @@
       "Find cafes near me",
       "Plan a day trip",
       "Hidden gems in Bangkok"
-    ]
+    ],
+    "errors": {
+      "quotaExceeded": "The trip assistant has reached its usage limit for now. Please try again in a little while."
+    }
   }
 }
