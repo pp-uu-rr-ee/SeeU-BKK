@@ -135,7 +135,8 @@
     "searchFailed": "Search failed. Please try again."
   },
   "actions": {
-    "addedToTrip": "Added {place} to {trip}"
+    "addedToTrip": "Added {place} to {trip}",
+    "addedManyToTrip": "Added {count} places to {trip}"
   },
   "home": {
     "title1": "Discover Bangkok's",
@@ -200,7 +201,9 @@
     "km": "km",
     "noCreationDate": "No creation date",
     "cancel": "Cancel",
-    "close": "Close"
+    "close": "Close",
+    "notifications": "Notifications",
+    "m": "m"
   },
   "places": {
     "loading": "Finding places around Bangkok...",
@@ -210,7 +213,7 @@
     "pageTitle": "Uncover the unseen Bangkok.",
     "pageTitleHighlight": "unseen Bangkok.",
     "pageSubtitle": "Search by vibe, neighborhood, or category to find places worth the detour.",
-    "searchPlaceholder": "Try riverside cafe, street food, or Talat Noi",
+    "searchPlaceholder": "Try riverside, street food, or Pak Khlong Talat",
     "categoriesLabel": "Categories",
     "filtersDescription": "Pick one or more categories to narrow your search.",
     "openFilters": "Open filters",
@@ -416,7 +419,8 @@
     "saved": "Saved",
     "breadcrumb": "Breadcrumb",
     "deleteReviewConfirm": "Delete your review?",
-    "loginToAddTrip": "Log in to add places to your trips"
+    "loginToAddTrip": "Log in to add places to your trips",
+    "rateStars": "Rate {n} out of 5 stars"
   },
   "onboarding": {
     "eyebrow": "Personalize your trip",

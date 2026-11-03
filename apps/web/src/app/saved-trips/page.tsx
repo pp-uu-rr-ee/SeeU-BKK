@@ -18,7 +18,7 @@ type Stop = {
   suggested_time_min?: number
   distance_from_prev_km?: number
   notes?: string
-  place: { id: string; name: string; lat?: number; lng?: number; tags?: string[] }
+  place: { id: string; name: string; name_th?: string | null; lat?: number; lng?: number; tags?: string[] }
 }
 
 type FavoritePlace = {
@@ -134,7 +134,9 @@ export default function SavedTripsPage() {
       ? trips
       : trips.filter((trip) => {
           const inTitle = trip.title.toLowerCase().includes(q)
-          const inStops = trip.stops?.some((s) => s.place?.name?.toLowerCase().includes(q))
+          const inStops = trip.stops?.some(
+            (s) => s.place?.name?.toLowerCase().includes(q) || s.place?.name_th?.toLowerCase().includes(q)
+          )
           return inTitle || inStops
         })
 
@@ -262,7 +264,7 @@ export default function SavedTripsPage() {
                   aria-selected={selected}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'h-10 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors',
+                    'h-10 max-md:h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors',
                     selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:border-primary/40'
                   )}
                 >
@@ -374,7 +376,7 @@ export default function SavedTripsPage() {
                         <span className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-soft text-xs font-semibold text-primary">
                           {idx + 1}
                         </span>
-                        <span className="min-w-0 pt-0.5 text-foreground">{stop.place?.name || t("savedTrips.untitledStop")}</span>
+                        <span className="min-w-0 pt-0.5 text-foreground">{(locale === "th" && stop.place?.name_th) || stop.place?.name || t("savedTrips.untitledStop")}</span>
                       </li>
                     ))}
                     {activeTripStops > 5 && (
@@ -456,7 +458,7 @@ export default function SavedTripsPage() {
                   type="button"
                   onClick={() => handleRemoveFavorite(place.id)}
                   aria-label={`${t("savedTrips.removeFavorite")}: ${place.name}`}
-                  className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-card/95 text-foreground shadow-card transition-colors hover:text-destructive"
+                  className="absolute right-3 top-3 flex h-10 w-10 max-md:h-11 max-md:w-11 items-center justify-center rounded-full bg-card/95 text-foreground shadow-card transition-colors hover:text-destructive"
                 >
                   <X className="h-4 w-4" aria-hidden />
                 </button>

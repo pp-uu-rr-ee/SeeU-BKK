@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ export function EditTripDialog({
   sessionToken = "",
 }: EditTripDialogProps) {
   const { t } = useTranslation();
+  const fieldId = useId();
   const [editTitle, setEditTitle] = useState("");
   const [editStops, setEditStops] = useState<EditStop[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -160,14 +161,15 @@ export function EditTripDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground/80 mb-1">
+            <label htmlFor={`${fieldId}-title`} className="block text-sm font-medium text-foreground/80 mb-1">
               {t("trips.tripTitle")}
             </label>
             <input
+              id={`${fieldId}-title`}
               type="text"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring max-md:h-11"
               placeholder={t("trips.editTitlePlaceholder")}
             />
           </div>
@@ -189,10 +191,11 @@ export function EditTripDialog({
                     <div className="font-medium text-black">{stop.label}</div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-muted-foreground">
+                        <label htmlFor={`${fieldId}-time-${index}`} className="text-xs text-muted-foreground">
                           {t("trips.suggestedTime")}
                         </label>
                         <input
+                          id={`${fieldId}-time-${index}`}
                           type="number"
                           min="1"
                           value={stop.suggested_time_min}
@@ -202,16 +205,17 @@ export function EditTripDialog({
                               parseInt(e.target.value) || 1
                             )
                           }
-                          className="w-full px-2 py-1 border rounded text-sm"
+                          className="w-full px-2 py-1 border rounded text-sm max-md:h-11"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">{t("trips.notes")}</label>
+                        <label htmlFor={`${fieldId}-notes-${index}`} className="text-xs text-muted-foreground">{t("trips.notes")}</label>
                         <input
+                          id={`${fieldId}-notes-${index}`}
                           type="text"
                           value={stop.notes}
                           onChange={(e) => updateStopNotes(index, e.target.value)}
-                          className="w-full px-2 py-1 border rounded text-sm"
+                          className="w-full px-2 py-1 border rounded text-sm max-md:h-11"
                           placeholder={t("trips.notesPlaceholder")}
                         />
                       </div>

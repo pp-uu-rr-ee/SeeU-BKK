@@ -80,6 +80,7 @@ interface Review {
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
 
 function StarRow({ rating, size = 'h-5 w-5', onSelect }: { rating: number; size?: string; onSelect?: (value: number) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((value) => {
@@ -91,7 +92,7 @@ function StarRow({ rating, size = 'h-5 w-5', onSelect }: { rating: number; size?
           <button
             key={value}
             type="button"
-            aria-label={`${value} / 5`}
+            aria-label={t('placeDetail.rateStars', { n: String(value) })}
             aria-pressed={value === rating}
             onClick={() => onSelect(value)}
             className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-accent"

@@ -13,7 +13,7 @@ export type TripDetailStop = {
   suggested_time_min?: number
   distance_from_prev_km?: number
   notes?: string
-  place: { id: string; name: string; lat?: number; lng?: number; tags?: string[]; image_url?: string | null }
+  place: { id: string; name: string; name_th?: string | null; lat?: number; lng?: number; tags?: string[]; image_url?: string | null }
 }
 
 export type TripDetail = {
@@ -72,7 +72,14 @@ export function TripDetailView({
     if (!trip?.stops?.length) return []
     let running = DAY_START_MINUTES
 
+    // total_minutes includes walking; only per-leg distances are stored, so share the
+    // walking time out by distance and the last stop ends at the planned total
+    const stopMinutes = trip.stops.reduce((sum, stop) => sum + (stop.suggested_time_min || 60), 0)
+    const walkMinutes = Math.max(0, (trip.total_minutes || 0) - stopMinutes)
+    const totalKm = trip.stops.reduce((sum, stop) => sum + (stop.distance_from_prev_km || 0), 0)
+
     return trip.stops.map((stop) => {
+      if (totalKm > 0) running += Math.round(walkMinutes * ((stop.distance_from_prev_km || 0) / totalKm))
       const timeLabel = formatClock(running)
       running += stop.suggested_time_min || 60
       return { ...stop, timeLabel }
@@ -169,7 +176,7 @@ export function TripDetailView({
                         {stop.place?.tags?.[0] && (
                           <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">{tagLabel(stop.place.tags[0], locale)}</p>
                         )}
-                        <h3 className="mt-1 font-display text-xl font-semibold text-foreground">{stop.place?.name || t('savedTrips.untitledStop')}</h3>
+                        <h3 className="mt-1 font-display text-xl font-semibold text-foreground">{(locale === 'th' && stop.place?.name_th) || stop.place?.name || t('savedTrips.untitledStop')}</h3>
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock3 className="h-4 w-4" aria-hidden />

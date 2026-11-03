@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Map, Maximize2, MessageSquare, Minimize2, X } from "lucide-react";
+import { Map as MapIcon, Maximize2, MessageSquare, Minimize2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { useChatActions } from "./chat/hooks/useChatActions";
 import { useChatHistory } from "./chat/hooks/useChatHistory";
 import { useChatStream } from "./chat/hooks/useChatStream";
 import type { ChatPanelProps, PlaceItem } from "./chat/types";
+import { ChatPlaceNamesContext } from "./chat/lib/place-names";
 
 export function ChatPanel({
 	onPlacesFound,
@@ -34,6 +35,7 @@ export function ChatPanel({
 	tripPlaceIds,
 	savedTripKeys,
 	onTripSaved,
+	placeCatalog,
 	resetKey = 0,
 }: ChatPanelProps) {
 	const { t } = useTranslation();
@@ -117,6 +119,11 @@ export function ChatPanel({
 		},
 	});
 
+	const thaiNamesById = useMemo(
+		() => new Map((placeCatalog ?? []).map((place) => [place.id, place])),
+		[placeCatalog],
+	);
+
 	// A draft whose stops match a saved trip counts as saved (e.g. reopening an older chat),
 	// so "Save to My Trips" can't create a duplicate
 	const lastDraftKey = lastAssistantTurn?.tripDraft?.stops.map((stop) => stop.place_id).join(",");
@@ -170,6 +177,7 @@ export function ChatPanel({
 	}
 
 	return (
+		<ChatPlaceNamesContext.Provider value={thaiNamesById}>
 		<motion.div
 			key="chat-panel"
 			initial={{ y: 100, opacity: 0 }}
@@ -189,7 +197,7 @@ export function ChatPanel({
 				<CardHeader className="flex flex-row items-center justify-between py-3 [.border-b]:pb-3 px-4 border-b bg-card shrink-0">
 					<CardTitle className="text-sm flex items-center gap-2 font-semibold">
 						<div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-							<Map className="h-4 w-4 text-primary" />
+							<MapIcon className="h-4 w-4 text-primary" />
 						</div>
 						{t("chat.actions.title")}
 						{isStreaming && (
@@ -269,5 +277,6 @@ export function ChatPanel({
 				</AnimatePresence>
 			</Card>
 		</motion.div>
+		</ChatPlaceNamesContext.Provider>
 	);
 }

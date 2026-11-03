@@ -141,7 +141,7 @@ export default function SavedTripDetailPage() {
               {shareToken ? t('savedTrips.shared') : t('savedTrips.share')}
             </Button>
             <Button asChild className="h-11 rounded-full px-5">
-              <Link href="/map">
+              <Link href={`/map?trip=${encodeURIComponent(params.id)}`}>
                 <Pencil className="h-4 w-4" aria-hidden />
                 {t('savedTrips.editInPlanner')}
               </Link>

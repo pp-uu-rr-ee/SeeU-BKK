@@ -226,7 +226,7 @@ export function ItineraryColumn({
         <span>•</span>
         <span>{t("itinerary.stopsCount", { count: String(trip.stops.length) })}</span>
         <span>•</span>
-        <span>{displayTotalDistanceKm.toFixed(1)} km</span>
+        <span>{displayTotalDistanceKm.toFixed(1)} {t("common.km")}</span>
       </div>
 
       {warnings.length > 0 && (
@@ -269,7 +269,7 @@ export function ItineraryColumn({
                         </span>
                         <button
                           className="cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring rounded max-md:flex max-md:h-11 max-md:w-11 max-md:items-center max-md:justify-center"
-                          aria-label={t("itinerary.reorderStop", { name: stop.name })}
+                          aria-label={t("itinerary.reorderStop", { name: (locale === "th" && stop.nameTh) || stop.name })}
                           tabIndex={0}
                         >
                           <GripVertical
@@ -318,7 +318,7 @@ export function ItineraryColumn({
                         variant="ghost"
                         size="icon"
                         className="w-7 h-7 max-md:h-11 max-md:w-11 shrink-0 text-muted-foreground hover:text-destructive"
-                        aria-label={t("itinerary.deleteStop", { name: stop.name })}
+                        aria-label={t("itinerary.deleteStop", { name: (locale === "th" && stop.nameTh) || stop.name })}
                         onClick={() => onDeleteStop?.(trip.id, stop.id)}
                       >
                         <Trash2 className="w-4 h-4" />

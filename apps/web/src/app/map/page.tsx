@@ -84,6 +84,14 @@ const DEFAULT_CATEGORIES = [
   { id: 'attraction', key: 'categories.attractions', icon: Camera },
 ];
 
+// Tags each chip searches for; mirrors CATEGORY_TAG_ALIASES in apps/server/src/lib/place-search.ts
+const CATEGORY_TAGS: Record<string, string[]> = {
+  restaurant: ['food', 'restaurant'],
+  shopping: ['market', 'mall', 'walking-street', 'shopping'],
+  cafe: ['cafe', 'coffee'],
+  attraction: ['landmark', 'architecture', 'history', 'attraction'],
+};
+
 
 import { useTranslation } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -226,7 +234,17 @@ export default function TripPlannerPage() {
     [activeTripDraft, draftToTrip, selectedTrip]
   );
 
-  const CATEGORIES = useMemo(() => DEFAULT_CATEGORIES.map(c => ({ ...c, label: t(c.key) })), [t]);
+  // Chips that would always come back empty (e.g. no cafes in the catalogue yet) are left out
+  const CATEGORIES = useMemo(() => {
+    const tagsInUse = new Set(initialPlaces.flatMap((place) => (place.tags || []).map((tag) => tag.toLowerCase())));
+    return DEFAULT_CATEGORIES
+      .filter((c) =>
+        c.id === 'all' ||
+        initialPlaces.length === 0 ||
+        (CATEGORY_TAGS[c.id] || [c.id]).some((tag) => tagsInUse.has(tag))
+      )
+      .map((c) => ({ ...c, label: t(c.key) }));
+  }, [t, initialPlaces]);
 
   useEffect(() => {
     if (!loading && !session?.access_token) {
@@ -342,12 +360,15 @@ export default function TripPlannerPage() {
     }
   }, []);
 
-  // Deep links from place pages: /map?place=<slug> and /map?chat=true&about=<name>
+  // Deep links: /map?place=<slug> and /map?chat=true&about=<name> from place pages,
+  // /map?trip=<id> from a trip's "Edit in planner"
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const placeSlug = params.get('place');
     const about = params.get('about');
+    const tripId = params.get('trip');
     if (placeSlug) setPendingPlaceSlug(placeSlug);
+    if (tripId) setSelectedTripId(tripId);
     if (params.get('chat') === 'true') {
       setIsChatOpen(true);
       if (about) setChatPrefill(t('map.askAboutPlace', { name: about }));
@@ -499,47 +520,47 @@ export default function TripPlannerPage() {
 
   const handleAddPlaceToTrip = useCallback((placesToAdd: PlaceItem | TripPlaceCandidate | Array<PlaceItem | TripPlaceCandidate>) => {
     const items = Array.isArray(placesToAdd) ? placesToAdd : [placesToAdd];
-    setTrips((prevTrips) => {
-      let updatedTrips = prevTrips;
+    // Work out the result first so toasts fire once (not from inside a state updater)
+    let updatedTrips = trips;
+    const addedNames: string[] = [];
+    let tripName = "";
 
-      for (const place of items) {
-        const result = appendPlaceToTrip({
-          trips: updatedTrips,
-          selectedTripId,
-          place,
-        });
+    for (const place of items) {
+      const result = appendPlaceToTrip({
+        trips: updatedTrips,
+        selectedTripId,
+        place,
+      });
 
-        if (result.status === "missing-trip") {
-          toast.error(t("errors.selectTrip"));
-          return prevTrips;
-        }
-
-        if (result.status === "missing-location") {
-          toast.error(t("errors.noLocation"));
-          return prevTrips;
-        }
-
-        if (result.status === "duplicate") {
-          toast.info(t("itinerary.alreadyInTrip", { name: place.name }));
-          continue;
-        }
-
-        const addedMessage =
-          t("actions.addedToTrip") || "{place} added to {trip}";
-        const tripName = result.tripName || "this trip";
-        toast.success(
-          addedMessage
-            .replace("{place}", place.name)
-            .replace("{trip}", tripName)
-        );
-
-        updatedTrips = result.trips;
-        if (selectedTripId) setTripUnsaved(selectedTripId, true);
+      if (result.status === "missing-trip") {
+        toast.error(t("errors.selectTrip"));
+        return;
       }
 
-      return updatedTrips;
-    });
-  }, [selectedTripId, t, setTripUnsaved]);
+      if (result.status === "missing-location") {
+        toast.error(t("errors.noLocation"));
+        return;
+      }
+
+      if (result.status === "duplicate") {
+        toast.info(t("itinerary.alreadyInTrip", { name: (locale === "th" && place.name_th) || place.name }));
+        continue;
+      }
+
+      updatedTrips = result.trips;
+      addedNames.push((locale === "th" && place.name_th) || place.name);
+      tripName = result.tripName || tripName;
+    }
+
+    if (addedNames.length === 0) return;
+    setTrips(updatedTrips);
+    if (selectedTripId) setTripUnsaved(selectedTripId, true);
+    toast.success(
+      addedNames.length === 1
+        ? t("actions.addedToTrip", { place: addedNames[0], trip: tripName })
+        : t("actions.addedManyToTrip", { count: String(addedNames.length), trip: tripName })
+    );
+  }, [trips, selectedTripId, t, locale, setTripUnsaved]);
 
   // Popup shortcut to add the opened place to the saved trip shown in the itinerary panel
   const popupAddToTrip = useMemo(() => {
@@ -595,13 +616,15 @@ export default function TripPlannerPage() {
     if (!removed) return;
     setTrips(nextTrips);
     setTripUnsaved(tripId, true);
-    toast.success(t("itinerary.stopRemoved", { name: removed.stop.name }), {
+    toast.success(t("itinerary.stopRemoved", { name: (locale === "th" && removed.stop.nameTh) || removed.stop.name }), {
+      // Long enough to read the toast and reach "Undo"
+      duration: 8000,
       action: {
         label: t("itinerary.undo"),
         onClick: () => setTrips((prev) => restoreStop(prev, tripId, removed.stop, removed.index)),
       },
     });
-  }, [activeTripDraft, trips, t, setTripUnsaved]);
+  }, [activeTripDraft, trips, t, locale, setTripUnsaved]);
 
   // Map/popup shape for a trip stop, filled from the loaded place (real description,
   // Thai fields, photo, slug for "View details")
@@ -887,7 +910,9 @@ export default function TripPlannerPage() {
       .map((stop) => ({
         id: `itinerary-${stop.slug}`,
         name: stop.name,
+        name_th: (stop as any).name_th ?? null,
         description: stop.notes || "Itinerary stop",
+        description_th: (stop as any).description_th ?? null,
         tags: [],
         lat: stop.lat!,
         lng: stop.lng!,
@@ -909,6 +934,7 @@ export default function TripPlannerPage() {
           foundPlaces.find((p) => p.name === stop.name || p.id === stop.place_id || p.slug === stop.slug) ||
           initialPlaces.find((p) => p.name === stop.name || p.id === stop.place_id || p.slug === stop.slug) ||
           searchResults.find((p) => p.name === stop.name || p.id === stop.place_id || p.slug === stop.slug);
+        const catalogPlace = initialPlaces.find((p) => p.id === stop.place_id || p.slug === stop.slug);
 
         return {
           ...stop,
@@ -916,6 +942,10 @@ export default function TripPlannerPage() {
           lng: place?.lng ?? stop.lng,
           slug: place?.slug ?? stop.slug ?? stop.name,
           image_url: place?.image_url ?? "",
+          // Draft stops (and chat-found places) only carry English fields; Thai pins/popups
+          // read these from the full catalog
+          name_th: catalogPlace?.name_th ?? null,
+          description_th: catalogPlace?.description_th ?? null,
         };
       })
     };
@@ -1393,6 +1423,7 @@ export default function TripPlannerPage() {
         onLocatePlace={handleLocateChatPlace}
         tripPlaceIds={chatTripPlaceIds}
         savedTripKeys={savedTripKeys}
+        placeCatalog={initialPlaces}
         onTripSaved={handleChatTripSaved}
         resetKey={chatResetKey}
       />

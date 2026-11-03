@@ -24,8 +24,9 @@ interface ChatHistorySidebarProps {
 function formatDate(date: Date, t: (key: string, vars?: Record<string, string>) => string, locale: Locale): string {
 	const now = new Date();
 	const d = new Date(date);
-	const diffMs = now.getTime() - d.getTime();
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+	// Calendar days, so last night's chat reads "Yesterday" rather than "Today"
+	const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+	const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / (1000 * 60 * 60 * 24));
 
 	if (diffDays === 0) return t("chatHistory.today");
 	if (diffDays === 1) return t("chatHistory.yesterday");

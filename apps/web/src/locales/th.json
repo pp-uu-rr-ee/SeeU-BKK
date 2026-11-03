@@ -135,7 +135,8 @@
     "searchFailed": "ค้นหาไม่สำเร็จ กรุณาลองอีกครั้ง"
   },
   "actions": {
-    "addedToTrip": "เพิ่ม {place} ไปยัง {trip}"
+    "addedToTrip": "เพิ่ม {place} ไปยัง {trip}",
+    "addedManyToTrip": "เพิ่ม {count} สถานที่ลง {trip} แล้ว"
   },
   "home": {
     "title1": "เที่ยวกรุงเทพ",
@@ -200,7 +201,9 @@
     "km": "กม.",
     "noCreationDate": "ไม่มีวันที่สร้าง",
     "cancel": "ยกเลิก",
-    "close": "ปิด"
+    "close": "ปิด",
+    "notifications": "การแจ้งเตือน",
+    "m": "ม."
   },
   "places": {
     "loading": "กำลังค้นหาสถานที่ในกรุงเทพ...",
@@ -210,7 +213,7 @@
     "pageTitle": "ค้นพบกรุงเทพที่ไม่เคยเห็น",
     "pageTitleHighlight": "กรุงเทพที่ไม่เคยเห็น",
     "pageSubtitle": "ค้นหาตามบรรยากาศ ย่าน หรือหมวดหมู่ เพื่อค้นพบสถานที่ที่คุ้มค่ากับการเดินทาง",
-    "searchPlaceholder": "ลองค้าหา ร้านกาแฟริมน้ำ อาหารถนน หรือ ตลาดน้อย",
+    "searchPlaceholder": "ลองค้นหา ริมน้ำ อาหารริมทาง หรือ ปากคลองตลาด",
     "categoriesLabel": "หมวดหมู่",
     "filtersDescription": "เลือกหลายหมวดหมู่พร้อมกันเพื่อกรองผลลัพธ์",
     "openFilters": "เปิดตัวกรอง",
@@ -416,7 +419,8 @@
     "saved": "บันทึกแล้ว",
     "breadcrumb": "ลำดับหน้า",
     "deleteReviewConfirm": "ลบรีวิวของคุณใช่ไหม?",
-    "loginToAddTrip": "เข้าสู่ระบบเพื่อเพิ่มสถานที่ลงทริป"
+    "loginToAddTrip": "เข้าสู่ระบบเพื่อเพิ่มสถานที่ลงทริป",
+    "rateStars": "ให้ {n} จาก 5 ดาว"
   },
   "onboarding": {
     "eyebrow": "ปรับทริปให้เป็นของคุณ",

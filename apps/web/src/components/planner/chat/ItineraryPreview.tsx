@@ -3,6 +3,7 @@ import { Route, Clock, Navigation, Check, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TripDraft } from "./types";
 import { useTranslation } from "@/contexts/language-context";
+import { useChatPlaceName } from "./lib/place-names";
 
 interface ItineraryPreviewProps {
 	itinerary: TripDraft;
@@ -22,6 +23,7 @@ export function ItineraryPreview({
 	isSaved,
 }: ItineraryPreviewProps) {
 	const { t } = useTranslation();
+	const placeName = useChatPlaceName();
 	const stops = itinerary.stops;
 	const totalKm = itinerary.total_distance_km;
 	const totalMin = itinerary.total_minutes;
@@ -34,9 +36,9 @@ export function ItineraryPreview({
 					{itinerary.title}
 				</span>
 				<div className="flex items-center gap-3 text-[10px] text-muted-foreground shrink-0">
-					{totalKm !== undefined && <span>{totalKm} km</span>}
+					{totalKm !== undefined && <span>{totalKm} {t("common.km")}</span>}
 					{totalMin !== undefined && (
-						<span>{Math.floor(totalMin / 60)}h {totalMin % 60}m</span>
+						<span>{t("itinerary.duration", { h: String(Math.floor(totalMin / 60)), m: String(totalMin % 60) })}</span>
 					)}
 				</div>
 			</div>
@@ -61,17 +63,17 @@ export function ItineraryPreview({
 
 						<div className="flex-1 min-w-0 pb-3">
 							<div className="font-medium text-foreground text-sm leading-snug">
-								{stop.name}
+								{placeName(stop).name}
 							</div>
 							<div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
 								<span className="flex items-center gap-1">
 									<Clock className="h-3 w-3" />
-									{stop.suggested_time_min} min
+									{stop.suggested_time_min} {t("common.min")}
 								</span>
 								{stop.distance_from_prev_km > 0 && (
 									<span className="flex items-center gap-1">
 										<Navigation className="h-3 w-3" />
-										{stop.distance_from_prev_km} km from prev
+										{t("savedTrips.fromPrev", { km: String(stop.distance_from_prev_km) })}
 									</span>
 								)}
 							</div>

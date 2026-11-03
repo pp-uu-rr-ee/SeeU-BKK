@@ -146,6 +146,8 @@ export interface ChatPanelProps {
 	savedTripKeys?: string[];
 	/** Called with the new trip's id after the chat's trip is saved */
 	onTripSaved?: (tripId: string | null) => void;
+	/** All places with their Thai fields, used to show chat cards in Thai */
+	placeCatalog?: Array<{ id: string; name_th?: string | null; description_th?: string | null }>;
 	onTripDraftCreated?: (tripDraft: TripDraft) => void;
 	onPreviewTripDraft?: (tripDraft: TripDraft) => void;
 	userLocation?: { lat: number; lng: number };

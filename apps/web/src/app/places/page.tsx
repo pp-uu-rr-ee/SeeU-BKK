@@ -184,7 +184,7 @@ export default function PlacesPage() {
                   setCurrentPage(1);
                 }}
                 className={cn(
-                  "h-10 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors",
+                  "h-10 max-md:h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors",
                   selectedCategories.length === 0
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-card text-foreground hover:border-primary/40"
@@ -201,7 +201,7 @@ export default function PlacesPage() {
                     aria-pressed={isSelected}
                     onClick={() => toggleCategory(cat.value)}
                     className={cn(
-                      "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors",
+                      "inline-flex h-10 max-md:h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors",
                       isSelected
                         ? "border-primary bg-teal-soft text-primary"
                         : "border-border bg-card text-foreground hover:border-primary/40"

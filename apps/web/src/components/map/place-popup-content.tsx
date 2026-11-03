@@ -70,6 +70,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
         await navigator.clipboard.writeText(
           `${window.location.origin}/places/${place.slug}`
         );
+        toast.success(t('placeDetail.linkCopied'));
       }
     } catch (error) {
       // User cancelled or error
@@ -130,9 +131,9 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
     const distance = R * c;
 
     if (distance < 1) {
-      return `${Math.round(distance * 1000)} m`;
+      return `${Math.round(distance * 1000)} ${t('common.m')}`;
     }
-    return `${distance.toFixed(1)} km`;
+    return `${distance.toFixed(1)} ${t('common.km')}`;
   };
 
   const distance = calculateDistance();

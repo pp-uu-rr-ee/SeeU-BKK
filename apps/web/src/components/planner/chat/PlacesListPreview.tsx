@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { MapPin, Plus, Map, Check } from "lucide-react";
 import { useTranslation } from "@/contexts/language-context";
+import { useChatPlaceName } from "./lib/place-names";
 import { tagLabel } from "@/lib/place-locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ function PlaceRow({
 }) {
 	const { t, locale } = useTranslation();
 	const [imageError, setImageError] = useState(false);
+	const { name, description } = useChatPlaceName()(place);
 
 	return (
 		<motion.div
@@ -43,7 +45,7 @@ function PlaceRow({
 				<div className="w-12 h-12 rounded-md overflow-hidden bg-muted shrink-0">
 					<img
 						src={place.image_url}
-						alt={place.name}
+						alt={name}
 						className="w-full h-full object-cover"
 						onError={() => setImageError(true)}
 					/>
@@ -55,7 +57,7 @@ function PlaceRow({
 			)}
 
 			<div className="flex-1 min-w-0">
-				<h4 className="text-sm font-semibold text-foreground truncate">{place.name}</h4>
+				<h4 className="text-sm font-semibold text-foreground truncate">{name}</h4>
 				{place.tags && place.tags.length > 0 && (
 					<div className="flex gap-1 mt-1 flex-wrap">
 						{place.tags.slice(0, 3).map((tag) => (
@@ -65,9 +67,9 @@ function PlaceRow({
 						))}
 					</div>
 				)}
-				{place.description && (
+				{description && (
 					<p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-						{place.description}
+						{description}
 					</p>
 				)}
 				<div className="flex gap-2 mt-2">

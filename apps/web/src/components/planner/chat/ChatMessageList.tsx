@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/contexts/language-context";
+import { useChatPlaceName } from "./lib/place-names";
 import { tagLabel } from "@/lib/place-locale";
 import { ActiveWorkflowStatus, WorkflowSummary } from "./AgentWorkflowVisualization";
 import { ItineraryPreview } from "./ItineraryPreview";
@@ -167,6 +168,7 @@ function PlaceCard({
 	onView?: () => void;
 }) {
 	const { t, locale } = useTranslation();
+	const { name } = useChatPlaceName()(place);
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 8 }}
@@ -180,7 +182,7 @@ function PlaceCard({
 			<div className="flex-1 min-w-0">
 				<div className="flex items-start justify-between gap-2">
 					<div className="min-w-0">
-						<h4 className="text-sm font-semibold text-foreground truncate">{place.name}</h4>
+						<h4 className="text-sm font-semibold text-foreground truncate">{name}</h4>
 						{place.tags && place.tags.length > 0 && (
 							<div className="flex gap-1 mt-1 flex-wrap">
 								{place.tags.slice(0, 3).map((tag) => (
@@ -195,7 +197,7 @@ function PlaceCard({
 						<div className="w-12 h-12 rounded-md overflow-hidden bg-muted shrink-0">
 							<img
 								src={place.image_url}
-								alt={place.name}
+								alt={name}
 								className="w-full h-full object-cover"
 								onError={(e) => {
 									e.currentTarget.style.display = "none";
@@ -366,7 +368,11 @@ function AssistantMessage({
 							variant="ghost"
 							size="sm"
 							className="h-9 max-md:h-11 text-xs text-muted-foreground"
-							onClick={() => setItineraryDismissed(false)}
+							onClick={() => {
+								// Bring back the card and the route it was showing on the map
+								setItineraryDismissed(false);
+								onPreviewTripDraft?.(previewTripDraft);
+							}}
 						>
 							<Route className="h-3.5 w-3.5 mr-1" aria-hidden />
 							{t("chat.actions.showPlanAgain")}
