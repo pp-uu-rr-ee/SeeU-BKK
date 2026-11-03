@@ -36,3 +36,6 @@ web-bundles
 logs/security/
 
 .agent
+
+# macOS Finder metadata
+.DS_Store
