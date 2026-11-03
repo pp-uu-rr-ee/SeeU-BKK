@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ImageOff, Star } from "lucide-react";
 import type { PlaceListItem } from "@/lib/places-api";
 import { useTranslation } from "@/contexts/language-context";
+import { tagLabel } from "@/lib/place-locale";
 import { cn } from "@/lib/utils";
 
 interface PlaceTileProps {
@@ -52,7 +53,7 @@ export function PlaceTile({ place, className, lazy = true }: PlaceTileProps) {
 								key={tag}
 								className="rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium capitalize text-foreground backdrop-blur-sm"
 							>
-								{tag.replace(/-/g, " ")}
+								{tagLabel(tag, locale)}
 							</span>
 						))}
 					</div>

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Heart, Share2, X, Camera, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Locale } from '@/contexts/language-context';
-import { localizedPlace } from '@/lib/place-locale';
+import { localizedPlace, tagLabel } from '@/lib/place-locale';
 
 interface Place {
   id: string;
@@ -178,7 +178,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             size="icon"
             onClick={onClose}
             aria-label={t('mapPopup.close')}
-            className="absolute top-2 right-2 h-9 w-9 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
+            className="absolute top-2 right-2 h-11 w-11 md:h-9 md:w-9 rounded-full bg-black/30 text-white hover:bg-black/50 hover:text-white"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -190,7 +190,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
             onClick={handleFavorite}
             aria-label={t('mapPopup.saveFavorite')}
             aria-pressed={isFavorite}
-            className={`absolute top-2 left-2 h-9 w-9 rounded-full ${
+            className={`absolute top-2 left-2 h-11 w-11 md:h-9 md:w-9 rounded-full ${
               isFavorite
                 ? 'bg-destructive text-white hover:bg-destructive/90'
                 : 'bg-black/30 text-white hover:bg-black/50'
@@ -228,8 +228,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
                   variant="secondary"
                   className="text-xs px-2 py-0.5 bg-secondary text-foreground/80 hover:bg-secondary"
                 >
-                  {/* Known tags share the stop-category labels; others show as-is */}
-                  {t(`stopCategory.${tag.toLowerCase()}`, tag)}
+                  {tagLabel(tag, locale)}
                 </Badge>
               ))}
               {place.tags.length > 3 && (

@@ -3,6 +3,7 @@ import { Loader2, Zap, CircleDot, Search, Database, Sparkles, Route, MapPin, Che
 import { cn } from "@/lib/utils";
 import { ChatToolCallDisplay } from "./ChatToolCallDisplay";
 import type { WorkflowStepData } from "./types";
+import { useTranslation } from "@/contexts/language-context";
 import {
 	ChainOfThought,
 	ChainOfThoughtHeader,
@@ -77,18 +78,21 @@ interface WorkflowSummaryProps {
 }
 
 export function WorkflowSummary({ steps, latency }: WorkflowSummaryProps) {
+	const { t } = useTranslation();
 	const summary = useMemo(() => {
 		const agents = steps
 			.filter((s) => ["search", "route", "reasoning"].includes(s.type))
 			.map((s) => {
-				if (s.type === "search") return "Researcher";
-				if (s.type === "route") return "Planner";
-				if (s.type === "reasoning") return "Critic";
+				if (s.type === "search") return t("chat.agents.researcher");
+				if (s.type === "route") return t("chat.agents.planner");
+				if (s.type === "reasoning") return t("chat.agents.critic");
 				return s.type;
 			});
 		const unique = [...new Set(agents)];
-		return unique.length > 0 ? `Agents: ${unique.join(" → ")}` : `${steps.length} steps completed`;
-	}, [steps]);
+		return unique.length > 0
+			? t("chat.agents.label", { names: unique.join(" → ") })
+			: t("chat.agents.stepsCompleted", { count: String(steps.length) });
+	}, [steps, t]);
 
 	return (
 		<ChainOfThought className="w-full">

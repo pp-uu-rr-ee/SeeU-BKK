@@ -52,7 +52,7 @@ export default function Header() {
 				</Link>
 
 				{/* Desktop navigation */}
-				<nav aria-label="Main" className="hidden md:block">
+				<nav aria-label={t("nav.mainLabel")} className="hidden md:block">
 					<ul className="flex items-center gap-1">
 						{links.map(({ to, label }) => (
 							<li key={to}>
@@ -85,7 +85,7 @@ export default function Header() {
 						onClick={() => setIsMobileMenuOpen((open) => !open)}
 						aria-expanded={isMobileMenuOpen}
 						aria-controls="mobile-nav"
-						aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+						aria-label={isMobileMenuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
 					>
 						{isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
 					</button>
@@ -95,7 +95,7 @@ export default function Header() {
 			{/* Mobile navigation */}
 			{isMobileMenuOpen && (
 				<div id="mobile-nav" className="border-t border-border bg-background md:hidden">
-					<nav aria-label="Main" className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+					<nav aria-label={t("nav.mainLabel")} className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
 						<ul className="flex flex-col">
 							{links.map(({ to, label }) => (
 								<li key={to}>

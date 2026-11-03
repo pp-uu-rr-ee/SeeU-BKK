@@ -36,14 +36,14 @@ export function ChatInputBar({
 					placeholder={t("chat.actions.inputPlaceholder")}
 					aria-label={t("chat.actions.inputPlaceholder")}
 					disabled={isStreaming}
-					className="flex-1 h-10"
+					className="flex-1 h-10 max-md:h-11"
 				/>
 				{isStreaming ? (
 					<Button
 						onClick={onStop}
 						size="icon"
 						variant="outline"
-						className="shrink-0 h-10 w-10"
+						className="shrink-0 h-10 w-10 max-md:h-11 max-md:w-11"
 						title={t("chat.actions.stop")}
 						aria-label={t("chat.actions.stop")}
 					>
@@ -54,7 +54,7 @@ export function ChatInputBar({
 						onClick={onSend}
 						disabled={!input.trim()}
 						size="icon"
-						className="shrink-0 h-10 w-10"
+						className="shrink-0 h-10 w-10 max-md:h-11 max-md:w-11"
 						aria-label={t("chat.actions.send")}
 					>
 						<Send className="h-4 w-4" />
@@ -64,7 +64,7 @@ export function ChatInputBar({
 			{hasTurns && !isStreaming && (
 				<button
 					onClick={onClearConversation}
-					className="min-h-8 text-xs text-muted-foreground hover:text-foreground transition-colors"
+					className="min-h-8 max-md:min-h-11 text-xs text-muted-foreground hover:text-foreground transition-colors"
 				>
 					{t("chat.actions.clear")}
 				</button>

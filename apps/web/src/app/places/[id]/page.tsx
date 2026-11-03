@@ -11,6 +11,8 @@ import { useTranslation } from '@/contexts/language-context';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { AddToTripDialog } from '@/components/trips/add-to-trip-dialog';
+import { tagLabel } from '@/lib/place-locale';
 import {
   MapPin,
   ArrowLeft,
@@ -123,6 +125,7 @@ export default function PlaceDetailPage() {
 
   const placeSlug = params.id as string;
   const accessToken = session?.access_token;
+  const [isAddToTripOpen, setIsAddToTripOpen] = useState(false);
 
   const fetchPlaceDetails = useCallback(async () => {
     try {
@@ -309,6 +312,7 @@ export default function PlaceDetailPage() {
 
   const handleDeleteReview = async () => {
     if (!accessToken) return;
+    if (!window.confirm(t('placeDetail.deleteReviewConfirm'))) return;
     setIsReviewSaving(true);
     try {
       const response = await fetch(`${serverUrl}/api/places/${placeSlug}/reviews`, {
@@ -334,9 +338,13 @@ export default function PlaceDetailPage() {
   };
 
   const handleAddToTrip = () => {
-    if (place) {
-      router.push(`/map?place=${encodeURIComponent(place.slug)}`);
+    if (!place) return;
+    if (!accessToken) {
+      toast.info(t('placeDetail.loginToAddTrip'));
+      router.push('/auth/login');
+      return;
     }
+    setIsAddToTripOpen(true);
   };
 
   const handleAskAssistant = () => {
@@ -403,7 +411,7 @@ export default function PlaceDetailPage() {
     <article className="bg-background pb-20">
       {/* Breadcrumb + actions */}
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-6 sm:px-6">
-        <nav aria-label="Breadcrumb" className="min-w-0 text-sm">
+        <nav aria-label={t("placeDetail.breadcrumb")} className="min-w-0 text-sm">
           <ol className="flex items-center gap-1.5 text-muted-foreground">
             <li>
               <Link href="/places" className="inline-flex items-center gap-1.5 rounded-full py-2 hover:text-foreground">
@@ -436,7 +444,7 @@ export default function PlaceDetailPage() {
             type="button"
             variant="outline"
             onClick={handleShare}
-            aria-label="Share"
+            aria-label={t("mapPopup.share")}
             className="h-11 w-11 rounded-full border-border bg-card p-0"
           >
             <Share2 className="h-5 w-5" aria-hidden />
@@ -449,7 +457,7 @@ export default function PlaceDetailPage() {
         {place.tags.length > 0 && (
           <p className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-saffron" />
-            {place.tags.map((tag) => tag.replace(/-/g, ' ')).join(' · ')}
+            {place.tags.map((tag) => tagLabel(tag, locale)).join(' · ')}
           </p>
         )}
         <h1 className="max-w-4xl font-display text-4xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-5xl md:text-6xl">
@@ -838,13 +846,24 @@ export default function PlaceDetailPage() {
                   <p className="mt-1 text-sm text-muted-foreground">
                     {typeof nearby.distance_km === 'number' && t('placeDetail.kmAway', { km: nearby.distance_km.toFixed(1) })}
                     {typeof nearby.distance_km === 'number' && nearby.tags.length > 0 && ' · '}
-                    <span className="capitalize">{nearby.tags.slice(0, 2).map((tag) => tag.replace(/-/g, ' ')).join(', ')}</span>
+                    <span>{nearby.tags.slice(0, 2).map((tag) => tagLabel(tag, locale)).join(', ')}</span>
                   </p>
                 </Link>
               </li>
             ))}
           </ul>
         </section>
+      )}
+
+      {place && accessToken && (
+        <AddToTripDialog
+          isOpen={isAddToTripOpen}
+          onClose={() => setIsAddToTripOpen(false)}
+          place={place}
+          displayName={displayName}
+          accessToken={accessToken}
+          serverUrl={serverUrl}
+        />
       )}
     </article>
   );

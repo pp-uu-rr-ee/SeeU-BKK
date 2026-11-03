@@ -85,6 +85,13 @@ type ClusterFeature = {
 
 type SuperclusterFeature = PointFeature | ClusterFeature;
 
+// A source + line layer we add on top of the base map style
+type MapOverlay = {
+  sourceId: string;
+  source: Parameters<mapboxgl.Map['addSource']>[1];
+  layer: Parameters<mapboxgl.Map['addLayer']>[0] & { id: string };
+};
+
 // Category colors for markers
 const CATEGORY_COLORS: Record<string, string> = {
   temple: '#F59E0B',
@@ -276,6 +283,9 @@ const MapContainer: React.FC<MapContainerProps> = ({
   const [currentBounds, setCurrentBounds] = useState<[number, number, number, number] | null>(null);
   const [is3DEnabled, setIs3DEnabled] = useState(show3D);
   const [isTrafficEnabled, setIsTrafficEnabled] = useState(false);
+  const is3DEnabledRef = useRef(show3D);
+  const overlaysRef = useRef<Map<string, MapOverlay>>(new Map());
+  const appliedStyleRef = useRef<'dark' | 'light' | 'satellite'>('light');
 
   // Initialize Supercluster
   const initSupercluster = useCallback(() => {
@@ -488,8 +498,17 @@ const MapContainer: React.FC<MapContainerProps> = ({
   }, []);
 
   // Add 3D building layer
-  const add3DBuildingLayer = useCallback(() => {
+  const add3DBuildingLayer = useCallback(function addBuildings() {
     if (!map.current) return;
+
+    // getStyle() throws while a style is still loading; try again once it settles
+    if (!map.current.isStyleLoaded()) {
+      map.current.once('idle', () => {
+        if (is3DEnabledRef.current) addBuildings();
+      });
+      return;
+    }
+    if (!map.current.getSource('composite')) return;
 
     const layers = map.current.getStyle().layers;
     const labelLayerId = layers?.find(
@@ -540,7 +559,8 @@ const MapContainer: React.FC<MapContainerProps> = ({
   const toggle3D = useCallback(() => {
     if (!map.current) return;
 
-    const newValue = !is3DEnabled;
+    const newValue = !is3DEnabledRef.current;
+    is3DEnabledRef.current = newValue;
     setIs3DEnabled(newValue);
 
     if (newValue) {
@@ -552,7 +572,63 @@ const MapContainer: React.FC<MapContainerProps> = ({
         map.current.removeLayer('3d-buildings');
       }
     }
-  }, [is3DEnabled, add3DBuildingLayer]);
+  }, [add3DBuildingLayer]);
+
+  // Overlays we draw on top of the base style (traffic, routes). setStyle() drops them,
+  // so they are kept here and re-added on style.load
+  const addOverlay = useCallback((overlay: MapOverlay) => {
+    const m = map.current;
+    if (!m) return;
+    overlaysRef.current.set(overlay.layer.id, overlay);
+    const apply = () => {
+      // Removed or replaced while waiting for the style
+      if (overlaysRef.current.get(overlay.layer.id) !== overlay) return;
+      if (m.getLayer(overlay.layer.id)) m.removeLayer(overlay.layer.id);
+      if (m.getSource(overlay.sourceId)) m.removeSource(overlay.sourceId);
+      m.addSource(overlay.sourceId, overlay.source);
+      m.addLayer(overlay.layer);
+    };
+    try {
+      apply();
+    } catch {
+      // Style still loading (e.g. right after a style switch)
+      m.once('idle', apply);
+    }
+  }, []);
+
+  const removeOverlay = useCallback((layerId: string, sourceId: string) => {
+    overlaysRef.current.delete(layerId);
+    const m = map.current;
+    if (!m) return;
+    if (m.getLayer(layerId)) m.removeLayer(layerId);
+    if (m.getSource(sourceId)) m.removeSource(sourceId);
+  }, []);
+
+  const restoreOverlays = useCallback(() => {
+    const m = map.current;
+    if (!m) return;
+    if (is3DEnabledRef.current) add3DBuildingLayer();
+    // Traffic first so route lines stay on top of it
+    const overlays = [...overlaysRef.current.values()].sort(
+      (a, b) => Number(b.sourceId === 'traffic') - Number(a.sourceId === 'traffic')
+    );
+    for (const { sourceId, source, layer } of overlays) {
+      if (!m.getSource(sourceId)) m.addSource(sourceId, source);
+      if (!m.getLayer(layer.id)) m.addLayer(layer);
+    }
+  }, [add3DBuildingLayer]);
+
+  // Padding for framing content: clear of the search bar and category chips on top and,
+  // on phones, the trip sheet's peek. Capped so a tall overlay can't make the fit impossible
+  const framePadding = useCallback(() => {
+    const container = map.current?.getContainer();
+    const width = container?.clientWidth ?? 0;
+    const height = container?.clientHeight ?? 0;
+    const isPhone = width < 768;
+    const bottom = isPhone ? 160 : 48;
+    const top = Math.min(topInsetRef.current + 32, Math.max(48, height - bottom - 120));
+    return { top, bottom, left: 48, right: 72 };
+  }, []);
 
   // Toggle traffic layer
   const toggleTraffic = useCallback(() => {
@@ -562,17 +638,13 @@ const MapContainer: React.FC<MapContainerProps> = ({
     setIsTrafficEnabled(newValue);
 
     if (newValue) {
-      // Check if source already exists before adding
-      if (!map.current.getSource('traffic')) {
-        map.current.addSource('traffic', {
+      addOverlay({
+        sourceId: 'traffic',
+        source: {
           type: 'vector',
           url: 'mapbox://mapbox.mapbox-traffic-v1',
-        });
-      }
-
-      // Check if layer already exists before adding
-      if (!map.current.getLayer('traffic-line')) {
-        map.current.addLayer({
+        },
+        layer: {
           id: 'traffic-line',
           type: 'line',
           source: 'traffic',
@@ -592,34 +664,24 @@ const MapContainer: React.FC<MapContainerProps> = ({
             ],
             'line-width': 2,
           },
-        });
-      }
+        },
+      });
     } else {
-      if (map.current.getLayer('traffic-line')) {
-        map.current.removeLayer('traffic-line');
-      }
-      if (map.current.getSource('traffic')) {
-        map.current.removeSource('traffic');
-      }
+      removeOverlay('traffic-line', 'traffic');
     }
-  }, [isTrafficEnabled]);
+  }, [isTrafficEnabled, addOverlay, removeOverlay]);
 
   // Draw trip route following actual roads using Mapbox Directions API
   useEffect(() => {
     if (!map.current || !mapLoaded || previewItinerary || !tripRoute || tripRoute.length < 2) {
       // Remove route layer if trip route is empty
-      if (map.current?.getLayer('trip-route')) {
-        map.current.removeLayer('trip-route');
-      }
-      if (map.current?.getSource('trip-route')) {
-        map.current.removeSource('trip-route');
-      }
+      removeOverlay('trip-route', 'trip-route');
       lastTripRouteKeyRef.current = null;
       return;
     }
 
     const routeKey = tripRoute.map(([lng, lat]) => `${lng},${lat}`).join(';');
-    if (lastTripRouteKeyRef.current === routeKey && map.current.getSource('trip-route')) {
+    if (lastTripRouteKeyRef.current === routeKey && overlaysRef.current.has('trip-route')) {
       return;
     }
     lastTripRouteKeyRef.current = routeKey;
@@ -661,14 +723,6 @@ const MapContainer: React.FC<MapContainerProps> = ({
           const distanceKm = route.distance ? route.distance / 1000 : 0;
           const travelDurationMin = route.duration ? Math.round(route.duration / 60) : 0;
 
-          // Remove existing route layer if it exists
-          if (map.current?.getLayer('trip-route')) {
-            map.current.removeLayer('trip-route');
-          }
-          if (map.current?.getSource('trip-route')) {
-            map.current.removeSource('trip-route');
-          }
-
           // Create GeoJSON from the actual route
           const routeGeoJSON: GeoJSON.FeatureCollection = {
             type: 'FeatureCollection',
@@ -691,25 +745,26 @@ const MapContainer: React.FC<MapContainerProps> = ({
             console.warn('onRouteInfo callback failed', e);
           }
 
-          // Add the route source
-          map.current!.addSource('trip-route', {
-            type: 'geojson',
-            data: routeGeoJSON,
-          });
-
-          // Add the route layer with solid line (not dashed)
-          map.current!.addLayer({
-            id: 'trip-route',
-            type: 'line',
-            source: 'trip-route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
+          // Route layer with solid line (not dashed); replaces any previous route
+          addOverlay({
+            sourceId: 'trip-route',
+            source: {
+              type: 'geojson',
+              data: routeGeoJSON,
             },
-            paint: {
-              'line-color': '#0E5A5F',
-              'line-width': 4,
-              'line-opacity': 0.85,
+            layer: {
+              id: 'trip-route',
+              type: 'line',
+              source: 'trip-route',
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round',
+              },
+              paint: {
+                'line-color': '#0E5A5F',
+                'line-width': 4,
+                'line-opacity': 0.85,
+              },
             },
           });
 
@@ -723,7 +778,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
                 routeCoordinates[0] as [number, number]
               )
             );
-            map.current!.fitBounds(bounds, { padding: 80, duration: 1000 });
+            map.current!.fitBounds(bounds, { padding: framePadding(), duration: 1000 });
           }
         } else {
           console.warn('No routes found in response');
@@ -737,15 +792,6 @@ const MapContainer: React.FC<MapContainerProps> = ({
 
     const drawStraightRoute = () => {
       if (!map.current) return;
-
-
-      // Remove existing route layer if it exists
-      if (map.current.getLayer('trip-route')) {
-        map.current.removeLayer('trip-route');
-      }
-      if (map.current.getSource('trip-route')) {
-        map.current.removeSource('trip-route');
-      }
 
       // Create a straight line as fallback
       const routeGeoJSON: GeoJSON.FeatureCollection = {
@@ -762,20 +808,22 @@ const MapContainer: React.FC<MapContainerProps> = ({
         ],
       };
 
-      map.current.addSource('trip-route', {
-        type: 'geojson',
-        data: routeGeoJSON,
-      });
-
-      map.current.addLayer({
-        id: 'trip-route',
-        type: 'line',
-        source: 'trip-route',
-        paint: {
-          'line-color': '#0E5A5F',
-          'line-width': 4,
-          'line-opacity': 0.8,
-          'line-dasharray': [2, 2],
+      addOverlay({
+        sourceId: 'trip-route',
+        source: {
+          type: 'geojson',
+          data: routeGeoJSON,
+        },
+        layer: {
+          id: 'trip-route',
+          type: 'line',
+          source: 'trip-route',
+          paint: {
+            'line-color': '#0E5A5F',
+            'line-width': 4,
+            'line-opacity': 0.8,
+            'line-dasharray': [2, 2],
+          },
         },
       });
 
@@ -785,7 +833,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
           (bounds, coord) => bounds.extend(coord),
           new mapboxgl.LngLatBounds(tripRoute[0], tripRoute[0])
         );
-        map.current.fitBounds(bounds, { padding: 80 });
+        map.current.fitBounds(bounds, { padding: framePadding() });
       }
 
       // compute approximate straight-line distance (km)
@@ -821,9 +869,10 @@ const MapContainer: React.FC<MapContainerProps> = ({
     fetchRouteDirections();
   }, [tripRoute, mapLoaded, previewItinerary]);
 
-  // Update map style
+  // Update map style (only when it actually changes: setStyle wipes our overlays)
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || appliedStyleRef.current === mapStyle) return;
+    appliedStyleRef.current = mapStyle;
 
     const styleUrls: Record<'dark' | 'light' | 'satellite', string> = {
       dark: 'mapbox://styles/mapbox/dark-v11',
@@ -831,15 +880,10 @@ const MapContainer: React.FC<MapContainerProps> = ({
       satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     };
 
-    map.current.setStyle(styleUrls[mapStyle]);
-
-    // Re-add 3D buildings after style change if enabled
-    map.current.once('style.load', () => {
-      if (is3DEnabled) {
-        add3DBuildingLayer();
-      }
-    });
-  }, [mapStyle, mapLoaded, is3DEnabled, add3DBuildingLayer]);
+    // Full rebuild so style.load always fires, then put 3D, traffic and routes back
+    map.current.once('style.load', restoreOverlays);
+    map.current.setStyle(styleUrls[mapStyle], { diff: false } as Parameters<mapboxgl.Map['setStyle']>[1]);
+  }, [mapStyle, mapLoaded, restoreOverlays]);
 
   // Close popup - with proper React 18 root cleanup
   const closePopup = useCallback(() => {
@@ -1179,12 +1223,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
     const layerId = 'preview-route-layer';
 
     if (!previewItinerary || !previewItinerary.stops || previewItinerary.stops.length < 2) {
-      if (map.current.getLayer(layerId)) {
-        map.current.removeLayer(layerId);
-      }
-      if (map.current.getSource(sourceId)) {
-        map.current.removeSource(sourceId);
-      }
+      removeOverlay(layerId, sourceId);
       lastPreviewRouteKeyRef.current = null;
       return;
     }
@@ -1197,7 +1236,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
     if (coordinates.length < 2) return;
 
     const previewRouteKey = coordinates.map((c: number[]) => c.join(',')).join(';');
-    if (lastPreviewRouteKeyRef.current === previewRouteKey && map.current.getSource(sourceId)) {
+    if (lastPreviewRouteKeyRef.current === previewRouteKey && overlaysRef.current.has(layerId)) {
       return;
     }
     lastPreviewRouteKeyRef.current = previewRouteKey;
@@ -1214,28 +1253,25 @@ const MapContainer: React.FC<MapContainerProps> = ({
         },
       };
 
-      if (map.current.getSource(sourceId)) {
-        (map.current.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(geojson as any);
-        return;
-      }
-
-      map.current.addSource(sourceId, {
-        type: 'geojson',
-        data: geojson as any,
-      });
-
-      map.current.addLayer({
-        id: layerId,
-        type: 'line',
-        source: sourceId,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
+      addOverlay({
+        sourceId,
+        source: {
+          type: 'geojson',
+          data: geojson as any,
         },
-        paint: {
-          'line-color': '#0E5A5F',
-          'line-width': 4,
-          'line-opacity': 0.85,
+        layer: {
+          id: layerId,
+          type: 'line',
+          source: sourceId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#0E5A5F',
+            'line-width': 4,
+            'line-opacity': 0.85,
+          },
         },
       });
     };
@@ -1349,9 +1385,8 @@ const MapContainer: React.FC<MapContainerProps> = ({
   const fitBoundsKey = fitBounds ? fitBounds.flat().join(',') : '';
   useEffect(() => {
     if (!map.current || !mapLoaded || !fitBounds || selectedPlaceRef.current) return;
-    const isPhone = map.current.getContainer().clientWidth < 768;
     map.current.fitBounds(fitBounds, {
-      padding: { top: topInsetRef.current + 32, bottom: isPhone ? 160 : 48, left: 48, right: 72 },
+      padding: framePadding(),
       maxZoom: 16,
       duration: 800,
     });
@@ -1400,7 +1435,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
     }
 
     map.current.fitBounds(bounds, {
-      padding: { top: 80, bottom: 80, left: 80, right: 400 }, // right padding for the itinerary panel
+      padding: framePadding(),
       duration: 1200,
       maxZoom: 15,
     });

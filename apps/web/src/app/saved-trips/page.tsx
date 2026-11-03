@@ -159,7 +159,7 @@ export default function SavedTripsPage() {
 
   const formatTripDate = (value?: string, detailed = false) => {
     if (!value) return detailed ? t("common.noCreationDate") : '—'
-    return new Date(value).toLocaleString(undefined, detailed ? undefined : { dateStyle: 'medium' })
+    return new Date(value).toLocaleString(locale === 'th' ? 'th-TH' : 'en-GB', detailed ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' })
   }
 
   const handleEditTrip = (trip: Trip) => {

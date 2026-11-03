@@ -46,7 +46,7 @@ export function ChatHistorySidebar({
 		<div className="flex flex-col h-full gap-3">
 			<Button
 				onClick={onNewSession}
-				className="w-full gap-2"
+				className="w-full gap-2 max-md:h-11"
 				variant="outline"
 			>
 				<Plus className="h-4 w-4" aria-hidden />
@@ -105,7 +105,7 @@ export function ChatHistorySidebar({
 								<Button
 									variant="ghost"
 									size="icon"
-									className="h-9 w-9 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 max-md:opacity-100 shrink-0 text-muted-foreground hover:text-destructive"
+									className="h-9 w-9 max-md:h-11 max-md:w-11 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 max-md:opacity-100 shrink-0 text-muted-foreground hover:text-destructive"
 									aria-label={t("chatHistory.delete", { title })}
 									onClick={(e) => {
 										e.stopPropagation();

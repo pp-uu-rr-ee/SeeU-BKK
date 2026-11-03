@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from '@/contexts/language-context'
+import { tagLabel } from '@/lib/place-locale'
 import { Button } from '@/components/ui/button'
 import { Calendar, Clock3, ExternalLink, ImageOff, Route } from 'lucide-react'
 import { toast } from 'sonner'
@@ -166,7 +167,7 @@ export function TripDetailView({
 
                       <div className="flex min-w-0 flex-1 flex-col justify-center p-5">
                         {stop.place?.tags?.[0] && (
-                          <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">{stop.place.tags[0].replace(/-/g, ' ')}</p>
+                          <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">{tagLabel(stop.place.tags[0], locale)}</p>
                         )}
                         <h3 className="mt-1 font-display text-xl font-semibold text-foreground">{stop.place?.name || t('savedTrips.untitledStop')}</h3>
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchPlacesList, type PlaceListItem } from "@/lib/places-api";
 import { useTranslation } from "@/contexts/language-context";
+import { tagLabel } from "@/lib/place-locale";
 import { PlaceTile, PlaceTileSkeleton } from "@/components/places/place-tile";
 import { cn } from "@/lib/utils";
 
@@ -16,16 +17,8 @@ const normalizeTag = (value: string) =>
     .replace(/&/g, "and")
     .replace(/\s+/g, " ");
 
-const formatTagLabel = (value: string) =>
-  value
-    .replace(/-/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-
 export default function PlacesPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [places, setPlaces] = useState<PlaceListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,8 +73,8 @@ export default function PlacesPage() {
     }
     return Array.from(counter.entries())
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([value, count]) => ({ value, label: formatTagLabel(value), count }));
-  }, [places]);
+      .map(([value, count]) => ({ value, label: tagLabel(value, locale), count }));
+  }, [places, locale]);
 
   const filteredPlaces = useMemo(() => {
     let result = places;
@@ -262,12 +255,12 @@ export default function PlacesPage() {
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <nav aria-label="Pagination" className="mt-12 flex items-center justify-center gap-2">
+          <nav aria-label={t("places.pagination")} className="mt-12 flex items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage <= 1}
-              aria-label="Previous page"
+              aria-label={t("places.prevPage")}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -292,7 +285,7 @@ export default function PlacesPage() {
               type="button"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              aria-label="Next page"
+              aria-label={t("places.nextPage")}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
             >
               <ChevronRight className="h-5 w-5" />

@@ -142,6 +142,10 @@ export interface ChatPanelProps {
 	onLocatePlace?: (place: PlaceItem) => void;
 	/** Place ids already in the trip that "Add" targets */
 	tripPlaceIds?: string[];
+	/** Saved trips as comma-joined place ids in stop order; a matching draft shows as saved */
+	savedTripKeys?: string[];
+	/** Called with the new trip's id after the chat's trip is saved */
+	onTripSaved?: (tripId: string | null) => void;
 	onTripDraftCreated?: (tripDraft: TripDraft) => void;
 	onPreviewTripDraft?: (tripDraft: TripDraft) => void;
 	userLocation?: { lat: number; lng: number };

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, MoreVertical, Edit, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ interface Props {
   onDeleteTrip?: (tripId: string) => void;
   onEditTrip?: (tripId: string) => void;
   onReorderTrips?: (orderedTripIds: string[]) => void;
+  isLoading?: boolean;
 }
 
 export function TripListColumn({
@@ -50,6 +52,7 @@ export function TripListColumn({
   onDeleteTrip,
   onEditTrip,
   onReorderTrips,
+  isLoading = false,
 }: Props) {
   const { t, locale } = useTranslation();
   // trip.date holds created_at (ISO); format it for the current language
@@ -95,6 +98,26 @@ export function TripListColumn({
     if (onReorderTrips) {
       onReorderTrips(newOrder.map((t) => t.id));
     }
+  }
+
+  // First load: placeholders instead of flashing the empty state
+  if (trips.length === 0 && isLoading) {
+    return (
+      <aside
+        className="flex flex-col gap-4 h-full"
+        role="complementary"
+        aria-label={t("tripList.label")}
+        aria-busy="true"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl font-semibold text-foreground">{t("tripList.title")}</h2>
+        </div>
+        <Skeleton className="h-10 w-full" />
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </aside>
+    );
   }
 
   // Empty state when no trips exist

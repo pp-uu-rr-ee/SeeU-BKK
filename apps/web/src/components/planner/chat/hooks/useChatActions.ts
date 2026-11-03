@@ -11,6 +11,9 @@ interface UseChatActionsParams {
 	session: { access_token?: string } | null;
 	setIsItinerarySaved: (value: boolean) => void;
 	clearConversation: () => void;
+	/** Called with the new trip's id after "Save to My Trips" succeeds */
+	onTripSaved?: (tripId: string | null) => void;
+	t: (key: string) => string;
 }
 
 interface UseChatActionsResult {
@@ -31,6 +34,8 @@ export function useChatActions({
 	session,
 	setIsItinerarySaved,
 	clearConversation,
+	onTripSaved,
+	t,
 }: UseChatActionsParams): UseChatActionsResult {
 	const [input, setInput] = useState("");
 	const [isSavingItinerary, setIsSavingItinerary] = useState(false);
@@ -55,9 +60,9 @@ export function useChatActions({
 		if (!lastAssistantTurn?.tripDraft) return;
 
 		if (!user || !session?.access_token) {
-			toast.error("Please log in to save itineraries", {
+			toast.error(t("chat.actions.loginToSave"), {
 				action: {
-					label: "Log in",
+					label: t("chat.actions.logIn"),
 					onClick: () => {
 						window.location.href = "/auth/login";
 					},
@@ -80,26 +85,22 @@ export function useChatActions({
 				body: JSON.stringify(buildTripDraftSavePayload(tripDraft)),
 			});
 
-			const body = (await res.json()) as { success: boolean; error?: string };
+			const body = (await res.json()) as { success: boolean; data?: { id?: string }; error?: string };
 
 			if (!res.ok || !body.success) {
 				throw new Error(body.error ?? `Request failed (${res.status})`);
 			}
 
 			setIsItinerarySaved(true);
-			toast.success("Itinerary saved!", {
-				action: {
-					label: "View",
-					onClick: () => window.open("/saved-trips", "_blank"),
-				},
-			});
+			onTripSaved?.(body.data?.id ?? null);
+			toast.success(t("chat.actions.savedToast"));
 		} catch (e: unknown) {
-			const msg = e instanceof Error ? e.message : "Failed to save itinerary";
-			toast.error(msg);
+			console.error("Failed to save trip from chat:", e);
+			toast.error(t("chat.actions.saveFailed"));
 		} finally {
 			setIsSavingItinerary(false);
 		}
-	}, [lastAssistantTurn, session, setIsItinerarySaved, user]);
+	}, [lastAssistantTurn, session, setIsItinerarySaved, user, onTripSaved, t]);
 
 	const handleViewPlace = useCallback((slug: string) => {
 		window.open(`/places/${slug}`, "_blank");

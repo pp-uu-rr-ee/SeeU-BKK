@@ -8,7 +8,13 @@
     "current": "Current",
     "all": "All",
     "signIn": "Sign in",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "mainLabel": "Main",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "language": "Language",
+    "switchToEnglish": "Switch to English",
+    "switchToThai": "Switch to Thai"
   },
   "categories": {
     "restaurants": "Restaurants",
@@ -193,7 +199,8 @@
     "min": "min",
     "km": "km",
     "noCreationDate": "No creation date",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "places": {
     "loading": "Finding places around Bangkok...",
@@ -215,7 +222,10 @@
     "placesCount": "{count} places ready to explore",
     "placeCount": "{count} place ready to explore",
     "noResults": "No places match your search yet. Try different keywords.",
-    "viewOnMap": "View on Map"
+    "viewOnMap": "View on Map",
+    "pagination": "Pagination",
+    "prevPage": "Previous page",
+    "nextPage": "Next page"
   },
   "profile": {
     "loading": "Loading...",
@@ -403,7 +413,10 @@
       "Saturday"
     ],
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "breadcrumb": "Breadcrumb",
+    "deleteReviewConfirm": "Delete your review?",
+    "loginToAddTrip": "Log in to add places to your trips"
   },
   "onboarding": {
     "eyebrow": "Personalize your trip",
@@ -599,7 +612,8 @@
     "uploadImage": "Upload photo",
     "uploadImageHint": "JPEG, PNG or WebP · up to 5MB · or paste an image URL above",
     "imageUploaded": "Photo uploaded — save the place to keep it",
-    "imagePreview": "Place photo preview"
+    "imagePreview": "Place photo preview",
+    "unauthorized": "That page is for admins only."
   },
   "trips": {
     "createTitle": "Create New Trip",
@@ -674,7 +688,7 @@
   "chat": {
     "suggestions": [
       "Show me temples",
-      "Find cafes near me",
+      "Find local food nearby",
       "Plan a day trip",
       "Hidden gems in Bangkok"
     ],
@@ -719,7 +733,18 @@
       "findingPlaces": "Finding places...",
       "title": "Trip Assistant",
       "welcome": "Ask me about places in Bangkok or let me plan your trip!",
-      "thinking": "thinking..."
+      "thinking": "thinking...",
+      "loginToSave": "Log in to save trips",
+      "logIn": "Log in",
+      "savedToast": "Saved to My Trips",
+      "saveFailed": "Couldn't save this trip. Please try again."
+    },
+    "agents": {
+      "label": "Agents: {names}",
+      "researcher": "Researcher",
+      "planner": "Planner",
+      "critic": "Critic",
+      "stepsCompleted": "{count} steps completed"
     }
   },
   "itinerary": {
@@ -780,5 +805,43 @@
     "loadFailed": "Could not load the chat",
     "deleted": "Chat deleted",
     "deleteFailed": "Could not delete the chat"
+  },
+  "addToTrip": {
+    "title": "Add to a trip",
+    "description": "Choose a trip for {place}. It's added as the last stop.",
+    "added": "Added {place} to {trip}",
+    "viewTrip": "View trip",
+    "failed": "Couldn't add to the trip. Please try again.",
+    "loadFailed": "Couldn't load your trips.",
+    "retry": "Try again",
+    "empty": "You don't have any trips yet.",
+    "alreadyIn": "Already in this trip",
+    "full": "Full ({max} stops max)",
+    "stopCount": "{count} stops",
+    "newTrip": "New trip with this place"
+  },
+  "tags": {
+    "history": "History",
+    "community": "Community",
+    "culture": "Culture",
+    "temple": "Temple",
+    "food": "Food",
+    "market": "Market",
+    "museum": "Museum",
+    "landmark": "Landmark",
+    "architecture": "Architecture",
+    "art": "Art",
+    "park": "Park",
+    "riverside": "Riverside",
+    "walking-street": "Walking street",
+    "local": "Local",
+    "nature": "Nature",
+    "nightlife": "Nightlife",
+    "gallery": "Gallery",
+    "mall": "Mall",
+    "meditation": "Meditation",
+    "cafe": "Cafe",
+    "shopping": "Shopping",
+    "restaurant": "Restaurant"
   }
 }

@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ArrowRight, Compass, Map, MessageCircle, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlaceTile, PlaceTileSkeleton } from "@/components/places/place-tile";
 import { fetchPlacesList, type PlaceListItem } from "@/lib/places-api";
-import { useTranslation } from "@/contexts/language-context";
+import { resolveStoredLocale, useTranslation } from "@/contexts/language-context";
+import { translate } from "@/lib/i18n";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000";
 
@@ -46,6 +48,19 @@ function Eyebrow({ children, tone = "default" }: { children: React.ReactNode; to
 export default function Home() {
 	const { t, locale } = useTranslation();
 	const router = useRouter();
+
+	// Sent here from an admin page without admin rights: say why instead of landing silently
+	useEffect(() => {
+		if (new URLSearchParams(window.location.search).get("error") !== "unauthorized") return;
+		// Next tick: the <Toaster> in the providers subscribes after this page's effects run.
+		// The provider hasn't applied the saved language yet, so resolve it here.
+		// A fixed id keeps a double-run effect (dev StrictMode) to one toast
+		const message = translate(resolveStoredLocale(), "admin.unauthorized");
+		window.setTimeout(() => toast.error(message, { id: "admin-unauthorized" }), 0);
+		router.replace("/");
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const [places, setPlaces] = useState<PlaceListItem[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [loadFailed, setLoadFailed] = useState(false);
@@ -131,7 +146,7 @@ export default function Home() {
 						<dl className="mt-10 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-6 text-sm text-muted-foreground">
 							{places.length > 0 && (
 								<div className="flex items-baseline gap-2">
-									<dt className="sr-only">Places</dt>
+									<dt className="sr-only">{t("nav.places")}</dt>
 									<dd className="font-display text-2xl font-semibold text-foreground">{places.length}</dd>
 									<dd>{t("home.statPlacesLabel")}</dd>
 								</div>

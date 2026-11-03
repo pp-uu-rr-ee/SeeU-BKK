@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { localizedPlace } from "../place-locale";
+import { localizedPlace, tagLabel } from "../place-locale";
 
 const place = {
   name: "Wat Pho",
@@ -22,4 +22,14 @@ test("falls back to English when the Thai text is missing or blank", () => {
     description: "Coins",
   });
   expect(localizedPlace({ name: "Coin Museum" }, "th")).toEqual({ name: "Coin Museum", description: "" });
+});
+
+test("tag labels follow the UI language", () => {
+  expect(tagLabel("walking-street", "th")).toBe("ถนนคนเดิน");
+  expect(tagLabel("walking-street", "en")).toBe("Walking street");
+  expect(tagLabel(" Temple ", "th")).toBe("วัด");
+});
+
+test("unknown tags fall back to a readable version of the tag", () => {
+  expect(tagLabel("rooftop-bar", "th")).toBe("Rooftop bar");
 });

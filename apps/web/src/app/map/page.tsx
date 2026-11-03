@@ -62,6 +62,9 @@ interface ChatSession {
   metadata: { title?: string };
 }
 
+// Room for the collapsed results pill under the search overlay: 0.75rem gap + 44px button
+const RESULTS_PILL_SPACE = 56;
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isUuid(value: string | null | undefined): value is string {
@@ -116,7 +119,8 @@ export default function TripPlannerPage() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [unsavedTripIds]);
-  const [isTripsLoading, setIsTripsLoading] = useState(false);
+  // true until the first fetch settles, so the empty states don't flash on load
+  const [isTripsLoading, setIsTripsLoading] = useState(true);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<
     { lat: number; lng: number } | undefined
@@ -179,6 +183,7 @@ export default function TripPlannerPage() {
   }, [searchQuery, selectedCategory]);
 
   // Frame every search/category result on the map (not just the ones already in view)
+  const isResultsPillVisible = searchResults.length > 0 && hasActiveSearch && !isResultsListOpen;
   const resultsBounds = useMemo((): [[number, number], [number, number]] | null => {
     if (!hasActiveSearch) return null;
     const located = searchResults.filter((place) => typeof place.lat === 'number' && typeof place.lng === 'number');
@@ -473,6 +478,24 @@ export default function TripPlannerPage() {
     () => (selectedTrip?.stops ?? []).map((stop) => stop.placeId).filter((id): id is string => Boolean(id)),
     [selectedTrip]
   );
+
+  // Saved trips by their stop sequence, so the chat can tell an already-saved draft apart
+  const savedTripKeys = useMemo(
+    () =>
+      trips
+        .filter((trip) => trip.source === "saved")
+        .map((trip) => trip.stops.map((stop) => stop.placeId).join(",")),
+    [trips]
+  );
+
+  // Chat "Save to My Trips": show the new trip in the list and switch to it
+  const handleChatTripSaved = useCallback((tripId: string | null) => {
+    void fetchSavedTrips();
+    if (tripId) {
+      setSelectedTripId(tripId);
+      setActiveTripDraft(null);
+    }
+  }, [fetchSavedTrips]);
 
   const handleAddPlaceToTrip = useCallback((placesToAdd: PlaceItem | TripPlaceCandidate | Array<PlaceItem | TripPlaceCandidate>) => {
     const items = Array.isArray(placesToAdd) ? placesToAdd : [placesToAdd];
@@ -981,7 +1004,8 @@ export default function TripPlannerPage() {
           initialZoom={12}
           previewItinerary={enrichedTripDraft}
           tripRoute={tripRoute}
-          topInset={mapTopInset}
+          // The collapsed "N places" pill hangs below the overlay; keep popups and fits clear of it
+          topInset={mapTopInset + (isResultsPillVisible ? RESULTS_PILL_SPACE : 0)}
           fitBounds={resultsBounds}
           addToTrip={popupAddToTrip}
           onRouteInfo={({ distanceKm, durationMin }) => {
@@ -1217,6 +1241,7 @@ export default function TripPlannerPage() {
               onDeleteTrip={handleDeleteTrip}
               onEditTrip={handleEditTrip}
               onReorderTrips={handleReorderTrips}
+              isLoading={isTripsLoading}
             />
           ) : (
             <ChatHistorySidebar
@@ -1248,7 +1273,7 @@ export default function TripPlannerPage() {
             onSelectStop={handleSelectStop}
             onSaveTrip={handleSaveTripToServer}
             onReorderStops={handleReorderStops}
-            isLoading={isTripsLoading}
+            isLoading={isTripsLoading && !displayedTrip}
             totalDurationMin={(stopsSuggestedDuration || 0) + (routeTravelMin || 0)}
             totalDistanceKm={routeDistanceKm ?? displayedTrip?.totalDistanceKm ?? 0}
             mode={displayedTrip?.source === "draft" ? "draft" : "saved"}
@@ -1308,6 +1333,7 @@ export default function TripPlannerPage() {
                   onDeleteTrip={handleDeleteTrip}
                   onEditTrip={handleEditTrip}
                   onReorderTrips={handleReorderTrips}
+                  isLoading={isTripsLoading}
                 />
               </div>
 
@@ -1323,7 +1349,7 @@ export default function TripPlannerPage() {
                   onSelectStop={handleSelectStop}
                   onSaveTrip={handleSaveTripToServer}
                   onReorderStops={handleReorderStops}
-                  isLoading={isTripsLoading}
+                  isLoading={isTripsLoading && !displayedTrip}
                   totalDurationMin={(stopsSuggestedDuration || 0) + (routeTravelMin || 0)}
                   totalDistanceKm={routeDistanceKm ?? displayedTrip?.totalDistanceKm ?? 0}
                   mode={displayedTrip?.source === "draft" ? "draft" : "saved"}
@@ -1366,6 +1392,8 @@ export default function TripPlannerPage() {
         onClosePreview={handleClosePreview}
         onLocatePlace={handleLocateChatPlace}
         tripPlaceIds={chatTripPlaceIds}
+        savedTripKeys={savedTripKeys}
+        onTripSaved={handleChatTripSaved}
         resetKey={chatResetKey}
       />
 

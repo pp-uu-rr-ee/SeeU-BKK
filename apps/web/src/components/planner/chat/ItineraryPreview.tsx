@@ -99,7 +99,7 @@ export function ItineraryPreview({
 									size="sm"
 									onClick={onSave}
 									disabled={isSaving}
-									className="flex-1 min-w-0 h-9 text-xs"
+									className="flex-1 min-w-0 h-9 max-md:h-11 text-xs"
 								>
 									{isSaving ? (
 										<>
@@ -119,7 +119,7 @@ export function ItineraryPreview({
 									size="sm"
 									variant="outline"
 									onClick={onPreview}
-									className="flex-1 min-w-0 h-9 text-xs"
+									className="flex-1 min-w-0 h-9 max-md:h-11 text-xs"
 								>
 									<Navigation className="h-3.5 w-3.5 mr-2" aria-hidden />
 									{t("chat.actions.showOnMap")}
@@ -130,7 +130,7 @@ export function ItineraryPreview({
 									size="sm"
 									variant="ghost"
 									onClick={onDismiss}
-									className="h-9 text-xs px-3 text-muted-foreground hover:text-foreground"
+									className="h-9 max-md:h-11 text-xs px-3 text-muted-foreground hover:text-foreground"
 								>
 									{t("chat.actions.hidePlan")}
 								</Button>

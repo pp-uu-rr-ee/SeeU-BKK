@@ -15,17 +15,21 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(
   undefined
 );
 
+/** The language the provider settles on after mount: the saved choice, else the browser's. */
+export function resolveStoredLocale(): Locale {
+  try {
+    const v = localStorage.getItem("locale") as Locale | null;
+    return v ?? (navigator.language?.startsWith("th") ? "th" : "en");
+  } catch (e) {
+    return "en";
+  }
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
 
   useEffect(() => {
-    try {
-      const v = localStorage.getItem("locale") as Locale | null;
-      const initialLocale = v ?? (navigator.language?.startsWith("th") ? "th" : "en");
-      setLocaleState(initialLocale);
-    } catch (e) {
-      setLocaleState("en");
-    }
+    setLocaleState(resolveStoredLocale());
   }, []);
 
   useEffect(() => {
@@ -34,6 +38,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       // ignore
     }
+    // Screen readers and the browser pick pronunciation/hyphenation from <html lang>
+    document.documentElement.lang = locale;
   }, [locale]);
 
   const setLocale = (l: Locale) => setLocaleState(l);

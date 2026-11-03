@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { MapPin, Plus, Map, Check } from "lucide-react";
 import { useTranslation } from "@/contexts/language-context";
+import { tagLabel } from "@/lib/place-locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { PlaceItem } from "./types";
@@ -28,7 +29,7 @@ function PlaceRow({
 	onLocate?: () => void;
 	isAdded?: boolean;
 }) {
-	const { t } = useTranslation();
+	const { t, locale } = useTranslation();
 	const [imageError, setImageError] = useState(false);
 
 	return (
@@ -59,7 +60,7 @@ function PlaceRow({
 					<div className="flex gap-1 mt-1 flex-wrap">
 						{place.tags.slice(0, 3).map((tag) => (
 							<Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
-								{tag}
+								{tagLabel(tag, locale)}
 							</Badge>
 						))}
 					</div>
@@ -74,7 +75,7 @@ function PlaceRow({
 						<Button
 							size="sm"
 							variant="outline"
-							className="h-9 text-xs px-3 bg-transparent"
+							className="h-9 max-md:h-11 text-xs px-3 bg-transparent"
 							onClick={onAdd}
 							disabled={isAdded}
 						>
@@ -83,7 +84,7 @@ function PlaceRow({
 						</Button>
 					)}
 					{onLocate && (
-						<Button size="sm" variant="ghost" className="h-9 text-xs px-3" onClick={onLocate}>
+						<Button size="sm" variant="ghost" className="h-9 max-md:h-11 text-xs px-3" onClick={onLocate}>
 							<Map className="h-3 w-3 mr-1" aria-hidden />
 							{t("chat.actions.showOnMap")}
 						</Button>
@@ -123,7 +124,7 @@ export function PlacesListPreview({ places, onAdd, onLocate, addedPlaceIds = [] 
 					<Button
 						variant="ghost"
 						size="sm"
-						className="w-full h-8 text-xs"
+						className="w-full h-8 max-md:h-11 text-xs"
 						onClick={() => setShowAll(true)}
 					>
 						{t("chat.actions.showMore", { count: String(hiddenCount) })}

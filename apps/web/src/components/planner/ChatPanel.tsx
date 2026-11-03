@@ -32,6 +32,8 @@ export function ChatPanel({
 	onClosePreview,
 	onLocatePlace,
 	tripPlaceIds,
+	savedTripKeys,
+	onTripSaved,
 	resetKey = 0,
 }: ChatPanelProps) {
 	const { t } = useTranslation();
@@ -106,12 +108,19 @@ export function ChatPanel({
 		user,
 		session,
 		setIsItinerarySaved,
+		onTripSaved,
+		t,
 		clearConversation: () => {
 			clearConversation();
 			onClosePreview?.();
 			onSessionCreated?.(null);
 		},
 	});
+
+	// A draft whose stops match a saved trip counts as saved (e.g. reopening an older chat),
+	// so "Save to My Trips" can't create a duplicate
+	const lastDraftKey = lastAssistantTurn?.tripDraft?.stops.map((stop) => stop.place_id).join(",");
+	const isDraftSaved = isItinerarySaved || (!!lastDraftKey && !!savedTripKeys?.includes(lastDraftKey));
 
 	// "Show on map": focus the place on the map and minimise the chat, which sits over the
 	// map on every screen size; places without coordinates fall back to their detail page
@@ -193,7 +202,7 @@ export function ChatPanel({
 						<Button
 							variant="ghost"
 							size="icon"
-							className="h-10 w-10"
+							className="h-10 w-10 max-md:h-11 max-md:w-11"
 							onClick={() => setIsMinimized((v) => !v)}
 							aria-label={isMinimized ? t("chat.actions.expand") : t("chat.actions.minimize")}
 						>
@@ -202,7 +211,7 @@ export function ChatPanel({
 						<Button
 							variant="ghost"
 							size="icon"
-							className="h-10 w-10"
+							className="h-10 w-10 max-md:h-11 max-md:w-11"
 							onClick={() => setIsOpen(false)}
 							aria-label={t("chat.actions.close")}
 						>
@@ -225,7 +234,7 @@ export function ChatPanel({
 									pendingTurn={pendingTurn}
 									isStreaming={isStreaming}
 									isSavingItinerary={isSavingItinerary}
-									isItinerarySaved={isItinerarySaved}
+									isItinerarySaved={isDraftSaved}
 									quickSuggestions={quickSuggestions}
 									messagesEndRef={messagesEndRef}
 									onQuickSuggestion={(text) => {

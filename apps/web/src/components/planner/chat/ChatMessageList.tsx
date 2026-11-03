@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/contexts/language-context";
+import { tagLabel } from "@/lib/place-locale";
 import { ActiveWorkflowStatus, WorkflowSummary } from "./AgentWorkflowVisualization";
 import { ItineraryPreview } from "./ItineraryPreview";
 import { PlacesListPreview } from "./PlacesListPreview";
@@ -165,7 +166,7 @@ function PlaceCard({
 	onAdd?: () => void;
 	onView?: () => void;
 }) {
-	const { t } = useTranslation();
+	const { t, locale } = useTranslation();
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 8 }}
@@ -184,7 +185,7 @@ function PlaceCard({
 							<div className="flex gap-1 mt-1 flex-wrap">
 								{place.tags.slice(0, 3).map((tag) => (
 									<Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
-										{tag}
+										{tagLabel(tag, locale)}
 									</Badge>
 								))}
 							</div>
@@ -208,13 +209,13 @@ function PlaceCard({
 				)}
 				<div className="flex gap-2 mt-2">
 					{onAdd && (
-						<Button size="sm" variant="outline" className="h-8 text-xs px-3 bg-transparent" onClick={onAdd}>
+						<Button size="sm" variant="outline" className="h-8 max-md:h-11 text-xs px-3 bg-transparent" onClick={onAdd}>
 							<Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden />
 							{t("chat.actions.add")}
 						</Button>
 					)}
 					{onView && (
-						<Button size="sm" variant="ghost" className="h-8 text-xs px-3" onClick={onView}>
+						<Button size="sm" variant="ghost" className="h-8 max-md:h-11 text-xs px-3" onClick={onView}>
 							{t("mapPopup.viewDetails")}
 						</Button>
 					)}
@@ -330,7 +331,7 @@ function AssistantMessage({
 
 				{/* Server actions used to render as inert badges; trip preview/save live on the trip card */}
 				{onAddPlace && notYetAdded.length > 1 && (
-					<Button variant="secondary" size="sm" className="h-9 text-xs" onClick={() => onAddPlace(notYetAdded)}>
+					<Button variant="secondary" size="sm" className="h-9 max-md:h-11 text-xs" onClick={() => onAddPlace(notYetAdded)}>
 						<Plus className="h-3.5 w-3.5 mr-1" aria-hidden />
 						{t("chat.actions.addAll", { count: String(notYetAdded.length) })}
 					</Button>
@@ -349,7 +350,7 @@ function AssistantMessage({
 								<Button
 									variant="ghost"
 									size="sm"
-									className="w-full h-8 text-xs"
+									className="w-full h-8 max-md:h-11 text-xs"
 									onClick={() => setShowAllParsed(true)}
 								>
 									{t("chat.actions.showMore", { count: String(parsedPlaces.length - 5) })}
@@ -364,7 +365,7 @@ function AssistantMessage({
 						<Button
 							variant="ghost"
 							size="sm"
-							className="h-9 text-xs text-muted-foreground"
+							className="h-9 max-md:h-11 text-xs text-muted-foreground"
 							onClick={() => setItineraryDismissed(false)}
 						>
 							<Route className="h-3.5 w-3.5 mr-1" aria-hidden />
@@ -401,7 +402,7 @@ function AssistantMessage({
 						<Button
 							variant="ghost"
 							size="sm"
-							className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+							className="h-7 max-md:h-11 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
 							onClick={handleCopy}
 						>
 							{copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -534,7 +535,7 @@ export function ChatMessageList({
 								key={suggestion}
 								variant="outline"
 								size="sm"
-								className="text-xs h-8 bg-transparent"
+								className="text-xs h-8 max-md:h-11 bg-transparent"
 								onClick={() => onQuickSuggestion(suggestion)}
 							>
 								{suggestion}
