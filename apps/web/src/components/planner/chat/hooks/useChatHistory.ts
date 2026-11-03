@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { AssistantTurn, PendingTurn, TripDraft, Turn } from "../types";
 import { uid } from "../constants";
 import { sessionMessagesToTurns, type StoredSessionMessage } from "../lib/session-turns";
+import { tripDraftToApply } from "../lib/trip-draft";
 
 interface UseChatHistoryParams {
 	onPlacesFound?: (places: AssistantTurn["suggestions"]) => void;
@@ -43,12 +44,16 @@ export function useChatHistory({
 		}
 	}, [lastAssistantTurn, onPlacesFound]);
 
+	// Show each new trip on the map once; re-sending it on every render made the
+	// preview impossible to close or replace with a saved trip
+	const appliedDraftTurnIdRef = useRef<string | null>(null);
 	useEffect(() => {
-		if (lastAssistantTurn?.tripDraft && onTripDraftCreated) {
-			onTripDraftCreated(lastAssistantTurn.tripDraft);
-			setIsItinerarySaved(false);
-		}
-	}, [lastAssistantTurn?.tripDraft, onTripDraftCreated]);
+		const draft = tripDraftToApply(lastAssistantTurn, appliedDraftTurnIdRef.current);
+		if (!draft || !onTripDraftCreated) return;
+		appliedDraftTurnIdRef.current = lastAssistantTurn?.id ?? null;
+		onTripDraftCreated(draft);
+		setIsItinerarySaved(false);
+	}, [lastAssistantTurn, onTripDraftCreated]);
 
 	const appendUserTurn = useCallback((text: string) => {
 		setTurns((prev) => [...prev, { role: "user", text, id: uid() }]);

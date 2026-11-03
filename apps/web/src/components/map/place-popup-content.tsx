@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Heart, Share2, X, Camera, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Locale } from '@/contexts/language-context';
+import { localizedPlace } from '@/lib/place-locale';
 
 interface Place {
   id: string;
@@ -20,6 +21,8 @@ interface Place {
   price: number;
   image_url: string;
   slug: string;
+  name_th?: string | null;
+  description_th?: string | null;
 }
 
 interface PlacePopupContentProps {
@@ -49,6 +52,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
   t,
   locale,
 }) => {
+  const { name: displayName, description: displayDescription } = localizedPlace(place, locale);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -58,8 +62,8 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: place.name,
-          text: place.description,
+          title: displayName,
+          text: displayDescription,
           url: `${window.location.origin}/places/${place.slug}`,
         });
       } else {
@@ -155,7 +159,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
           {popupImageUrl && !imageError ? (
             <img
               src={popupImageUrl}
-              alt={place.name}
+              alt={displayName}
               className="w-full h-full object-cover"
               onError={() => setImageError(true)}
             />
@@ -198,7 +202,7 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
           {/* Title and price overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <h3 className="font-display text-white font-semibold text-xl leading-tight mb-1 drop-shadow-md">
-              {place.name}
+              {displayName}
             </h3>
             <div className="flex items-center gap-2">
               <span className="text-saffron font-semibold text-sm drop-shadow-md">
@@ -224,7 +228,8 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
                   variant="secondary"
                   className="text-xs px-2 py-0.5 bg-secondary text-foreground/80 hover:bg-secondary"
                 >
-                  {tag}
+                  {/* Known tags share the stop-category labels; others show as-is */}
+                  {t(`stopCategory.${tag.toLowerCase()}`, tag)}
                 </Badge>
               ))}
               {place.tags.length > 3 && (
@@ -240,9 +245,9 @@ export const PlacePopupContent: React.FC<PlacePopupContentProps> = ({
 
           {/* Description */}
           <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
-            {place.description.length > 100
-              ? `${place.description.substring(0, 100)}...`
-              : place.description}
+            {displayDescription.length > 100
+              ? `${displayDescription.substring(0, 100)}...`
+              : displayDescription}
           </p>
 
           {/* Address */}

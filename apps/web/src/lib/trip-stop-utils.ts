@@ -7,6 +7,7 @@ export interface TripPlaceCandidate {
 	lat?: number;
 	lng?: number;
 	tags?: string[];
+	name_th?: string | null;
 	address?: string | null;
 	description?: string;
 }
@@ -74,9 +75,11 @@ export function appendPlaceToTrip({
 	}
 
 	const addedStop: TripStop = {
-		id: `stop-${Date.now()}`,
+		// Place id keeps ids unique when several places are added in the same tick ("Add all")
+		id: `stop-${place.id}-${Date.now()}`,
 		placeId: place.id,
 		name: place.name,
+		nameTh: place.name_th ?? null,
 		address: place.address?.trim() || "",
 		category: toStopCategory(place.tags),
 		suggestedDurationMin: 60,

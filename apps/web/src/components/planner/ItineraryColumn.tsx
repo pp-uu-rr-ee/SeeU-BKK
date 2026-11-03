@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, GripVertical, Save, Clock, Edit } from "lucide-react";
+import { Trash2, GripVertical, Save, Clock, Edit, X } from "lucide-react";
 import type { StopCategory, Trip, TripStop } from "@/types/trip";
 import { useTranslation } from "@/contexts/language-context";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,8 @@ interface Props {
   warnings?: string[];
   /** Saved trip has local edits (stops added/removed/reordered) not yet saved */
   hasUnsavedChanges?: boolean;
+  /** Draft mode: take the chat's trip off the map */
+  onClosePreview?: () => void;
 }
 
 const categoryColors: Record<StopCategory, string> = {
@@ -74,8 +76,9 @@ export function ItineraryColumn({
   mode = "saved",
   warnings = [],
   hasUnsavedChanges = false,
+  onClosePreview,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [orderedStops, setOrderedStops] = useState<TripStop[]>(
     trip?.stops ?? []
   );
@@ -118,7 +121,7 @@ export function ItineraryColumn({
       <aside
         className="flex flex-col gap-4 h-full"
         role="complementary"
-        aria-label="Trip itinerary"
+        aria-label={t("itinerary.label")}
       >
         <div className="flex items-center justify-between">
           <Skeleton className="h-7 w-48" />
@@ -139,10 +142,10 @@ export function ItineraryColumn({
       <aside
         className="flex flex-col gap-4 h-full"
         role="complementary"
-        aria-label="Trip itinerary"
+        aria-label={t("itinerary.label")}
       >
         <div className="flex items-center justify-center h-full text-center p-8">
-          <p className="text-muted-foreground">Select a trip to view itinerary</p>
+          <p className="text-muted-foreground">{t("itinerary.selectTrip")}</p>
         </div>
       </aside>
     );
@@ -156,7 +159,7 @@ export function ItineraryColumn({
     <aside
       className="flex flex-col gap-4 h-full"
       role="complementary"
-      aria-label="Trip itinerary"
+      aria-label={t("itinerary.label")}
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
@@ -168,7 +171,7 @@ export function ItineraryColumn({
             {trip.name}
           </h2>
           {mode === "draft" && (
-            <p className="text-xs text-accent-foreground mt-1">AI Draft preview</p>
+            <p className="text-xs text-accent-foreground mt-1">{t("itinerary.draftPreview")}</p>
           )}
           {mode === "saved" && hasUnsavedChanges && (
             <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-accent-foreground" role="status">
@@ -184,10 +187,21 @@ export function ItineraryColumn({
               size="sm"
               className="max-md:h-11"
               onClick={() => onEditTrip(trip.id)}
-              aria-label="Edit trip details"
+              aria-label={t("itinerary.editDetails")}
             >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
+              <Edit className="w-4 h-4 mr-1" aria-hidden />
+              {t("itinerary.edit")}
+            </Button>
+          )}
+          {mode === "draft" && onClosePreview && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="max-md:h-11"
+              onClick={onClosePreview}
+            >
+              <X className="w-4 h-4 mr-1" aria-hidden />
+              {t("itinerary.closePreview")}
             </Button>
           )}
           <Button
@@ -195,10 +209,10 @@ export function ItineraryColumn({
             className="max-md:h-11"
             onClick={handleSaveTrip}
             disabled={mode === "saved" && !hasUnsavedChanges}
-            aria-label="Save trip changes"
+            aria-label={t("itinerary.saveChanges")}
           >
-            <Save className="w-4 h-4 mr-1" />
-            {mode === "draft" ? "Save Draft" : "Save"}
+            <Save className="w-4 h-4 mr-1" aria-hidden />
+            {mode === "draft" ? t("itinerary.saveDraft") : t("itinerary.save")}
           </Button>
         </div>
       </div>
@@ -207,11 +221,10 @@ export function ItineraryColumn({
       <div className="flex items-center gap-4 text-sm text-muted-foreground pb-2 border-b border-border">
         <span className="flex items-center gap-1">
           <Clock className="w-4 h-4" aria-hidden="true" />
-          {Math.floor(displayTotalDurationMin / 60)}h {displayTotalDurationMin % 60}
-          m
+          {t("itinerary.duration", { h: String(Math.floor(displayTotalDurationMin / 60)), m: String(displayTotalDurationMin % 60) })}
         </span>
         <span>•</span>
-        <span>{trip.stops.length} stops</span>
+        <span>{t("itinerary.stopsCount", { count: String(trip.stops.length) })}</span>
         <span>•</span>
         <span>{displayTotalDistanceKm.toFixed(1)} km</span>
       </div>
@@ -226,7 +239,7 @@ export function ItineraryColumn({
       <div
         className="flex-1 overflow-y-auto pr-2 -mr-2"
         role="list"
-        aria-label="Trip stops"
+        aria-label={t("itinerary.stopsLabel")}
       >
         <DndContext
           sensors={sensors}
@@ -250,13 +263,13 @@ export function ItineraryColumn({
                       <div className="flex flex-col items-center gap-1 pt-1">
                         <span
                           className="font-bold text-lg text-foreground/80 w-6 h-6 flex items-center justify-center"
-                          aria-label={`Stop ${index + 1}`}
+                          aria-label={t("itinerary.stopN", { n: String(index + 1) })}
                         >
                           {index + 1}
                         </span>
                         <button
                           className="cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring rounded max-md:flex max-md:h-11 max-md:w-11 max-md:items-center max-md:justify-center"
-                          aria-label={`Reorder stop: ${stop.name}`}
+                          aria-label={t("itinerary.reorderStop", { name: stop.name })}
                           tabIndex={0}
                         >
                           <GripVertical
@@ -270,7 +283,7 @@ export function ItineraryColumn({
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2 mb-1">
                           <h4 className="font-semibold text-foreground text-sm leading-tight">
-                            {stop.name}
+                            {(locale === "th" && stop.nameTh) || stop.name}
                           </h4>
                           <span
                             className={cn(
@@ -295,7 +308,7 @@ export function ItineraryColumn({
                             aria-hidden="true"
                           />
                           <p className="text-xs text-muted-foreground">
-                            Suggested: {stop.suggestedDurationMin} mins
+                            {t("itinerary.suggestedMinutes", { n: String(stop.suggestedDurationMin) })}
                           </p>
                         </div>
                       </div>
@@ -305,7 +318,7 @@ export function ItineraryColumn({
                         variant="ghost"
                         size="icon"
                         className="w-7 h-7 max-md:h-11 max-md:w-11 shrink-0 text-muted-foreground hover:text-destructive"
-                        aria-label={`Delete stop: ${stop.name}`}
+                        aria-label={t("itinerary.deleteStop", { name: stop.name })}
                         onClick={() => onDeleteStop?.(trip.id, stop.id)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -325,9 +338,8 @@ export function ItineraryColumn({
         className="w-full max-md:h-11"
         onClick={() => onAddStop?.(trip.id)}
         disabled={!onAddStop || mode !== "saved"}
-        aria-label="Add new stop to itinerary"
       >
-        + Add Stop
+        {t("itinerary.addStop")}
       </Button>
     </aside>
   );

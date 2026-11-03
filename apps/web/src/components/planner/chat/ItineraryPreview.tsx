@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Route, Clock, Navigation, Check, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TripDraft } from "./types";
+import { useTranslation } from "@/contexts/language-context";
 
 interface ItineraryPreviewProps {
 	itinerary: TripDraft;
@@ -20,6 +21,7 @@ export function ItineraryPreview({
 	isSaving,
 	isSaved,
 }: ItineraryPreviewProps) {
+	const { t } = useTranslation();
 	const stops = itinerary.stops;
 	const totalKm = itinerary.total_distance_km;
 	const totalMin = itinerary.total_minutes;
@@ -84,11 +86,11 @@ export function ItineraryPreview({
 			</div>
 
 			{(onSave || onDismiss) && (
-				<div className="px-4 py-3 border-t border-border bg-muted/20 flex gap-2">
+				<div className="px-4 py-3 border-t border-border bg-muted/20 flex flex-wrap gap-2">
 					{isSaved ? (
 						<div className="flex-1 flex items-center justify-center gap-2 text-emerald-600 text-xs font-medium py-1">
 							<Check className="h-3.5 w-3.5" />
-							Saved to My Trips
+							{t("chat.actions.saved")}
 						</div>
 					) : (
 						<>
@@ -97,17 +99,17 @@ export function ItineraryPreview({
 									size="sm"
 									onClick={onSave}
 									disabled={isSaving}
-									className="flex-1 h-9 text-xs"
+									className="flex-1 min-w-0 h-9 text-xs"
 								>
 									{isSaving ? (
 										<>
 											<Loader2 className="h-3.5 w-3.5 animate-spin mr-2" />
-											Saving...
+											{t("chat.actions.saving")}
 										</>
 									) : (
 										<>
 											<Save className="h-3.5 w-3.5 mr-2" />
-											Save to My Trips
+											{t("chat.actions.saveTrip")}
 										</>
 									)}
 								</Button>
@@ -117,10 +119,10 @@ export function ItineraryPreview({
 									size="sm"
 									variant="outline"
 									onClick={onPreview}
-									className="flex-1 h-9 text-xs"
+									className="flex-1 min-w-0 h-9 text-xs"
 								>
-									<Navigation className="h-3.5 w-3.5 mr-2" />
-									Preview on Map
+									<Navigation className="h-3.5 w-3.5 mr-2" aria-hidden />
+									{t("chat.actions.showOnMap")}
 								</Button>
 							)}
 							{onDismiss && (
@@ -128,9 +130,9 @@ export function ItineraryPreview({
 									size="sm"
 									variant="ghost"
 									onClick={onDismiss}
-									className="h-9 text-xs px-4 text-muted-foreground hover:text-foreground"
+									className="h-9 text-xs px-3 text-muted-foreground hover:text-foreground"
 								>
-									Ignore
+									{t("chat.actions.hidePlan")}
 								</Button>
 							)}
 						</>

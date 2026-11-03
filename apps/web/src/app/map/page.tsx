@@ -18,6 +18,7 @@ import type { Trip, TripStop } from "@/types/trip";
 import type { ChatPanelProps, TripDraft, TripDraftStop } from "@/components/planner/chat/types";
 import { buildTripDraftSavePayload } from "@/components/planner/chat/lib/trip-draft";
 import { nameToSlug } from "@/lib/slug-utils";
+import { localizedPlace } from "@/lib/place-locale";
 import { appendPlaceToTrip, mergeFetchedTrips, removeStop, restoreStop, toStopCategory, type TripPlaceCandidate } from "@/lib/trip-stop-utils";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
@@ -50,6 +51,8 @@ interface PlaceItem extends TripPlaceCandidate {
   price?: number;
   avg_rating?: number | null;
   review_count?: number;
+  name_th?: string | null;
+  description_th?: string | null;
 }
 
 interface ChatSession {
@@ -189,7 +192,7 @@ export default function TripPlannerPage() {
   const draftToTrip = useCallback((tripDraft: TripDraft): Trip => ({
     id: "draft",
     name: tripDraft.title,
-    date: "Draft",
+    date: "",
     totalDurationMin: tripDraft.total_minutes,
     totalDistanceKm: tripDraft.total_distance_km,
     estimatedBudget: 0,
@@ -202,6 +205,7 @@ export default function TripPlannerPage() {
         id: stop.id,
         placeId: stop.place_id,
         name: stop.name,
+        nameTh: initialPlaces.find((item) => item.id === stop.place_id)?.name_th ?? null,
         address: place?.address?.trim() || "",
         category: toStopCategory(place?.tags),
         suggestedDurationMin: stop.suggested_time_min,
@@ -211,7 +215,7 @@ export default function TripPlannerPage() {
         distanceFromPrevKm: stop.distance_from_prev_km,
       };
     }),
-  }), []);
+  }), [initialPlaces]);
   const displayedTrip = useMemo(
     () => (activeTripDraft ? draftToTrip(activeTripDraft) : selectedTrip),
     [activeTripDraft, draftToTrip, selectedTrip]
@@ -243,11 +247,13 @@ export default function TripPlannerPage() {
         const serverTrips = data.data.map((trip: any) => ({
           id: trip.id,
           name: trip.title || 'Unnamed Trip',
-          date: trip.created_at ? new Date(trip.created_at).toLocaleDateString() : 'No date',
+          // Formatted per locale in TripListColumn
+          date: trip.created_at || '',
           stops: (trip.stops || []).map((stop: any) => ({
             id: stop.id,
             placeId: stop.place_id || stop.place?.id,
             name: stop.place?.name || 'Unknown Stop',
+            nameTh: stop.place?.name_th ?? null,
             address: stop.place?.address?.trim() || '',
             category: toStopCategory(stop.place?.tags),
             suggestedDurationMin: stop.suggested_time_min || 60,
@@ -366,6 +372,8 @@ export default function TripPlannerPage() {
             tags: p.tags || [],
             price: p.price,
             description: p.description || '',
+            name_th: p.name_th ?? null,
+            description_th: p.description_th ?? null,
             address: p.address || p.name || 'Address not available',
             image_url: p.image_url || '',
             avg_rating: p.avg_rating ?? null,
@@ -418,6 +426,8 @@ export default function TripPlannerPage() {
           tags: p.tags || [],
           price: p.price,
           description: p.description || '',
+          name_th: p.name_th ?? null,
+          description_th: p.description_th ?? null,
           address: p.address || p.name || 'Address not available',
           image_url: p.image_url || '',
           avg_rating: p.avg_rating ?? null,
@@ -443,13 +453,26 @@ export default function TripPlannerPage() {
 
   const handlePlacesFound = (places: PlaceItem[]) => {
     setFoundPlaces(places);
-    console.log("Found places from chat:", places);
   };
 
-  const handleTripDraftCreated = (tripDraft: TripDraft) => {
+  const handleTripDraftCreated = useCallback((tripDraft: TripDraft) => {
     setActiveTripDraft(tripDraft);
-    console.log("Received trip draft from agent:", tripDraft);
-  };
+  }, []);
+  const handleClosePreview = useCallback(() => setActiveTripDraft(null), []);
+  // Chat "Show on map" focuses the place like a search result
+  const handleLocateChatPlace = useCallback((place: PlaceItem) => {
+    const mapPlace = transformPlacesForMap([place])[0];
+    if (!mapPlace) return;
+    setSelectedPlace(mapPlace);
+    // Phones: the trip sheet would cover the popup
+    setIsBottomSheetExpanded(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Chat "Add" targets the selected saved trip; its stops show as "Added"
+  const chatTripPlaceIds = useMemo(
+    () => (selectedTrip?.stops ?? []).map((stop) => stop.placeId).filter((id): id is string => Boolean(id)),
+    [selectedTrip]
+  );
 
   const handleAddPlaceToTrip = useCallback((placesToAdd: PlaceItem | TripPlaceCandidate | Array<PlaceItem | TripPlaceCandidate>) => {
     const items = Array.isArray(placesToAdd) ? placesToAdd : [placesToAdd];
@@ -500,6 +523,7 @@ export default function TripPlannerPage() {
     if (activeTripDraft || leftPanelTab !== 'trips' || !selectedTrip) return null;
     return {
       label: t("map.popup.addToTrip", { trip: selectedTrip.name }),
+      placeIds: selectedTrip.stops.map((stop) => stop.placeId).filter((id): id is string => Boolean(id)),
       onAdd: (place: { id: string; name: string; slug: string; lat: number; lng: number; tags: string[]; description?: string; address?: string }) =>
         handleAddPlaceToTrip(place),
     };
@@ -556,24 +580,33 @@ export default function TripPlannerPage() {
     });
   }, [activeTripDraft, trips, t, setTripUnsaved]);
 
-  const handleSelectStop = useCallback((stop: TripStop) => {
-    const mapPlace = {
+  // Map/popup shape for a trip stop, filled from the loaded place (real description,
+  // Thai fields, photo, slug for "View details")
+  const stopToMapPlace = (stop: TripStop) => {
+    const place = initialPlaces.find((item) => item.id === stop.placeId);
+    return {
       id: stop.id,
       name: stop.name,
-      description: [t(`stopCategory.${stop.category}`), stop.address].filter(Boolean).join(" - "),
-      tags: [stop.category],
+      name_th: stop.nameTh ?? place?.name_th ?? null,
+      description: place?.description || t(`stopCategory.${stop.category}`),
+      description_th: place?.description_th ?? null,
+      tags: place?.tags?.length ? place.tags : [stop.category],
       lat: stop.lat,
       lng: stop.lng,
       address: stop.address,
-      price: 0,
-      image_url: stop.image_url || "",
-      slug: stop.placeId || '',
+      price: place?.price ?? 0,
+      image_url: stop.image_url || place?.image_url || "",
+      slug: place?.slug || nameToSlug(stop.name),
     };
-    setSelectedPlace(mapPlace);
-  }, [t]);
+  };
+
+  const handleSelectStop = useCallback((stop: TripStop) => {
+    setSelectedPlace(stopToMapPlace(stop));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, initialPlaces]);
 
   const handleDeleteTrip = async (tripId: string) => {
-    if (!confirm("Are you sure you want to delete this trip?")) return;
+    if (!confirm(t("tripList.deleteConfirm"))) return;
     if (session?.access_token) {
       try {
         await fetch(`${serverUrl}/api/itineraries/${tripId}`, {
@@ -581,7 +614,7 @@ export default function TripPlannerPage() {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
       } catch {
-        toast.error("Failed to delete trip from server");
+        toast.error(t("tripList.deleteFailed"));
         return;
       }
     }
@@ -650,7 +683,7 @@ export default function TripPlannerPage() {
 
   const handleSaveTripToServer = useCallback(async (tripId: string, orderedStops: TripStop[]) => {
     if (!session?.access_token) {
-      toast.error("Please log in to save trips");
+      toast.error(t("itinerary.loginToSave"));
       return;
     }
     try {
@@ -693,7 +726,7 @@ export default function TripPlannerPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error ?? `Error ${res.status}`);
-      toast.success(isDraftSave ? "Trip draft saved!" : "Trip saved!");
+      toast.success(isDraftSave ? t("itinerary.draftSaved") : t("itinerary.tripSaved"));
       if (!isDraftSave) setTripUnsaved(tripId, false);
       if (isDraftSave) {
         setActiveTripDraft(null);
@@ -703,7 +736,7 @@ export default function TripPlannerPage() {
       }
       fetchSavedTrips();
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to save trip");
+      toast.error(e.message ?? t("itinerary.saveFailed"));
     }
   }, [session?.access_token, serverUrl, trips, fetchSavedTrips, activeTripDraft, displayedTrip, setTripUnsaved]);
 
@@ -730,13 +763,15 @@ export default function TripPlannerPage() {
       }
     } catch (error) {
       console.error('Error loading session messages:', error);
-      toast.error('Failed to load chat history');
+      toast.error(t("chatHistory.loadFailed"));
     }
   }, [session?.access_token, serverUrl]);
 
+  const [chatResetKey, setChatResetKey] = useState(0);
   const handleNewSession = useCallback(() => {
     setActiveSessionId(null);
     setChatSessionMessages(null);
+    setChatResetKey((key) => key + 1);
   }, []);
 
   const handleDeleteSession = useCallback(async (sessionId: string) => {
@@ -751,12 +786,13 @@ export default function TripPlannerPage() {
         if (activeSessionId === sessionId) {
           setActiveSessionId(null);
           setChatSessionMessages(null);
+          setChatResetKey((key) => key + 1);
         }
-        toast.success('Chat deleted');
+        toast.success(t("chatHistory.deleted"));
       }
     } catch (error) {
       console.error('Error deleting session:', error);
-      toast.error('Failed to delete chat');
+      toast.error(t("chatHistory.deleteFailed"));
     }
   }, [activeSessionId, session?.access_token, serverUrl]);
 
@@ -777,11 +813,13 @@ export default function TripPlannerPage() {
       .map((place) => ({
         id: place.id,
         name: place.name,
-        description: place.description || place.tags?.join(", ") || "No description available",
+        name_th: place.name_th ?? null,
+        description: place.description || place.tags?.join(", ") || "",
+        description_th: place.description_th ?? null,
         tags: place.tags || [],
         lat: place.lat!,
         lng: place.lng!,
-        address: place.address || "Address not available",
+        address: place.address || "",
         price: place.price || 0,
         image_url: place.image_url || "",
         slug: place.slug || place.id,
@@ -817,19 +855,7 @@ export default function TripPlannerPage() {
     return trip.stops
       .map((stop, index) => ({ stop, sequence: index + 1 }))
       .filter(({ stop }) => stop.lat && stop.lng)
-      .map(({ stop, sequence }) => ({
-        sequence,
-        id: stop.id,
-        name: stop.name,
-        description: [t(`stopCategory.${stop.category}`), stop.address].filter(Boolean).join(" - "),
-        tags: [stop.category],
-        lat: stop.lat,
-        lng: stop.lng,
-        address: stop.address,
-        price: 0,
-        image_url: stop.image_url || "",
-        slug: nameToSlug(stop.name),
-      }));
+      .map(({ stop, sequence }) => ({ sequence, ...stopToMapPlace(stop) }));
   };
 
   const transformTripDraftStopsForMap = (stops: TripDraftStop[]): any[] => {
@@ -938,7 +964,8 @@ export default function TripPlannerPage() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    // Fill the viewport below the sticky site header (h-16 + 1px border) so the page never scrolls
+    <div className="relative w-full h-[calc(100dvh-4rem-1px)] overflow-hidden">
       {/* Fullscreen Map Background - reserve space for side panels on md+ */}
       <div className="absolute inset-0 z-0 md:left-[400px] md:right-[400px]">
         <MapContainer
@@ -978,6 +1005,7 @@ export default function TripPlannerPage() {
             <Input
               type="text"
               placeholder={t("map.searchPlaceholder")}
+              aria-label={t("map.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 pr-12 h-12 rounded-full shadow-xl border-0 bg-card/95 backdrop-blur-md text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
@@ -987,9 +1015,10 @@ export default function TripPlannerPage() {
                 variant="ghost"
                 size="icon"
                 onClick={handleClearSearch}
-                className="absolute right-2 h-8 w-8 rounded-full hover:bg-secondary"
+                className="absolute right-1 h-10 w-10 rounded-full hover:bg-secondary"
+                aria-label={t("map.results.clear")}
               >
-                <X className="h-4 w-4 text-muted-foreground" />
+                <X className="h-4 w-4 text-muted-foreground" aria-hidden />
               </Button>
             )}
             {isSearching && (
@@ -999,8 +1028,9 @@ export default function TripPlannerPage() {
         </div>
 
         {/* Category Filters - Perplexity style */}
+        {/* Edge fade hints that more categories scroll in from the right */}
         <motion.div
-          className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+          className="mt-3 flex gap-2 overflow-x-auto pb-2 pr-8 scrollbar-hide [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)]"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
@@ -1015,12 +1045,13 @@ export default function TripPlannerPage() {
                 variant={isSelected ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
+                aria-pressed={isSelected}
                 className={`flex items-center gap-2 whitespace-nowrap rounded-full transition-all max-md:h-11 ${isSelected
                   ? 'bg-primary hover:bg-primary/90 text-white shadow-md'
                   : 'bg-card/95 backdrop-blur-md hover:bg-secondary border-0 shadow-md'
                   }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4" aria-hidden />
                 {category.label}
               </Button>
             );
@@ -1092,7 +1123,7 @@ export default function TripPlannerPage() {
                     >
                       <PlaceCard
                         id={place.id}
-                        name={place.name}
+                        name={localizedPlace(place, locale).name}
                         tags={place.tags}
                         image_url={place.image_url}
                         avgRating={place.avg_rating ?? null}
@@ -1144,7 +1175,7 @@ export default function TripPlannerPage() {
           isOpen={isLeftPanelOpen}
           onClose={() => setIsLeftPanelOpen(false)}
           position="left"
-          title={leftPanelTab === 'trips' ? "My Trips" : "Chat History"}
+          title={leftPanelTab === 'trips' ? t("tripList.title") : t("chatHistory.title")}
           width="w-[400px]"
         >
           {/* Tab switcher */}
@@ -1156,8 +1187,8 @@ export default function TripPlannerPage() {
                   : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <MapIcon className="h-4 w-4" />
-              My Trips
+              <MapIcon className="h-4 w-4" aria-hidden />
+              {t("tripList.title")}
             </button>
             <button
               onClick={() => {
@@ -1169,8 +1200,8 @@ export default function TripPlannerPage() {
                   : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <MessageSquare className="h-4 w-4" />
-              Chat History
+              <MessageSquare className="h-4 w-4" aria-hidden />
+              {t("chatHistory.title")}
             </button>
           </div>
 
@@ -1222,6 +1253,7 @@ export default function TripPlannerPage() {
             totalDistanceKm={routeDistanceKm ?? displayedTrip?.totalDistanceKm ?? 0}
             mode={displayedTrip?.source === "draft" ? "draft" : "saved"}
             hasUnsavedChanges={!!displayedTrip && unsavedTripIds.has(displayedTrip.id)}
+            onClosePreview={() => setActiveTripDraft(null)}
             warnings={displayedTrip?.warnings ?? []}
           />
         </CollapsiblePanel>
@@ -1232,7 +1264,7 @@ export default function TripPlannerPage() {
         isOpen={isBottomSheetExpanded}
         onClose={() => setIsBottomSheetExpanded(false)}
         onOpenChange={setIsBottomSheetExpanded}
-        title={leftPanelTab === 'history' ? 'Chat History' : displayedTrip?.name || 'My Trip'}
+        title={leftPanelTab === 'history' ? t("chatHistory.title") : displayedTrip?.name || t("tripList.title")}
         peekHeight={120}
       >
         <div className="px-4 space-y-6">
@@ -1244,8 +1276,8 @@ export default function TripPlannerPage() {
                   : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <MapIcon className="h-4 w-4" />
-              My Trips
+              <MapIcon className="h-4 w-4" aria-hidden />
+              {t("tripList.title")}
             </button>
             <button
               onClick={() => {
@@ -1257,8 +1289,8 @@ export default function TripPlannerPage() {
                   : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
-              <MessageSquare className="h-4 w-4" />
-              Chat History
+              <MessageSquare className="h-4 w-4" aria-hidden />
+              {t("chatHistory.title")}
             </button>
           </div>
 
@@ -1281,7 +1313,7 @@ export default function TripPlannerPage() {
 
               <div>
                 <h3 className="text-sm font-semibold text-foreground/80 mb-3">
-                  Itinerary
+                  {t("itinerary.heading")}
                 </h3>
                 <ItineraryColumn
                   trip={displayedTrip}
@@ -1296,6 +1328,7 @@ export default function TripPlannerPage() {
                   totalDistanceKm={routeDistanceKm ?? displayedTrip?.totalDistanceKm ?? 0}
                   mode={displayedTrip?.source === "draft" ? "draft" : "saved"}
             hasUnsavedChanges={!!displayedTrip && unsavedTripIds.has(displayedTrip.id)}
+            onClosePreview={() => setActiveTripDraft(null)}
                   warnings={displayedTrip?.warnings ?? []}
                 />
               </div>
@@ -1330,6 +1363,10 @@ export default function TripPlannerPage() {
         contextPlaces={chatContextPlaces}
         initialPrompt={chatPrefill}
         hideLauncherOnMobile={isBottomSheetExpanded}
+        onClosePreview={handleClosePreview}
+        onLocatePlace={handleLocateChatPlace}
+        tripPlaceIds={chatTripPlaceIds}
+        resetKey={chatResetKey}
       />
 
       {/* New Trip Dialog */}

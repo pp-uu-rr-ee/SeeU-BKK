@@ -120,7 +120,8 @@
     },
     "popup": {
       "addToTrip": "เพิ่มลง {trip}"
-    }
+    },
+    "loading": "กำลังโหลดแผนที่..."
   },
   "errors": {
     "selectTrip": "กรุณาเลือกทริปก่อน",
@@ -691,6 +692,34 @@
       "tellMore": "เล่าเพิ่มอีก",
       "similar": "แนะนำที่คล้ายกัน",
       "dayTrip": "วางแผนทริปหนึ่งวัน"
+    },
+    "actions": {
+      "add": "เพิ่ม",
+      "added": "เพิ่มแล้ว",
+      "showOnMap": "ดูบนแผนที่",
+      "addAll": "เพิ่มทั้ง {count} แห่งลงทริป",
+      "placesFound": "พบ {count} สถานที่",
+      "showMore": "ดูเพิ่มอีก {count} แห่ง",
+      "saveTrip": "บันทึกลงทริปของฉัน",
+      "saving": "กำลังบันทึก...",
+      "saved": "บันทึกลงทริปของฉันแล้ว",
+      "hidePlan": "ซ่อน",
+      "showPlanAgain": "แสดงแผนทริปอีกครั้ง",
+      "copy": "คัดลอก",
+      "copied": "คัดลอกแล้ว",
+      "clear": "ล้างการสนทนา",
+      "inputPlaceholder": "ถามเรื่องสถานที่...",
+      "send": "ส่ง",
+      "stop": "หยุด",
+      "minimize": "ย่อแชต",
+      "expand": "ขยายแชต",
+      "close": "ปิดแชต",
+      "open": "เปิดผู้ช่วยวางแผนทริป",
+      "placesMentioned": "กล่าวถึง {count} สถานที่",
+      "findingPlaces": "กำลังหาสถานที่...",
+      "title": "ผู้ช่วยวางแผนทริป",
+      "welcome": "ถามเรื่องสถานที่ในกรุงเทพฯ หรือให้ช่วยวางแผนทริปได้เลย",
+      "thinking": "กำลังคิด..."
     }
   },
   "itinerary": {
@@ -698,6 +727,58 @@
     "undo": "เลิกทำ",
     "alreadyInTrip": "{name} อยู่ในทริปนี้แล้ว",
     "unsaved": "ยังไม่ได้บันทึก",
-    "saved": "บันทึกแล้ว"
+    "saved": "บันทึกแล้ว",
+    "closePreview": "ปิดตัวอย่าง",
+    "label": "แผนการเดินทาง",
+    "selectTrip": "เลือกทริปเพื่อดูแผนการเดินทาง",
+    "draftPreview": "ตัวอย่างทริปจาก AI",
+    "editDetails": "แก้ไขรายละเอียดทริป",
+    "edit": "แก้ไข",
+    "saveChanges": "บันทึกการแก้ไขทริป",
+    "saveDraft": "บันทึกทริปร่าง",
+    "save": "บันทึก",
+    "duration": "{h} ชม. {m} นาที",
+    "stopsCount": "{count} จุด",
+    "stopsLabel": "จุดแวะในทริป",
+    "suggestedMinutes": "แนะนำ: {n} นาที",
+    "deleteStop": "ลบจุดแวะ: {name}",
+    "addStop": "+ เพิ่มจุดแวะ",
+    "stopN": "จุดที่ {n}",
+    "reorderStop": "จัดลำดับจุดแวะ: {name}",
+    "loginToSave": "กรุณาเข้าสู่ระบบเพื่อบันทึกทริป",
+    "draftSaved": "บันทึกทริปร่างแล้ว",
+    "tripSaved": "บันทึกทริปแล้ว",
+    "saveFailed": "บันทึกทริปไม่สำเร็จ",
+    "heading": "แผนการเดินทาง"
+  },
+  "tripList": {
+    "label": "รายการทริป",
+    "title": "ทริปของฉัน",
+    "empty": "ยังไม่มีทริป",
+    "createFirst": "สร้างทริปแรกของคุณ",
+    "newTrip": "+ ทริปใหม่",
+    "searchPlaceholder": "ค้นหาทริป...",
+    "noMatch": "ไม่พบทริปที่ตรงกับ \"{query}\"",
+    "selectTrip": "เลือกทริป: {name}",
+    "actions": "ตัวเลือกของ {name}",
+    "edit": "แก้ไขทริป",
+    "delete": "ลบทริป",
+    "deleteConfirm": "ลบทริปนี้ใช่ไหม?",
+    "deleteFailed": "ลบทริปไม่สำเร็จ"
+  },
+  "chatHistory": {
+    "title": "ประวัติแชต",
+    "newChat": "แชตใหม่",
+    "empty": "ยังไม่มีประวัติแชต",
+    "emptyHint": "เริ่มคุยกับผู้ช่วยแล้วแชตจะถูกเก็บไว้ที่นี่",
+    "chatOn": "แชตวันที่ {date}",
+    "today": "วันนี้",
+    "yesterday": "เมื่อวาน",
+    "daysAgo": "{n} วันที่แล้ว",
+    "delete": "ลบแชต: {title}",
+    "deleteConfirm": "ลบแชตนี้ใช่ไหม?",
+    "loadFailed": "โหลดแชตไม่สำเร็จ",
+    "deleted": "ลบแชตแล้ว",
+    "deleteFailed": "ลบแชตไม่สำเร็จ"
   }
 }

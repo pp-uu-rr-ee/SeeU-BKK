@@ -120,7 +120,8 @@
     },
     "popup": {
       "addToTrip": "Add to {trip}"
-    }
+    },
+    "loading": "Loading map..."
   },
   "errors": {
     "selectTrip": "Please select a trip first",
@@ -691,6 +692,34 @@
       "tellMore": "Tell me more",
       "similar": "Show me something similar",
       "dayTrip": "Plan a day trip"
+    },
+    "actions": {
+      "add": "Add",
+      "added": "Added",
+      "showOnMap": "Show on map",
+      "addAll": "Add all {count} to trip",
+      "placesFound": "{count} places found",
+      "showMore": "Show {count} more",
+      "saveTrip": "Save to My Trips",
+      "saving": "Saving...",
+      "saved": "Saved to My Trips",
+      "hidePlan": "Hide",
+      "showPlanAgain": "Show trip plan again",
+      "copy": "Copy",
+      "copied": "Copied",
+      "clear": "Clear conversation",
+      "inputPlaceholder": "Ask about places...",
+      "send": "Send",
+      "stop": "Stop",
+      "minimize": "Minimize chat",
+      "expand": "Expand chat",
+      "close": "Close chat",
+      "open": "Open trip assistant",
+      "placesMentioned": "{count} places mentioned",
+      "findingPlaces": "Finding places...",
+      "title": "Trip Assistant",
+      "welcome": "Ask me about places in Bangkok or let me plan your trip!",
+      "thinking": "thinking..."
     }
   },
   "itinerary": {
@@ -698,6 +727,58 @@
     "undo": "Undo",
     "alreadyInTrip": "{name} is already in this trip",
     "unsaved": "Unsaved changes",
-    "saved": "Saved"
+    "saved": "Saved",
+    "closePreview": "Close preview",
+    "label": "Trip itinerary",
+    "selectTrip": "Select a trip to see its itinerary",
+    "draftPreview": "AI draft preview",
+    "editDetails": "Edit trip details",
+    "edit": "Edit",
+    "saveChanges": "Save trip changes",
+    "saveDraft": "Save draft",
+    "save": "Save",
+    "duration": "{h}h {m}m",
+    "stopsCount": "{count} stops",
+    "stopsLabel": "Trip stops",
+    "suggestedMinutes": "Suggested: {n} min",
+    "deleteStop": "Delete stop: {name}",
+    "addStop": "+ Add stop",
+    "stopN": "Stop {n}",
+    "reorderStop": "Reorder stop: {name}",
+    "loginToSave": "Please sign in to save trips",
+    "draftSaved": "Trip draft saved",
+    "tripSaved": "Trip saved",
+    "saveFailed": "Could not save the trip",
+    "heading": "Itinerary"
+  },
+  "tripList": {
+    "label": "Trip list",
+    "title": "My Trips",
+    "empty": "No trips yet",
+    "createFirst": "Create your first trip",
+    "newTrip": "+ New Trip",
+    "searchPlaceholder": "Search trips...",
+    "noMatch": "No trips match \"{query}\"",
+    "selectTrip": "Select trip: {name}",
+    "actions": "Actions for {name}",
+    "edit": "Edit trip",
+    "delete": "Delete trip",
+    "deleteConfirm": "Delete this trip?",
+    "deleteFailed": "Could not delete the trip"
+  },
+  "chatHistory": {
+    "title": "Chat History",
+    "newChat": "New chat",
+    "empty": "No chat history yet",
+    "emptyHint": "Start a conversation to save it here",
+    "chatOn": "Chat on {date}",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{n} days ago",
+    "delete": "Delete chat: {title}",
+    "deleteConfirm": "Delete this chat?",
+    "loadFailed": "Could not load the chat",
+    "deleted": "Chat deleted",
+    "deleteFailed": "Could not delete the chat"
   }
 }

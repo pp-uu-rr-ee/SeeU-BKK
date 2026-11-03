@@ -40,10 +40,13 @@ interface ChatMessageListProps {
 	quickSuggestions: string[];
 	messagesEndRef: RefObject<HTMLDivElement | null>;
 	onQuickSuggestion: (text: string) => void;
-	onAddPlace?: (place: PlaceItem) => void;
-	onViewPlace?: (slug: string) => void;
+	onAddPlace?: (place: PlaceItem | PlaceItem[]) => void;
+	onLocatePlace?: (place: PlaceItem) => void;
 	onSaveItinerary?: () => void;
 	onPreviewTripDraft?: (tripDraft: TripDraft) => void;
+	/** "Hide" on a trip card also takes that trip off the map */
+	onDismissTripDraft?: () => void;
+	tripPlaceIds?: string[];
 	onFollowUp?: (text: string) => void;
 }
 
@@ -162,6 +165,7 @@ function PlaceCard({
 	onAdd?: () => void;
 	onView?: () => void;
 }) {
+	const { t } = useTranslation();
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 8 }}
@@ -205,13 +209,13 @@ function PlaceCard({
 				<div className="flex gap-2 mt-2">
 					{onAdd && (
 						<Button size="sm" variant="outline" className="h-8 text-xs px-3 bg-transparent" onClick={onAdd}>
-							<Plus className="h-3.5 w-3.5 mr-1.5" />
-							Add to Trip
+							<Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+							{t("chat.actions.add")}
 						</Button>
 					)}
 					{onView && (
 						<Button size="sm" variant="ghost" className="h-8 text-xs px-3" onClick={onView}>
-							View Details
+							{t("mapPopup.viewDetails")}
 						</Button>
 					)}
 				</div>
@@ -234,19 +238,23 @@ function AssistantMessage({
 	turn,
 	isLast,
 	onAddPlace,
-	onViewPlace,
+	onLocatePlace,
 	onSaveItinerary,
 	onPreviewTripDraft,
+	onDismissTripDraft,
+	tripPlaceIds,
 	isSavingItinerary,
 	isItinerarySaved,
 	onFollowUp,
 }: {
 	turn: AssistantTurn;
 	isLast: boolean;
-	onAddPlace?: (place: PlaceItem) => void;
-	onViewPlace?: (slug: string) => void;
+	onAddPlace?: (place: PlaceItem | PlaceItem[]) => void;
+	onLocatePlace?: (place: PlaceItem) => void;
 	onSaveItinerary?: () => void;
 	onPreviewTripDraft?: (tripDraft: TripDraft) => void;
+	onDismissTripDraft?: () => void;
+	tripPlaceIds?: string[];
 	isSavingItinerary?: boolean;
 	isItinerarySaved?: boolean;
 	onFollowUp?: (text: string) => void;
@@ -290,7 +298,7 @@ function AssistantMessage({
 	const followUps = useMemo(() => getFollowUpChips(turn, parsedItinerary !== null, locale), [turn, parsedItinerary, locale]);
 
 	const displayText = turn.ui?.summary || (introText !== null ? introText : turn.text);
-	const uiActions = turn.ui?.actions ?? [];
+	const notYetAdded = turn.suggestions.filter((place) => !tripPlaceIds?.includes(place.id));
 	const previewTripDraft = turn.tripDraft;
 
 	return (
@@ -312,23 +320,26 @@ function AssistantMessage({
 				))}
 
 				{turn.suggestions.length > 0 && (
-					<PlacesListPreview places={turn.suggestions} onAdd={onAddPlace} onView={onViewPlace} />
+					<PlacesListPreview
+						places={turn.suggestions}
+						onAdd={onAddPlace}
+						onLocate={onLocatePlace}
+						addedPlaceIds={tripPlaceIds}
+					/>
 				)}
 
-				{uiActions.length > 0 && (
-					<div className="flex flex-wrap gap-2">
-						{uiActions.map((action) => (
-							<Badge key={`${action.type}-${action.label}`} variant="outline" className="text-[10px]">
-								{action.label}
-							</Badge>
-						))}
-					</div>
+				{/* Server actions used to render as inert badges; trip preview/save live on the trip card */}
+				{onAddPlace && notYetAdded.length > 1 && (
+					<Button variant="secondary" size="sm" className="h-9 text-xs" onClick={() => onAddPlace(notYetAdded)}>
+						<Plus className="h-3.5 w-3.5 mr-1" aria-hidden />
+						{t("chat.actions.addAll", { count: String(notYetAdded.length) })}
+					</Button>
 				)}
 
 				{parsedPlaces.length > 0 && parsedItinerary === null && (
 					<div className="space-y-2">
 						<p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-							{parsedPlaces.length} place{parsedPlaces.length > 1 ? "s" : ""} mentioned
+							{t("chat.actions.placesMentioned", { count: String(parsedPlaces.length) })}
 						</p>
 						<div className="space-y-2">
 							{(showAllParsed ? parsedPlaces : parsedPlaces.slice(0, 5)).map((place, idx) => (
@@ -341,7 +352,7 @@ function AssistantMessage({
 									className="w-full h-8 text-xs"
 									onClick={() => setShowAllParsed(true)}
 								>
-									+ {parsedPlaces.length - 5} more places
+									{t("chat.actions.showMore", { count: String(parsedPlaces.length - 5) })}
 								</Button>
 							)}
 						</div>
@@ -349,6 +360,17 @@ function AssistantMessage({
 				)}
 
 				<AnimatePresence>
+					{previewTripDraft !== null && itineraryDismissed && (
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-9 text-xs text-muted-foreground"
+							onClick={() => setItineraryDismissed(false)}
+						>
+							<Route className="h-3.5 w-3.5 mr-1" aria-hidden />
+							{t("chat.actions.showPlanAgain")}
+						</Button>
+					)}
 					{previewTripDraft !== null && !itineraryDismissed && (
 						<motion.div
 							initial={{ opacity: 1 }}
@@ -363,7 +385,10 @@ function AssistantMessage({
 										? () => onPreviewTripDraft(previewTripDraft)
 										: undefined
 								}
-								onDismiss={() => setItineraryDismissed(true)}
+								onDismiss={() => {
+									setItineraryDismissed(true);
+									onDismissTripDraft?.();
+								}}
 								isSaving={isSavingItinerary}
 								isSaved={isItinerarySaved}
 							/>
@@ -380,7 +405,7 @@ function AssistantMessage({
 							onClick={handleCopy}
 						>
 							{copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-							{copied ? "Copied" : "Copy"}
+							{copied ? t("chat.actions.copied") : t("chat.actions.copy")}
 						</Button>
 					</div>
 				)}
@@ -408,8 +433,9 @@ function PendingAssistantMessage({
 	onAddPlace,
 }: {
 	pending: PendingTurn;
-	onAddPlace?: (place: PlaceItem) => void;
+	onAddPlace?: (place: PlaceItem | PlaceItem[]) => void;
 }) {
+	const { t } = useTranslation();
 	const showDots = pending.workflowSteps.length === 0 && !pending.text;
 
 	return (
@@ -442,7 +468,7 @@ function PendingAssistantMessage({
 				{pending.suggestions.length > 0 && (
 					<div className="space-y-2">
 						<h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-							Finding places...
+							{t("chat.actions.findingPlaces")}
 						</h4>
 						{pending.suggestions.slice(0, 3).map((place, idx) => (
 							<PlaceCard
@@ -483,11 +509,14 @@ export function ChatMessageList({
 	messagesEndRef,
 	onQuickSuggestion,
 	onAddPlace,
-	onViewPlace,
+	onLocatePlace,
 	onSaveItinerary,
 	onPreviewTripDraft,
+	onDismissTripDraft,
+	tripPlaceIds,
 	onFollowUp,
 }: ChatMessageListProps) {
+	const { t } = useTranslation();
 	return (
 		<>
 			{turns.length === 0 && !isStreaming && (
@@ -495,9 +524,9 @@ export function ChatMessageList({
 					<div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
 						<Map className="h-7 w-7 text-primary" />
 					</div>
-					<p className="text-foreground font-medium mb-1">Map Assistant</p>
+					<p className="text-foreground font-medium mb-1">{t("chat.actions.title")}</p>
 					<p className="text-muted-foreground text-sm mb-5">
-						Ask me about places in Bangkok or let me plan your trip!
+						{t("chat.actions.welcome")}
 					</p>
 					<div className="flex flex-wrap gap-2 justify-center">
 						{quickSuggestions.map((suggestion) => (
@@ -526,9 +555,11 @@ export function ChatMessageList({
 						turn={turn}
 						isLast={isLast && !isStreaming}
 						onAddPlace={onAddPlace}
-						onViewPlace={onViewPlace}
+						onLocatePlace={onLocatePlace}
 						onSaveItinerary={onSaveItinerary}
 						onPreviewTripDraft={onPreviewTripDraft}
+						onDismissTripDraft={onDismissTripDraft}
+						tripPlaceIds={tripPlaceIds}
 						isSavingItinerary={isSavingItinerary}
 						isItinerarySaved={isItinerarySaved}
 						onFollowUp={onFollowUp}

@@ -22,6 +22,8 @@ export interface TripStop {
   id: string;
   placeId?: string;
   name: string;
+  /** Thai place name, shown in Thai mode */
+  nameTh?: string | null;
   address: string;
   category: StopCategory;
   suggestedDurationMin: number;

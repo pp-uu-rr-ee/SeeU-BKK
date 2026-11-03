@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Trip } from "@/types/trip";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/contexts/language-context";
 
 import {
   DndContext,
@@ -50,6 +51,12 @@ export function TripListColumn({
   onEditTrip,
   onReorderTrips,
 }: Props) {
+  const { t, locale } = useTranslation();
+  // trip.date holds created_at (ISO); format it for the current language
+  const formatTripDate = (value: string) =>
+    value && !Number.isNaN(Date.parse(value))
+      ? new Date(value).toLocaleDateString(locale === "th" ? "th-TH" : "en-GB", { dateStyle: "medium" })
+      : value;
   const [searchQuery, setSearchQuery] = useState("");
   const [orderedTrips, setOrderedTrips] = useState<Trip[]>(trips);
 
@@ -69,9 +76,10 @@ export function TripListColumn({
       orderedTrips.filter(
         (trip) =>
           trip.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          trip.date.toLowerCase().includes(searchQuery.toLowerCase())
+          formatTripDate(trip.date).toLowerCase().includes(searchQuery.toLowerCase())
       ),
-    [orderedTrips, searchQuery]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orderedTrips, searchQuery, locale]
   );
 
   function handleDragEnd(event: DragEndEvent) {
@@ -95,15 +103,15 @@ export function TripListColumn({
       <aside
         className="flex flex-col gap-4 h-full"
         role="complementary"
-        aria-label="Trip list"
+        aria-label={t("tripList.label")}
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold text-foreground">My Trips</h2>
+          <h2 className="font-display text-xl font-semibold text-foreground">{t("tripList.title")}</h2>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center py-12 px-4">
-            <p className="text-muted-foreground mb-4">No trips yet</p>
-            <Button onClick={onNewTripClick}>Create Your First Trip</Button>
+            <p className="text-muted-foreground mb-4">{t("tripList.empty")}</p>
+            <Button onClick={onNewTripClick}>{t("tripList.createFirst")}</Button>
           </div>
         </div>
       </aside>
@@ -114,12 +122,12 @@ export function TripListColumn({
     <aside
       className="flex flex-col gap-4 h-full"
       role="complementary"
-      aria-label="Trip list"
+      aria-label={t("tripList.label")}
     >
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-semibold text-foreground">My Trips</h2>
-        <Button size="sm" className="max-md:h-11" onClick={onNewTripClick} aria-label="Create new trip">
-          + New Trip
+        <h2 className="font-display text-xl font-semibold text-foreground">{t("tripList.title")}</h2>
+        <Button size="sm" className="max-md:h-11" onClick={onNewTripClick}>
+          {t("tripList.newTrip")}
         </Button>
       </div>
 
@@ -129,11 +137,11 @@ export function TripListColumn({
           aria-hidden="true"
         />
         <Input
-          placeholder="Search trips..."
+          placeholder={t("tripList.searchPlaceholder")}
           className="pl-9 max-md:h-11"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label="Search trips"
+          aria-label={t("tripList.searchPlaceholder")}
         />
       </div>
 
@@ -141,7 +149,7 @@ export function TripListColumn({
       {filteredTrips.length === 0 && searchQuery && (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground text-sm">
-            No trips found matching "{searchQuery}"
+            {t("tripList.noMatch", { query: searchQuery })}
           </p>
         </div>
       )}
@@ -180,7 +188,7 @@ export function TripListColumn({
                                 onSelectTrip(isSelected ? null : trip.id);
                               }
                             }}
-                            aria-label={`Select trip: ${trip.name}`}
+                            aria-label={t("tripList.selectTrip", { name: trip.name })}
                             aria-pressed={isSelected}
                           >
                             <h3
@@ -197,7 +205,7 @@ export function TripListColumn({
                                 isSelected && "text-primary"
                               )}
                             >
-                              {trip.date}
+                              {formatTripDate(trip.date)}
                             </p>
                           </button>
 
@@ -208,7 +216,7 @@ export function TripListColumn({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 max-md:h-11 max-md:w-11 shrink-0"
-                                  aria-label={`Actions for ${trip.name}`}
+                                  aria-label={t("tripList.actions", { name: trip.name })}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <MoreVertical className="h-4 w-4" />
@@ -219,8 +227,8 @@ export function TripListColumn({
                                   <DropdownMenuItem
                                     onClick={() => onEditTrip(trip.id)}
                                   >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit Trip
+                                    <Edit className="mr-2 h-4 w-4" aria-hidden />
+                                    {t("tripList.edit")}
                                   </DropdownMenuItem>
                                 )}
                                 {onDeleteTrip && (
@@ -228,8 +236,8 @@ export function TripListColumn({
                                     onClick={() => onDeleteTrip(trip.id)}
                                     className="text-destructive focus:text-destructive"
                                   >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Trip
+                                    <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                                    {t("tripList.delete")}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>

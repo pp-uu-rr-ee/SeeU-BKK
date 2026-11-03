@@ -1,3 +1,4 @@
+import { useTranslation } from "@/contexts/language-context";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, X } from "lucide-react";
@@ -24,6 +25,7 @@ export function ChatInputBar({
 	onStop,
 	onClearConversation,
 }: ChatInputBarProps) {
+	const { t } = useTranslation();
 	return (
 		<div className="p-4 border-t bg-muted/30 shrink-0 space-y-2">
 			<div className="flex gap-2">
@@ -31,17 +33,19 @@ export function ChatInputBar({
 					value={input}
 					onChange={(e) => onInputChange(e.target.value)}
 					onKeyDown={onKeyDown}
-					placeholder="Ask about places..."
+					placeholder={t("chat.actions.inputPlaceholder")}
+					aria-label={t("chat.actions.inputPlaceholder")}
 					disabled={isStreaming}
-					className="flex-1 h-9"
+					className="flex-1 h-10"
 				/>
 				{isStreaming ? (
 					<Button
 						onClick={onStop}
 						size="icon"
 						variant="outline"
-						className="shrink-0 h-9 w-9"
-						title="Stop"
+						className="shrink-0 h-10 w-10"
+						title={t("chat.actions.stop")}
+						aria-label={t("chat.actions.stop")}
 					>
 						<X className="h-4 w-4" />
 					</Button>
@@ -50,7 +54,8 @@ export function ChatInputBar({
 						onClick={onSend}
 						disabled={!input.trim()}
 						size="icon"
-						className="shrink-0 h-9 w-9"
+						className="shrink-0 h-10 w-10"
+						aria-label={t("chat.actions.send")}
 					>
 						<Send className="h-4 w-4" />
 					</Button>
@@ -59,9 +64,9 @@ export function ChatInputBar({
 			{hasTurns && !isStreaming && (
 				<button
 					onClick={onClearConversation}
-					className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+					className="min-h-8 text-xs text-muted-foreground hover:text-foreground transition-colors"
 				>
-					Clear conversation
+					{t("chat.actions.clear")}
 				</button>
 			)}
 		</div>

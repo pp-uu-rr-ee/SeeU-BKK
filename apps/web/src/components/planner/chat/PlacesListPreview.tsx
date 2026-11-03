@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { MapPin, Plus, Map } from "lucide-react";
+import { MapPin, Plus, Map, Check } from "lucide-react";
+import { useTranslation } from "@/contexts/language-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { PlaceItem } from "./types";
@@ -8,20 +9,26 @@ import type { PlaceItem } from "./types";
 interface PlacesListPreviewProps {
 	places: PlaceItem[];
 	onAdd?: (place: PlaceItem) => void;
-	onView?: (slug: string) => void;
+	/** Show the place on the map */
+	onLocate?: (place: PlaceItem) => void;
+	/** Place ids already in the open trip; their Add button shows "Added" */
+	addedPlaceIds?: string[];
 }
 
 function PlaceRow({
 	place,
 	index,
 	onAdd,
-	onView,
+	onLocate,
+	isAdded,
 }: {
 	place: PlaceItem;
 	index: number;
 	onAdd?: () => void;
-	onView?: () => void;
+	onLocate?: () => void;
+	isAdded?: boolean;
 }) {
+	const { t } = useTranslation();
 	const [imageError, setImageError] = useState(false);
 
 	return (
@@ -64,15 +71,21 @@ function PlaceRow({
 				)}
 				<div className="flex gap-2 mt-2">
 					{onAdd && (
-						<Button size="sm" variant="outline" className="h-7 text-xs px-2.5 bg-transparent" onClick={onAdd}>
-							<Plus className="h-3 w-3 mr-1" />
-							Append
+						<Button
+							size="sm"
+							variant="outline"
+							className="h-9 text-xs px-3 bg-transparent"
+							onClick={onAdd}
+							disabled={isAdded}
+						>
+							{isAdded ? <Check className="h-3 w-3 mr-1" aria-hidden /> : <Plus className="h-3 w-3 mr-1" aria-hidden />}
+							{isAdded ? t("chat.actions.added") : t("chat.actions.add")}
 						</Button>
 					)}
-					{onView && (
-						<Button size="sm" variant="ghost" className="h-7 text-xs px-2.5" onClick={onView}>
-							<Map className="h-3 w-3 mr-1" />
-							Locate
+					{onLocate && (
+						<Button size="sm" variant="ghost" className="h-9 text-xs px-3" onClick={onLocate}>
+							<Map className="h-3 w-3 mr-1" aria-hidden />
+							{t("chat.actions.showOnMap")}
 						</Button>
 					)}
 				</div>
@@ -81,7 +94,8 @@ function PlaceRow({
 	);
 }
 
-export function PlacesListPreview({ places, onAdd, onView }: PlacesListPreviewProps) {
+export function PlacesListPreview({ places, onAdd, onLocate, addedPlaceIds = [] }: PlacesListPreviewProps) {
+	const { t } = useTranslation();
 	const [showAll, setShowAll] = useState(false);
 	const visible = showAll ? places : places.slice(0, 5);
 	const hiddenCount = places.length - 5;
@@ -91,7 +105,7 @@ export function PlacesListPreview({ places, onAdd, onView }: PlacesListPreviewPr
 			<div className="flex items-center gap-1.5">
 				<MapPin className="h-3.5 w-3.5 text-primary" />
 				<p className="text-sm font-semibold text-foreground">
-					{places.length} place{places.length > 1 ? "s" : ""} found
+					{t("chat.actions.placesFound", { count: String(places.length) })}
 				</p>
 			</div>
 			<div className="space-y-2">
@@ -101,7 +115,8 @@ export function PlacesListPreview({ places, onAdd, onView }: PlacesListPreviewPr
 						place={place}
 						index={idx}
 						onAdd={onAdd ? () => onAdd(place) : undefined}
-						onView={onView ? () => onView(place.slug) : undefined}
+						onLocate={onLocate ? () => onLocate(place) : undefined}
+						isAdded={addedPlaceIds.includes(place.id)}
 					/>
 				))}
 				{!showAll && hiddenCount > 0 && (
@@ -111,7 +126,7 @@ export function PlacesListPreview({ places, onAdd, onView }: PlacesListPreviewPr
 						className="w-full h-8 text-xs"
 						onClick={() => setShowAll(true)}
 					>
-						Show {hiddenCount} more
+						{t("chat.actions.showMore", { count: String(hiddenCount) })}
 					</Button>
 				)}
 			</div>

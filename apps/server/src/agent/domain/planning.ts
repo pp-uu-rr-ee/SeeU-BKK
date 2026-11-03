@@ -246,8 +246,19 @@ export function computeTripValidation(draft: Pick<TripDraft, "stops" | "total_di
 	};
 }
 
+/**
+ * Title for a trip the user did not name: its stops in order, so drafts and the
+ * trips saved from them are told apart (instead of every one being "Suggested Trip").
+ */
+export function defaultTripTitle(stopNames: string[]): string {
+	const names = stopNames.map((name) => name.trim()).filter(Boolean);
+	if (names.length === 0) return "Trip";
+	const shown = names.slice(0, 3).join(" → ");
+	return names.length > 3 ? `${shown} +${names.length - 3}` : shown;
+}
+
 export function buildTripDraftFromCandidates({
-	title = "Suggested Trip",
+	title,
 	summary,
 	candidates,
 	constraints,
@@ -294,7 +305,7 @@ export function buildTripDraftFromCandidates({
 		`${stops.length} stop${stops.length === 1 ? "" : "s"} planned with a ${constraints.durationMinutes}-minute budget.`;
 
 	const draftBase = {
-		title,
+		title: title?.trim() || defaultTripTitle(stops.map((stop) => stop.name)),
 		summary: computedSummary,
 		constraints,
 		places: ordered,
@@ -313,7 +324,7 @@ export function buildTripDraftFromCandidates({
 }
 
 export function buildTripDraftFromRoute({
-	title = "Suggested Trip",
+	title,
 	summary,
 	candidates,
 	constraints,
@@ -355,7 +366,7 @@ export function buildTripDraftFromRoute({
 		`${stops.length} stop${stops.length === 1 ? "" : "s"} planned with a ${constraints.durationMinutes}-minute budget.`;
 
 	const draftBase = {
-		title,
+		title: title?.trim() || defaultTripTitle(stops.map((stop) => stop.name)),
 		summary: computedSummary,
 		constraints,
 		places: ordered,

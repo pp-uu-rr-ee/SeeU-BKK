@@ -13,7 +13,7 @@ import { ChatMessageList } from "./chat/ChatMessageList";
 import { useChatActions } from "./chat/hooks/useChatActions";
 import { useChatHistory } from "./chat/hooks/useChatHistory";
 import { useChatStream } from "./chat/hooks/useChatStream";
-import type { ChatPanelProps } from "./chat/types";
+import type { ChatPanelProps, PlaceItem } from "./chat/types";
 
 export function ChatPanel({
 	onPlacesFound,
@@ -29,6 +29,10 @@ export function ChatPanel({
 	contextPlaces,
 	initialPrompt,
 	hideLauncherOnMobile = false,
+	onClosePreview,
+	onLocatePlace,
+	tripPlaceIds,
+	resetKey = 0,
 }: ChatPanelProps) {
 	const { t } = useTranslation();
 	const quickSuggestions = [0, 1, 2, 3].map((i) => t(`chat.suggestions.${i}`));
@@ -58,10 +62,22 @@ export function ChatPanel({
 	// Load session messages when a session is selected from history
 	useEffect(() => {
 		if (sessionMessages) {
+			// Drop the previous chat's trip from the map; the loaded chat re-applies its own
+			onClosePreview?.();
 			loadSession(sessionMessages);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sessionMessages]);
+
+	// "New Chat" / deleting the open chat: clear what is on screen and its trip preview
+	const lastResetKeyRef = useRef(resetKey);
+	useEffect(() => {
+		if (lastResetKeyRef.current === resetKey) return;
+		lastResetKeyRef.current = resetKey;
+		clearConversation();
+		onClosePreview?.();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [resetKey]);
 
 	const { isStreaming, startWithMessage, stop } = useChatStream({
 		userLocation,
@@ -92,9 +108,21 @@ export function ChatPanel({
 		setIsItinerarySaved,
 		clearConversation: () => {
 			clearConversation();
+			onClosePreview?.();
 			onSessionCreated?.(null);
 		},
 	});
+
+	// "Show on map": focus the place on the map and minimise the chat, which sits over the
+	// map on every screen size; places without coordinates fall back to their detail page
+	const handleLocatePlace = (place: PlaceItem) => {
+		if (onLocatePlace && typeof place.lat === "number" && typeof place.lng === "number") {
+			onLocatePlace(place);
+			setIsMinimized(true);
+			return;
+		}
+		handleViewPlace(place.slug);
+	};
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -124,8 +152,9 @@ export function ChatPanel({
 						hideLauncherOnMobile && "max-md:hidden",
 					)}
 					size="icon"
+					aria-label={t("chat.actions.open")}
 				>
-					<MessageSquare className="h-6 w-6" />
+					<MessageSquare className="h-6 w-6" aria-hidden />
 				</Button>
 			</motion.div>
 		);
@@ -142,30 +171,42 @@ export function ChatPanel({
 			<Card
 				className={cn(
 					// md+: docked over the map column so the itinerary panel stays visible
-					"fixed bottom-4 right-4 md:bottom-6 md:right-[416px] shadow-2xl z-50 overflow-hidden flex flex-col",
+					"fixed bottom-4 right-4 md:bottom-6 md:right-[416px] shadow-2xl z-50 overflow-hidden flex flex-col gap-0 py-0",
 					isMinimized
-						? "w-80 h-14"
+						? "w-80 h-16 max-md:bottom-[136px]"
 						: "w-[95vw] max-w-[440px] h-[65vh] md:w-[440px] md:max-w-[calc(100vw-432px)] md:h-[680px] md:max-h-[calc(100vh-112px)]",
 				)}
 			>
-				<CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b bg-card shrink-0">
+				<CardHeader className="flex flex-row items-center justify-between py-3 [.border-b]:pb-3 px-4 border-b bg-card shrink-0">
 					<CardTitle className="text-sm flex items-center gap-2 font-semibold">
 						<div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
 							<Map className="h-4 w-4 text-primary" />
 						</div>
-						Map Assistant
+						{t("chat.actions.title")}
 						{isStreaming && (
 							<span className="text-[10px] text-muted-foreground font-normal animate-pulse">
-								thinking...
+								{t("chat.actions.thinking")}
 							</span>
 						)}
 					</CardTitle>
 					<div className="flex gap-1">
-						<Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsMinimized((v) => !v)}>
-							{isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-10 w-10"
+							onClick={() => setIsMinimized((v) => !v)}
+							aria-label={isMinimized ? t("chat.actions.expand") : t("chat.actions.minimize")}
+						>
+							{isMinimized ? <Maximize2 className="h-4 w-4" aria-hidden /> : <Minimize2 className="h-4 w-4" aria-hidden />}
 						</Button>
-						<Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
-							<X className="h-4 w-4" />
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-10 w-10"
+							onClick={() => setIsOpen(false)}
+							aria-label={t("chat.actions.close")}
+						>
+							<X className="h-4 w-4" aria-hidden />
 						</Button>
 					</div>
 				</CardHeader>
@@ -191,7 +232,9 @@ export function ChatPanel({
 										void startWithMessage(text);
 									}}
 									onAddPlace={onAddPlaceToTrip}
-									onViewPlace={handleViewPlace}
+									onLocatePlace={handleLocatePlace}
+									onDismissTripDraft={onClosePreview}
+									tripPlaceIds={tripPlaceIds}
 									onSaveItinerary={() => {
 										void handleSaveItinerary();
 									}}

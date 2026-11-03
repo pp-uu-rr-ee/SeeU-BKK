@@ -183,7 +183,7 @@ itineraries.get('/', authMiddleware, async (c) => {
 
 		const placeIds = Array.from(new Set((stops || []).map((stop) => stop.place_id).filter(Boolean)));
 		const { data: places, error: placeErr } = placeIds.length
-			? await supabase.from('bangkok_unseen').select('id, name, lat, lng, tags, image_url, address').in('id', placeIds)
+			? await supabase.from('bangkok_unseen').select('id, name, name_th, lat, lng, tags, image_url, address').in('id', placeIds)
 			: { data: [], error: null as any };
 		if (placeErr) throw placeErr;
 
@@ -203,6 +203,7 @@ itineraries.get('/', authMiddleware, async (c) => {
 				place: {
 					id: place.id,
 					name: place.name,
+					name_th: place.name_th || null,
 					lat: place.lat,
 					lng: place.lng,
 					tags: Array.isArray(place.tags) ? place.tags : [],
@@ -234,7 +235,7 @@ async function loadTripStops(itineraryId: string) {
 
 	const placeIds = Array.from(new Set((stops || []).map((stop) => stop.place_id).filter(Boolean)));
 	const { data: places, error: placeErr } = placeIds.length
-		? await supabase.from('bangkok_unseen').select('id, name, lat, lng, tags, image_url, address').in('id', placeIds)
+		? await supabase.from('bangkok_unseen').select('id, name, name_th, lat, lng, tags, image_url, address').in('id', placeIds)
 		: { data: [], error: null as any };
 	if (placeErr) throw placeErr;
 
@@ -251,6 +252,7 @@ async function loadTripStops(itineraryId: string) {
 			place: {
 				id: place.id,
 				name: place.name,
+				name_th: place.name_th || null,
 				lat: place.lat,
 				lng: place.lng,
 				tags: Array.isArray(place.tags) ? place.tags : [],

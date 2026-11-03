@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	buildTripDraftFromCandidates,
+	defaultTripTitle,
 	extractPlanningConstraints,
 } from "../domain/planning";
 
@@ -64,5 +65,20 @@ describe("planning domain", () => {
 		expect(draft.stops[0]?.place_id).toBeTruthy();
 		expect(draft.total_minutes).toBeGreaterThan(0);
 		expect(draft.validation.score).toBeGreaterThan(0);
+	});
+});
+
+describe("defaultTripTitle", () => {
+	test("names the trip after its stops instead of a generic label", () => {
+		expect(defaultTripTitle(["Wat Pho", "Grand Palace", "Wat Phra Kaew"])).toBe("Wat Pho → Grand Palace → Wat Phra Kaew");
+	});
+
+	test("long trips show the first three stops and how many more", () => {
+		expect(defaultTripTitle(["A", "B", "C", "D", "E"])).toBe("A → B → C +2");
+	});
+
+	test("a single stop or no stops still gets a usable title", () => {
+		expect(defaultTripTitle(["Wat Arun"])).toBe("Wat Arun");
+		expect(defaultTripTitle([])).toBe("Trip");
 	});
 });

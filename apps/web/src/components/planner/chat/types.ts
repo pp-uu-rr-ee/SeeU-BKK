@@ -135,7 +135,13 @@ export interface ParsedItinerary {
 
 export interface ChatPanelProps {
 	onPlacesFound?: (places: PlaceItem[]) => void;
-	onAddPlaceToTrip?: (place: PlaceItem) => void;
+	onAddPlaceToTrip?: (place: PlaceItem | PlaceItem[]) => void;
+	/** Takes the chat's trip draft off the map */
+	onClosePreview?: () => void;
+	/** Shows a suggested place on the map */
+	onLocatePlace?: (place: PlaceItem) => void;
+	/** Place ids already in the trip that "Add" targets */
+	tripPlaceIds?: string[];
 	onTripDraftCreated?: (tripDraft: TripDraft) => void;
 	onPreviewTripDraft?: (tripDraft: TripDraft) => void;
 	userLocation?: { lat: number; lng: number };
@@ -149,4 +155,6 @@ export interface ChatPanelProps {
 	initialPrompt?: string;
 	/** Hide the launcher on phones (e.g. while the trip sheet is expanded and would be covered) */
 	hideLauncherOnMobile?: boolean;
+	/** Changing this starts a fresh conversation (e.g. "New Chat" in the history list) */
+	resetKey?: number;
 }

@@ -153,3 +153,20 @@ describe("mergeFetchedTrips", () => {
 		]);
 	});
 });
+
+describe("appendPlaceToTrip ids", () => {
+	test("places added in the same millisecond still get distinct stop ids", () => {
+		const first = appendPlaceToTrip({
+			trips: [baseTrip],
+			selectedTripId: "trip-1",
+			place: { id: "p-a", name: "Museum Siam", slug: "museum-siam", lat: 13.74, lng: 100.49 },
+		});
+		const second = appendPlaceToTrip({
+			trips: first.trips,
+			selectedTripId: "trip-1",
+			place: { id: "p-b", name: "Coin Museum", slug: "coin-museum", lat: 13.75, lng: 100.49 },
+		});
+		const ids = second.trips[0]!.stops.map((stop) => stop.id);
+		expect(new Set(ids).size).toBe(ids.length);
+	});
+});

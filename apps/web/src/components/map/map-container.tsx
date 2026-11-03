@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Supercluster from 'supercluster';
 import { MapControls } from './map-controls';
+import { localizedPlace } from '@/lib/place-locale';
 import { PlacePopupContent } from './place-popup-content';
 import { useAuth } from '@/contexts/auth-context';
 import { useTranslation } from '@/contexts/language-context';
@@ -26,6 +27,8 @@ interface Place {
   slug: string;
   /** 1-based stop number when the place is a stop of the selected trip */
   sequence?: number;
+  name_th?: string | null;
+  description_th?: string | null;
 }
 
 interface ItineraryStop {
@@ -53,7 +56,7 @@ interface MapContainerProps {
   /** [[west, south], [east, north]] to frame, e.g. the current search results; re-frames when the box changes */
   fitBounds?: [[number, number], [number, number]] | null;
   /** Popup action for adding a (non-stop) place to the open trip */
-  addToTrip?: { label: string; onAdd: (place: Place) => void } | null;
+  addToTrip?: { label: string; onAdd: (place: Place) => void; placeIds?: string[] } | null;
 }
 
 // Feature type for Supercluster
@@ -639,7 +642,6 @@ const MapContainer: React.FC<MapContainerProps> = ({
 
         const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinatesString}?waypoints=${waypointIndices}&access_token=${accessToken}&overview=full&geometries=geojson`;
 
-        console.log('Fetching route:', directionsUrl);
 
         const response = await fetch(directionsUrl);
 
@@ -650,7 +652,6 @@ const MapContainer: React.FC<MapContainerProps> = ({
         }
 
         const data = await response.json();
-        console.log('Route response:', data);
 
         if (data.routes && data.routes.length > 0) {
           const route = data.routes[0];
@@ -737,7 +738,6 @@ const MapContainer: React.FC<MapContainerProps> = ({
     const drawStraightRoute = () => {
       if (!map.current) return;
 
-      console.log('Using fallback straight line route');
 
       // Remove existing route layer if it exists
       if (map.current.getLayer('trip-route')) {
@@ -885,7 +885,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
             }
           }}
           addToTrip={
-            addToTripRef.current && place.sequence === undefined
+            addToTripRef.current && place.sequence === undefined && !addToTripRef.current.placeIds?.includes(place.id)
               ? {
                   label: addToTripRef.current.label,
                   onAdd: () => {
@@ -1105,6 +1105,13 @@ const MapContainer: React.FC<MapContainerProps> = ({
           marker.setLngLat([lng, lat]);
         }
 
+        // Mapbox labels every marker "Map marker"; name the place (and stop number) instead
+        const markerName = localizedPlace(place, locale).name;
+        marker.getElement().setAttribute(
+          'aria-label',
+          isSequence ? `${sequenceNumber}. ${markerName}` : markerName
+        );
+
         const color = isSequence ? '#0E5A5F' : getMarkerColor(place);
         const icon = isSequence ? sequenceNumber : getMarkerIcon(place);
 
@@ -1161,6 +1168,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
     previewItinerary,
     getMarkerColor,
     getMarkerIcon,
+    locale,
   ]);
 
   // Draw route line for itinerary preview
@@ -1481,7 +1489,7 @@ const MapContainer: React.FC<MapContainerProps> = ({
           >
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">Initializing map...</p>
+              <p className="text-muted-foreground">{t("map.loading")}</p>
             </div>
           </motion.div>
         )}
