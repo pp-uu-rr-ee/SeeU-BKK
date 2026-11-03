@@ -1,0 +1,47 @@
+# Render Blueprint for the API server (apps/server). The web app is deployed on Vercel.
+# Render: New → Blueprint → pick this repo; it asks for every `sync: false` value on first deploy.
+services:
+  - type: web
+    name: seeu-server
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./apps/server/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeploy: true
+    # Only redeploy when the server (or shared dependencies) change
+    buildFilter:
+      paths:
+        - apps/server/**
+        - package.json
+        - bun.lock
+        - bunfig.toml
+    envVars:
+      # Web origin allowed by CORS, e.g. https://seeu-bkk.vercel.app (no trailing slash)
+      - key: CORS_ORIGIN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # Gemini through its OpenAI-compatible endpoint (see apps/server/.env.example)
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: LLM_FALLBACK_MODELS
+        sync: false
+      - key: LLM_EMBED_MODEL
+        sync: false
+      - key: LLM_EMBED_DIMENSIONS
+        sync: false
+      - key: MAPBOX_ACCESS_TOKEN
+        sync: false
+      # Only needed if the internal /api/tools routes are used
+      - key: TOOLS_API_KEY
+        sync: false
